@@ -1,0 +1,36 @@
+services:
+  # 1. Spring Boot Backend Service
+  - type: web
+    name: investa-backend
+    env: java
+    rootDir: backend
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -jar target/backend-0.0.1-SNAPSHOT.jar
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: investa-postgres
+          property: connectionString
+      - key: SPRING_DATASOURCE_DRIVER
+        value: org.postgresql.Driver
+      - key: SPRING_JPA_DIALECT
+        value: org.hibernate.dialect.PostgreSQLDialect
+      - key: INVESTA_EXCEL_PATH
+        value: ../Forecast.xlsx
+
+  # 2. React Frontend Static Site
+  - type: web
+    name: investa-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm run build
+    publishDir: dist
+    plan: free
+    envVars:
+      - key: VITE_API_BASE
+        fromService:
+          name: investa-backend
+          property: host

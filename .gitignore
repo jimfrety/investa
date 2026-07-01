@@ -1,0 +1,18 @@
+# Maven Build and Databases
+backend/target/
+backend/data/
+backend/*.db
+backend/*.log
+
+# React Build and Packages
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# IDEs and System files
+.DS_Store
+.idea/
+.vscode/
+*.class
+*.log
+*.iml
