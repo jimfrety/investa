@@ -139,8 +139,9 @@ export default function ReturnCalculator() {
   const simulateReturns = () => {
     if (!selectedAsset) return { chartData: [], summary: {} }
 
-    let initialCapital = mode === 'new' ? newCash : (selectedAsset.quantity * selectedAsset.currentPrice)
-    let initialShares = mode === 'new' ? (newCash / selectedAsset.currentPrice) : selectedAsset.quantity
+    let existingValue = (selectedAsset.quantity * selectedAsset.currentPrice)
+    let initialCapital = mode === 'new' ? (existingValue + newCash) : existingValue
+    let initialShares = mode === 'new' ? ((existingValue + newCash) / selectedAsset.currentPrice) : selectedAsset.quantity
     let currentPrice = selectedAsset.currentPrice
     
     let shares = initialShares
@@ -285,7 +286,7 @@ export default function ReturnCalculator() {
           {/* Cash Amount input (New Mode only) */}
           {mode === 'new' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>Investment Capital ($)</label>
+              <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>Simulated New Cash ($)</label>
               <input 
                 type="number" 
                 value={newCash}
@@ -293,6 +294,9 @@ export default function ReturnCalculator() {
                 className="investa-input"
                 min="100"
               />
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                This cash will be added directly on top of your existing position/portfolio value (${(selectedAsset?.quantity * selectedAsset?.currentPrice)?.toLocaleString(undefined, { minimumFractionDigits: 2 })}).
+              </span>
             </div>
           )}
 
