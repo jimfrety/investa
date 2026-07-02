@@ -303,7 +303,9 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
           </button>
         </div>
       ),
-      flex: 1.2
+      flex: 1.2,
+      sortable: false,
+      filter: false
     }
   ]
 
@@ -353,7 +355,8 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
           columnDefs={columnDefs}
           defaultColDef={{
             resizable: true,
-            sortable: true
+            sortable: true,
+            filter: true
           }}
           onCellValueChanged={onCellValueChanged}
         />
