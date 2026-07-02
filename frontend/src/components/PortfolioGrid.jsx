@@ -36,6 +36,57 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
     "SPK", "S"
   ].sort()
 
+  const getShareName = (symbolCode) => {
+    const held = holdings.find(h => h.code === symbolCode)
+    if (held) return held.shareName
+
+    const fallbackNames = {
+      "CRWD": "CrowdStrike Inc",
+      "USF": "US Foods Holding Corp",
+      "APA": "Smart Asia Pacific ETF",
+      "EUF": "Smart Europe ETF",
+      "ADAM": "Adamas",
+      "HESM": "Hess Midstream",
+      "EMF": "Smart Emerging Markets ETF",
+      "OZY": "Smart Australian Top 20 ETF",
+      "HVN": "Harvey Norman",
+      "TXN": "Texas Instruments",
+      "JNJ": "Johnson & Johnson",
+      "ENB": "Enbridge Inc",
+      "FTQI": "First Trust Nasdaq Buywrite Income ETF",
+      "T": "AT&T",
+      "MU": "Micron Technology",
+      "AGNC": "AGNC Investment",
+      "GOOG": "Alphabet Inc (Google)",
+      "JEPI": "JPMorgan Equity Premium Income ETF",
+      "VZ": "Verizon Communications",
+      "SCHF": "Schwab International Equity ETF",
+      "IONQ": "IonQ Inc",
+      "VHY": "Vanguard Australian Shares High Yield ETF",
+      "NPF": "Smart NZ Property ETF",
+      "VNLA": "Janus Henderson Short Duration Income ETF",
+      "PKLB": "Pacific Edge Ltd",
+      "BKT": "Blackrock Income Trust Inc",
+      "RGTI": "Rigetti Computing",
+      "GCI": "Gryphon Capital Income Trust",
+      "MIN": "MFS Intermediate Income Trust",
+      "GNE": "Genesis Energy Ltd",
+      "FNZ": "Smart NZ Top 50 ETF",
+      "KMB": "Kimberly-Clark Corp",
+      "O": "Realty Income Corp",
+      "HVST": "Betashares Australian Div Harvester Active ETF",
+      "QBITS": "D-Wave Quantum Inc",
+      "META": "Meta Platforms Inc",
+      "PFLT": "Pennantpark Floating Rate Capital Ltd",
+      "AIR": "Air New Zealand Ltd",
+      "XRO": "Xero Ltd",
+      "ARX": "Arcadium Lithium plc",
+      "SPK": "Spark New Zealand Ltd",
+      "S": "SentinelOne Inc"
+    }
+    return fallbackNames[symbolCode] || symbolCode
+  }
+
   const { data: holdings = [], refetch } = useQuery({
     queryKey: ['holdings'],
     queryFn: fetchHoldings
@@ -391,7 +442,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
               className="investa-input"
             >
               {masterSymbols.map(s => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>{s} - {getShareName(s)}</option>
               ))}
             </select>
           </div>
