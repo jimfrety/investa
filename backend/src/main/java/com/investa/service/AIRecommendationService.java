@@ -37,12 +37,24 @@ public class AIRecommendationService {
     @Value("${openai.api.key}")
     private String apiKey;
 
+    @Value("${gemini.api.key:}")
+    private String geminiApiKey;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     public Map<String, Object> generateChatResponse(String message) {
         log.info("Received chat query: {}", message);
         
-        // 1. Try OpenAI if API Key exists
+        // 1. Try Gemini if API Key exists
+        if (geminiApiKey != null && !geminiApiKey.trim().isEmpty() && !geminiApiKey.equals("${GEMINI_API_KEY}")) {
+            try {
+                return callGemini(message);
+            } catch (Exception e) {
+                log.error("Error calling Gemini, falling back to OpenAI or local engine", e);
+            }
+        }
+        
+        // 2. Try OpenAI if API Key exists
         if (apiKey != null && !apiKey.trim().isEmpty() && !apiKey.equals("${OPENAI_API_KEY}")) {
             try {
                 return callOpenAI(message);
@@ -51,8 +63,85 @@ public class AIRecommendationService {
             }
         }
 
-        // 2. Local AI Portfolio Manager fallback response engine
+        // 3. Local AI Portfolio Manager fallback response engine
         return generateLocalAIResponse(message);
+    }
+
+    private Map<String, Object> callGemini(String userQuery) {
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiApiKey;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Compile context
+        List<Holding> holdings = holdingRepository.findAll();
+        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst().orElse(null);
+        Map<String, Object> summary = portfolioService.getPortfolioSummary();
+        Map<String, Object> divMetrics = dividendService.getDividendMetrics();
+        Map<String, Object> riskMetrics = riskEngine.calculateRiskMetrics();
+
+        StringBuilder systemPrompt = new StringBuilder();
+        systemPrompt.append("You are Investa AI, a professional portfolio manager. You know the user's complete portfolio, risk parameters, and objectives.\n\n");
+        systemPrompt.append("--- PORTFOLIO DETAILS ---\n");
+        systemPrompt.append(String.format("Net Worth: $%,.2f\nHoldings Value: $%,.2f\nCash: $%,.2f\n", 
+                summary.get("netWorth"), summary.get("holdingsValue"), summary.get("cashBalance")));
+        systemPrompt.append(String.format("Annual Dividend Income: $%,.2f (Yield: %.2f%%)\n", 
+                divMetrics.get("annualIncome"), divMetrics.get("portfolioYield")));
+        systemPrompt.append(String.format("Average Portfolio Risk: %.2f / 7\n", riskMetrics.get("averageRisk")));
+        
+        systemPrompt.append("\n--- ACTIVE HOLDINGS ---\n");
+        for (Holding h : holdings) {
+            systemPrompt.append(String.format("- %s (%s): %s shares, Avg Purchase Price $%,.2f, Current Price $%,.2f, Sector: %s, Risk: %d/7\n",
+                    h.getShareName(), h.getCode(), h.getQuantity(), h.getAvgPurchasePrice(), h.getCurrentPrice(), h.getSector(), h.getRisk()));
+        }
+
+        if (policy != null) {
+            systemPrompt.append("\n--- INVESTMENT POLICY RULES ---\n");
+            systemPrompt.append(String.format("- Primary: %s\n- Secondary: %s\n- Max Risk Limit: %.2f\n- Max Sector Exposure: %.1f%%\n- Max Single Asset: %.1f%%\n- Growth Sell Target: %.1f%%\n",
+                    policy.getPrimaryObjective(), policy.getSecondaryObjective(), policy.getMaxRisk(), 
+                    policy.getMaxSectorExposure() * 100.0, policy.getMaxSingleHolding() * 100.0, policy.getGrowthSellTarget() * 100.0));
+        }
+
+        systemPrompt.append("\nAnswer the user's question. Provide high-quality financial analysis, reference specific assets, explain calculations, and structure recommendations with confidence metrics.");
+
+        // Construct Gemini Request Payload
+        Map<String, Object> requestBody = new HashMap<>();
+        
+        // System instruction
+        Map<String, Object> systemInstruction = new HashMap<>();
+        systemInstruction.put("parts", List.of(Map.of("text", systemPrompt.toString())));
+        requestBody.put("systemInstruction", systemInstruction);
+
+        // Contents
+        Map<String, Object> contentPart = new HashMap<>();
+        contentPart.put("parts", List.of(Map.of("text", userQuery)));
+        requestBody.put("contents", List.of(contentPart));
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            List candidates = (List) response.getBody().get("candidates");
+            if (candidates != null && !candidates.isEmpty()) {
+                Map firstCandidate = (Map) candidates.get(0);
+                Map contentObj = (Map) firstCandidate.get("content");
+                if (contentObj != null) {
+                    List parts = (List) contentObj.get("parts");
+                    if (parts != null && !parts.isEmpty()) {
+                        Map firstPart = (Map) parts.get(0);
+                        String answer = (String) firstPart.get("text");
+
+                        Map<String, Object> result = new HashMap<>();
+                        result.put("answer", answer);
+                        result.put("confidence", 95);
+                        result.put("confidenceReason", "Recommendations derived dynamically from active holdings and risk model matching.");
+                        return result;
+                    }
+                }
+            }
+        }
+
+        throw new RuntimeException("Gemini API call returned empty response or error");
     }
 
     private Map<String, Object> callOpenAI(String userQuery) {
