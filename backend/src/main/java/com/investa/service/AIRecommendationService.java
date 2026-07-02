@@ -75,7 +75,14 @@ public class AIRecommendationService {
     }
 
     private Map<String, Object> callGemini(String userQuery, String activeGeminiKey) {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + activeGeminiKey;
+        // We will try multiple candidate API URL endpoints to ensure compatibility with all API key versions/regions
+        String[] candidateUrls = {
+            "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + activeGeminiKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + activeGeminiKey,
+            "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" + activeGeminiKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=" + activeGeminiKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + activeGeminiKey
+        };
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -125,30 +132,40 @@ public class AIRecommendationService {
         requestBody.put("contents", List.of(contentPart));
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+        
+        Exception lastException = null;
+        for (String url : candidateUrls) {
+            try {
+                log.info("Attempting Gemini API call to endpoint: {}", url.replaceAll("key=.*", "key=REDACTED"));
+                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            List candidates = (List) response.getBody().get("candidates");
-            if (candidates != null && !candidates.isEmpty()) {
-                Map firstCandidate = (Map) candidates.get(0);
-                Map contentObj = (Map) firstCandidate.get("content");
-                if (contentObj != null) {
-                    List parts = (List) contentObj.get("parts");
-                    if (parts != null && !parts.isEmpty()) {
-                        Map firstPart = (Map) parts.get(0);
-                        String answer = (String) firstPart.get("text");
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    List candidates = (List) response.getBody().get("candidates");
+                    if (candidates != null && !candidates.isEmpty()) {
+                        Map firstCandidate = (Map) candidates.get(0);
+                        Map contentObj = (Map) firstCandidate.get("content");
+                        if (contentObj != null) {
+                            List parts = (List) contentObj.get("parts");
+                            if (parts != null && !parts.isEmpty()) {
+                                Map firstPart = (Map) parts.get(0);
+                                String answer = (String) firstPart.get("text");
 
-                        Map<String, Object> result = new HashMap<>();
-                        result.put("answer", answer);
-                        result.put("confidence", 95);
-                        result.put("confidenceReason", "Recommendations derived dynamically from active holdings and risk model matching.");
-                        return result;
+                                Map<String, Object> result = new HashMap<>();
+                                result.put("answer", answer);
+                                result.put("confidence", 95);
+                                result.put("confidenceReason", "Recommendations derived dynamically from active holdings and risk model matching.");
+                                return result;
+                            }
+                        }
                     }
                 }
+            } catch (Exception e) {
+                log.warn("Gemini call failed for URL: {}. Error: {}", url.replaceAll("key=.*", "key=REDACTED"), e.getMessage());
+                lastException = e;
             }
         }
 
-        throw new RuntimeException("Gemini API call returned empty response or error");
+        throw new RuntimeException("All Gemini API candidate URLs failed. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
     }
 
     private Map<String, Object> callOpenAI(String userQuery) {
@@ -382,7 +399,9 @@ public class AIRecommendationService {
         }
 
         // 7. Buy / Watchlist Recommendations
-        if (query.contains("buy") || query.contains("purchase") || query.contains("acquire") || query.contains("watchlist")) {
+        if (query.contains("buy") || query.contains("purchase") || query.contains("acquire") || 
+            query.contains("watchlist") || query.contains("recommend") || query.contains("suggestion") || 
+            query.contains("not currently")) {
             List<Watchlist> items = watchlistRepository.findAll();
             items.sort((a, b) -> Double.compare(b.getOverallScore(), a.getOverallScore()));
 
