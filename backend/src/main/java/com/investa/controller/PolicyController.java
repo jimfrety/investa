@@ -2,6 +2,7 @@ package com.investa.controller;
 
 import com.investa.model.InvestmentPolicy;
 import com.investa.repository.InvestmentPolicyRepository;
+import com.investa.service.AIRecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 public class PolicyController {
 
     private final InvestmentPolicyRepository policyRepository;
+    private final AIRecommendationService recommendationService;
 
     @GetMapping
     public ResponseEntity<InvestmentPolicy> getPolicy() {
@@ -46,5 +48,11 @@ public class PolicyController {
         }
         InvestmentPolicy saved = policyRepository.save(updatedPolicy);
         return ResponseEntity.ok(saved);
+    }
+    @PostMapping("/test-gemini-key")
+    public ResponseEntity<java.util.Map<String, Object>> testGeminiKey(@RequestBody java.util.Map<String, String> payload) {
+        String key = payload.get("key");
+        java.util.Map<String, Object> result = recommendationService.testGeminiKey(key);
+        return ResponseEntity.ok(result);
     }
 }

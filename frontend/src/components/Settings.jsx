@@ -62,6 +62,31 @@ export default function Settings() {
     })
   }
 
+  const [isTesting, setIsTesting] = useState(false)
+  const [testResult, setTestResult] = useState(null)
+
+  const handleTestKey = async () => {
+    if (!geminiKey.trim()) {
+      setTestResult({ success: false, message: 'Please enter an API key to test.' })
+      return
+    }
+    setIsTesting(true)
+    setTestResult(null)
+    try {
+      const res = await fetch('/api/policy/test-gemini-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: geminiKey })
+      })
+      const data = await res.json()
+      setTestResult(data)
+    } catch (err) {
+      setTestResult({ success: false, message: 'Network error connecting to backend.' })
+    } finally {
+      setIsTesting(false)
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '650px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -97,7 +122,28 @@ export default function Settings() {
               >
                 {showKey ? "Hide" : "Show"}
               </button>
+              <button 
+                type="button" 
+                className="investa-button"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(79, 70, 229, 0.2) 100%)',
+                  border: '1px solid var(--border-glass)'
+                }}
+                onClick={handleTestKey}
+                disabled={isTesting}
+              >
+                {isTesting ? "Testing..." : "Test Connection"}
+              </button>
             </div>
+            {testResult && (
+              <div style={{ 
+                fontSize: '12px', 
+                fontWeight: '600', 
+                color: testResult.success ? 'var(--accent-emerald)' : 'var(--accent-rose)' 
+              }}>
+                {testResult.success ? '● ' : '▲ '} {testResult.message}
+              </div>
+            )}
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
               Get an API key from <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-indigo)', textDecoration: 'underline' }}>Google AI Studio</a>. Keys are stored securely in your local SQLite/H2 database.
             </span>

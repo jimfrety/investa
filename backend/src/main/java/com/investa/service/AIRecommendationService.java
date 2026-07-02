@@ -475,4 +475,53 @@ public class AIRecommendationService {
         response.put("confidenceReason", "User guidance prompt.");
         return response;
     }
+
+    public Map<String, Object> testGeminiKey(String testKey) {
+        Map<String, Object> responseMap = new HashMap<>();
+        if (testKey == null || testKey.trim().isEmpty()) {
+            responseMap.put("success", false);
+            responseMap.put("message", "API Key cannot be empty.");
+            return responseMap;
+        }
+
+        String[] candidateUrls = {
+            "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + testKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + testKey,
+            "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" + testKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=" + testKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + testKey
+        };
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Simple prompt payload
+        Map<String, Object> requestBody = new HashMap<>();
+        Map<String, Object> contentPart = new HashMap<>();
+        contentPart.put("parts", List.of(Map.of("text", "Hello, please reply with a short verification message.")));
+        requestBody.put("contents", List.of(contentPart));
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        for (String url : candidateUrls) {
+            try {
+                log.info("Testing Gemini API key against URL: {}", url.replaceAll("key=.*", "key=REDACTED"));
+                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    List candidates = (List) response.getBody().get("candidates");
+                    if (candidates != null && !candidates.isEmpty()) {
+                        responseMap.put("success", true);
+                        responseMap.put("message", "Connection successful! Your API key is fully working.");
+                        return responseMap;
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Test connection failed for URL: {}. Error: {}", url.replaceAll("key=.*", "key=REDACTED"), e.getMessage());
+            }
+        }
+
+        responseMap.put("success", false);
+        responseMap.put("message", "Failed to connect to Gemini endpoints. Please check that the key is valid.");
+        return responseMap;
+    }
 }
