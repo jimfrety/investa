@@ -85,13 +85,17 @@ public class DividendService {
             monthlyIncome.put(m, 0.0);
         }
 
-        int currentYear = LocalDate.now().getYear();
+        // Determine the target year dynamically (most recent year with dividends)
+        int targetYear = dividendRepository.findAll().stream()
+                .map(d -> d.getPaymentDate().getYear())
+                .max(Integer::compareTo)
+                .orElse(LocalDate.now().getYear());
 
         for (Holding h : holdings) {
             String currency = h.getCurrency() != null ? h.getCurrency() : "NZD";
             List<Dividend> divs = dividendRepository.findByCode(h.getCode());
             for (Dividend d : divs) {
-                if (d.getPaymentDate().getYear() == currentYear) {
+                if (d.getPaymentDate().getYear() == targetYear) {
                     String monthName = d.getPaymentDate().getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
                     double currentAmt = monthlyIncome.getOrDefault(monthName, 0.0);
                     double paymentInBase = currencyService.convertToBase(h.getQuantity() * d.getAmount(), currency);
@@ -104,7 +108,7 @@ public class DividendService {
         for (Map.Entry<String, Double> entry : monthlyIncome.entrySet()) {
             Map<String, Object> monthData = new HashMap<>();
             monthData.put("month", entry.getKey());
-            monthData.put("income", entry.getValue());
+            monthData.put("amount", entry.getValue()); // Matches frontend Recharts dataKey
             calendar.add(monthData);
         }
 
