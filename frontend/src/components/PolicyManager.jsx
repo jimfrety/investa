@@ -20,12 +20,6 @@ export default function PolicyManager({ onPolicyUpdated }) {
   const [avoidCuts, setAvoidCuts] = useState(true)
   const [maxSector, setMaxSector] = useState(20)
   const [cashAvailable, setCashAvailable] = useState(0)
-  const [seedUnrealisedGains, setSeedUnrealisedGains] = useState(0)
-  const [seedRealisedGains, setSeedRealisedGains] = useState(0)
-  const [seedUnrealisedCurrencyGains, setSeedUnrealisedCurrencyGains] = useState(0)
-  const [seedRealisedCurrencyGains, setSeedRealisedCurrencyGains] = useState(0)
-  const [seedTransactionFees, setSeedTransactionFees] = useState(0)
-  const [seedDividendsReceived, setSeedDividendsReceived] = useState(0)
   const [successMsg, setSuccessMsg] = useState('')
 
   // Sync state with query data
@@ -41,12 +35,6 @@ export default function PolicyManager({ onPolicyUpdated }) {
       setAvoidCuts(policy.avoidDividendCuts !== false)
       setMaxSector(Math.round((policy.maxSectorExposure ?? 0.20) * 100))
       setCashAvailable(policy.cashAvailable ?? 0.0)
-      setSeedUnrealisedGains(policy.seedUnrealisedGains ?? 0.0)
-      setSeedRealisedGains(policy.seedRealisedGains ?? 0.0)
-      setSeedUnrealisedCurrencyGains(policy.seedUnrealisedCurrencyGains ?? 0.0)
-      setSeedRealisedCurrencyGains(policy.seedRealisedCurrencyGains ?? 0.0)
-      setSeedTransactionFees(policy.seedTransactionFees ?? 0.0)
-      setSeedDividendsReceived(policy.seedDividendsReceived ?? 0.0)
     }
   }, [policy])
 
@@ -62,6 +50,7 @@ export default function PolicyManager({ onPolicyUpdated }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     policyMutation.mutate({
+      ...policy,
       primaryObjective: primaryObj,
       secondaryObjective: secondaryObj,
       growthSellTarget: growthTarget / 100.0,
@@ -71,13 +60,7 @@ export default function PolicyManager({ onPolicyUpdated }) {
       minMarketCap: minCap * 1.0e9,
       avoidDividendCuts: avoidCuts,
       maxSectorExposure: maxSector / 100.0,
-      cashAvailable: Number(cashAvailable),
-      seedUnrealisedGains: Number(seedUnrealisedGains),
-      seedRealisedGains: Number(seedRealisedGains),
-      seedUnrealisedCurrencyGains: Number(seedUnrealisedCurrencyGains),
-      seedRealisedCurrencyGains: Number(seedRealisedCurrencyGains),
-      seedTransactionFees: Number(seedTransactionFees),
-      seedDividendsReceived: Number(seedDividendsReceived)
+      cashAvailable: Number(cashAvailable)
     })
   }
 
@@ -216,80 +199,6 @@ export default function PolicyManager({ onPolicyUpdated }) {
             <label htmlFor="avoidCuts" style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>
               Avoid stocks with historical dividend cuts within the last 3 years
             </label>
-          </div>
-
-          <h4 style={{ fontSize: '14px', color: 'var(--text-primary)', marginTop: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '8px', letterSpacing: '0.05em' }}>
-            PORTFOLIO PERFORMANCE SEEDS / HISTORICAL OVERRIDES
-          </h4>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Unrealised P&L ($)</label>
-              <input 
-                type="number"
-                step="0.01"
-                value={seedUnrealisedGains}
-                onChange={(e) => setSeedUnrealisedGains(Number(e.target.value))}
-                className="investa-input"
-              />
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Realised P&L ($)</label>
-              <input 
-                type="number"
-                step="0.01"
-                value={seedRealisedGains}
-                onChange={(e) => setSeedRealisedGains(Number(e.target.value))}
-                className="investa-input"
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Unrealised Currency P&L ($)</label>
-              <input 
-                type="number"
-                step="0.01"
-                value={seedUnrealisedCurrencyGains}
-                onChange={(e) => setSeedUnrealisedCurrencyGains(Number(e.target.value))}
-                className="investa-input"
-              />
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Realised Currency P&L ($)</label>
-              <input 
-                type="number"
-                step="0.01"
-                value={seedRealisedCurrencyGains}
-                onChange={(e) => setSeedRealisedCurrencyGains(Number(e.target.value))}
-                className="investa-input"
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Transaction Fees ($)</label>
-              <input 
-                type="number"
-                step="0.01"
-                value={seedTransactionFees}
-                onChange={(e) => setSeedTransactionFees(Number(e.target.value))}
-                className="investa-input"
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Dividends Received ($)</label>
-              <input 
-                type="number"
-                step="0.01"
-                value={seedDividendsReceived}
-                onChange={(e) => setSeedDividendsReceived(Number(e.target.value))}
-                className="investa-input"
-              />
-            </div>
           </div>
 
           {successMsg && (

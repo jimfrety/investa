@@ -17,10 +17,23 @@ export default function Settings() {
   const [successMsg, setSuccessMsg] = useState('')
   const [showKey, setShowKey] = useState(false)
 
+  const [seedUnrealisedGains, setSeedUnrealisedGains] = useState(0)
+  const [seedRealisedGains, setSeedRealisedGains] = useState(0)
+  const [seedUnrealisedCurrencyGains, setSeedUnrealisedCurrencyGains] = useState(0)
+  const [seedRealisedCurrencyGains, setSeedRealisedCurrencyGains] = useState(0)
+  const [seedTransactionFees, setSeedTransactionFees] = useState(0)
+  const [seedDividendsReceived, setSeedDividendsReceived] = useState(0)
+
   // Sync with current API key on load
   useEffect(() => {
     if (policy) {
       setGeminiKey(policy.geminiApiKey || '')
+      setSeedUnrealisedGains(policy.seedUnrealisedGains ?? 0.0)
+      setSeedRealisedGains(policy.seedRealisedGains ?? 0.0)
+      setSeedUnrealisedCurrencyGains(policy.seedUnrealisedCurrencyGains ?? 0.0)
+      setSeedRealisedCurrencyGains(policy.seedRealisedCurrencyGains ?? 0.0)
+      setSeedTransactionFees(policy.seedTransactionFees ?? 0.0)
+      setSeedDividendsReceived(policy.seedDividendsReceived ?? 0.0)
     }
   }, [policy])
 
@@ -37,10 +50,15 @@ export default function Settings() {
     e.preventDefault()
     if (!policy) return
 
-    // Keep all existing policy settings, only update geminiApiKey
     settingsMutation.mutate({
       ...policy,
-      geminiApiKey: geminiKey
+      geminiApiKey: geminiKey,
+      seedUnrealisedGains: Number(seedUnrealisedGains),
+      seedRealisedGains: Number(seedRealisedGains),
+      seedUnrealisedCurrencyGains: Number(seedUnrealisedCurrencyGains),
+      seedRealisedCurrencyGains: Number(seedRealisedCurrencyGains),
+      seedTransactionFees: Number(seedTransactionFees),
+      seedDividendsReceived: Number(seedDividendsReceived)
     })
   }
 
@@ -83,6 +101,82 @@ export default function Settings() {
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
               Get an API key from <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-indigo)', textDecoration: 'underline' }}>Google AI Studio</a>. Keys are stored securely in your local SQLite/H2 database.
             </span>
+          </div>
+
+          <h4 style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '16px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '6px', letterSpacing: '0.05em' }}>
+            PORTFOLIO PERFORMANCE SEEDS / HISTORICAL OVERRIDES
+          </h4>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Unrealised P&L ($)</label>
+              <input 
+                type="number"
+                step="0.01"
+                value={seedUnrealisedGains}
+                onChange={(e) => setSeedUnrealisedGains(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Realised P&L ($)</label>
+              <input 
+                type="number"
+                step="0.01"
+                value={seedRealisedGains}
+                onChange={(e) => setSeedRealisedGains(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Unrealised Currency P&L ($)</label>
+              <input 
+                type="number"
+                step="0.01"
+                value={seedUnrealisedCurrencyGains}
+                onChange={(e) => setSeedUnrealisedCurrencyGains(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Realised Currency P&L ($)</label>
+              <input 
+                type="number"
+                step="0.01"
+                value={seedRealisedCurrencyGains}
+                onChange={(e) => setSeedRealisedCurrencyGains(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Transaction Fees ($)</label>
+              <input 
+                type="number"
+                step="0.01"
+                value={seedTransactionFees}
+                onChange={(e) => setSeedTransactionFees(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Seed Dividends Received ($)</label>
+              <input 
+                type="number"
+                step="0.01"
+                value={seedDividendsReceived}
+                onChange={(e) => setSeedDividendsReceived(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
           </div>
 
           {successMsg && (
