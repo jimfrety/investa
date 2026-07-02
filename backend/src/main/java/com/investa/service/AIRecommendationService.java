@@ -45,10 +45,17 @@ public class AIRecommendationService {
     public Map<String, Object> generateChatResponse(String message) {
         log.info("Received chat query: {}", message);
         
+        // Resolve Gemini API key (Database config takes priority, fallback to environment variable)
+        String activeGeminiKey = geminiApiKey;
+        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst().orElse(null);
+        if (policy != null && policy.getGeminiApiKey() != null && !policy.getGeminiApiKey().trim().isEmpty()) {
+            activeGeminiKey = policy.getGeminiApiKey();
+        }
+
         // 1. Try Gemini if API Key exists
-        if (geminiApiKey != null && !geminiApiKey.trim().isEmpty() && !geminiApiKey.equals("${GEMINI_API_KEY}")) {
+        if (activeGeminiKey != null && !activeGeminiKey.trim().isEmpty() && !activeGeminiKey.equals("${GEMINI_API_KEY}")) {
             try {
-                return callGemini(message);
+                return callGemini(message, activeGeminiKey);
             } catch (Exception e) {
                 log.error("Error calling Gemini, falling back to OpenAI or local engine", e);
             }
@@ -67,8 +74,8 @@ public class AIRecommendationService {
         return generateLocalAIResponse(message);
     }
 
-    private Map<String, Object> callGemini(String userQuery) {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiApiKey;
+    private Map<String, Object> callGemini(String userQuery, String activeGeminiKey) {
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + activeGeminiKey;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

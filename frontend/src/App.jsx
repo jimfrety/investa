@@ -10,6 +10,7 @@ import PolicyManager from './components/PolicyManager'
 import WatchlistOpportunity from './components/WatchlistOpportunity'
 import AIChatAssistant from './components/AIChatAssistant'
 import ReturnCalculator from './components/ReturnCalculator'
+import Settings from './components/Settings'
 
 // Icons
 import DashboardIcon from '@mui/icons-material/Dashboard'
@@ -22,6 +23,7 @@ import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety'
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
 import MenuOpenIcon from '@mui/icons-material/MenuOpen'
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble'
+import SettingsIcon from '@mui/icons-material/Settings'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -63,6 +65,8 @@ export default function App() {
         return <WatchlistOpportunity onAskAI={handleAskAI} onTradeExecuted={handleRefetchAll} />
       case 'calculator':
         return <ReturnCalculator />
+      case 'settings':
+        return <Settings />
       default:
         return <DashboardOverview onAskAI={handleAskAI} summary={summary} risk={risk} />
     }
@@ -107,6 +111,9 @@ export default function App() {
             </li>
             <li className={`sidebar-item ${activeTab === 'calculator' ? 'active' : ''}`} onClick={() => setActiveTab('calculator')}>
               <MonetizationOnIcon fontSize="small" /> Return Calculator
+            </li>
+            <li className={`sidebar-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+              <SettingsIcon fontSize="small" /> Settings
             </li>
           </ul>
         </div>

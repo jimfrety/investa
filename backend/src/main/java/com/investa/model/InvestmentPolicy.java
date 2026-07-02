@@ -35,4 +35,6 @@ public class InvestmentPolicy {
     private Double seedRealisedCurrencyGains;
     private Double seedTransactionFees;
     private Double seedDividendsReceived;
+    
+    private String geminiApiKey;
 }

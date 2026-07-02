@@ -1,0 +1,119 @@
+import React, { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { fetchPolicy, updatePolicy } from '../api/client'
+import SettingsIcon from '@mui/icons-material/Settings'
+import SaveIcon from '@mui/icons-material/Save'
+import KeyIcon from '@mui/icons-material/Key'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+
+export default function Settings() {
+  const queryClient = useQueryClient()
+  const { data: policy } = useQuery({
+    queryKey: ['policy'],
+    queryFn: fetchPolicy
+  })
+
+  const [geminiKey, setGeminiKey] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+  const [showKey, setShowKey] = useState(false)
+
+  // Sync with current API key on load
+  useEffect(() => {
+    if (policy) {
+      setGeminiKey(policy.geminiApiKey || '')
+    }
+  }, [policy])
+
+  const settingsMutation = useMutation({
+    mutationFn: updatePolicy,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['policy'] })
+      setSuccessMsg('Settings updated successfully! Investa AI will now use this key.')
+      setTimeout(() => setSuccessMsg(''), 5000)
+    }
+  })
+
+  const handleSave = (e) => {
+    e.preventDefault()
+    if (!policy) return
+
+    // Keep all existing policy settings, only update geminiApiKey
+    settingsMutation.mutate({
+      ...policy,
+      geminiApiKey: geminiKey
+    })
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '650px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <SettingsIcon style={{ color: 'var(--accent-indigo)' }} />
+        <h3 style={{ fontSize: '18px', fontWeight: '700' }} className="gradient-text">System & AI Settings</h3>
+      </div>
+
+      <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <KeyIcon fontSize="small" style={{ color: 'var(--text-secondary)' }} />
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                Gemini API Key
+              </label>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input 
+                type={showKey ? "text" : "password"} 
+                value={geminiKey}
+                onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder="Paste your Gemini API Key (e.g. AIzaSy...)"
+                className="investa-input"
+                style={{ flex: 1 }}
+              />
+              <button 
+                type="button" 
+                className="investa-button"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)', boxShadow: 'none' }}
+                onClick={() => setShowKey(!showKey)}
+              >
+                {showKey ? "Hide" : "Show"}
+              </button>
+            </div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              Get an API key from <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-indigo)', textDecoration: 'underline' }}>Google AI Studio</a>. Keys are stored securely in your local SQLite/H2 database.
+            </span>
+          </div>
+
+          {successMsg && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-emerald)', fontSize: '13px', fontWeight: '600' }}>
+              <CheckCircleIcon fontSize="small" /> {successMsg}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
+            <button 
+              type="submit" 
+              className="investa-button"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              disabled={settingsMutation.isPending}
+            >
+              <SaveIcon fontSize="small" /> 
+              {settingsMutation.isPending ? 'SAVING...' : 'SAVE SETTINGS'}
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+      <div className="glass-panel" style={{ padding: '20px', borderRadius: '16px', border: '1px dashed var(--border-glass)' }}>
+        <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-secondary)' }}>AI Engine Status</h4>
+        <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.5', margin: 0 }}>
+          {geminiKey.trim() 
+            ? "✅ Gemini API is configured as your active intelligence engine." 
+            : "ℹ️ No custom key provided. The system falls back to your local mock intelligence matching engine unless GEMINI_API_KEY is defined in your environment."}
+        </p>
+      </div>
+    </div>
+  )
+}
