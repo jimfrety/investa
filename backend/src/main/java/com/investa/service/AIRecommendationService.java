@@ -79,8 +79,11 @@ public class AIRecommendationService {
         String[] candidateUrls = {
             "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + activeGeminiKey,
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + activeGeminiKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + activeGeminiKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + activeGeminiKey,
             "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" + activeGeminiKey,
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=" + activeGeminiKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=" + activeGeminiKey,
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + activeGeminiKey
         };
 
@@ -487,8 +490,11 @@ public class AIRecommendationService {
         String[] candidateUrls = {
             "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + testKey,
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + testKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + testKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + testKey,
             "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=" + testKey,
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=" + testKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=" + testKey,
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + testKey
         };
 
@@ -503,6 +509,7 @@ public class AIRecommendationService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
+        String lastErrorMessage = "Please check your network and key.";
         for (String url : candidateUrls) {
             try {
                 log.info("Testing Gemini API key against URL: {}", url.replaceAll("key=.*", "key=REDACTED"));
@@ -515,13 +522,30 @@ public class AIRecommendationService {
                         return responseMap;
                     }
                 }
+            } catch (org.springframework.web.client.HttpStatusCodeException e) {
+                String errorBody = e.getResponseBodyAsString();
+                log.warn("Test connection HTTP error for URL: {}. Status: {}, Body: {}", 
+                        url.replaceAll("key=.*", "key=REDACTED"), e.getStatusCode(), errorBody);
+                try {
+                    Map errorObj = new com.fasterxml.jackson.databind.ObjectMapper().readValue(errorBody, Map.class);
+                    Map innerError = (Map) errorObj.get("error");
+                    if (innerError != null && innerError.get("message") != null) {
+                        lastErrorMessage = innerError.get("message").toString();
+                    } else {
+                        lastErrorMessage = e.getStatusCode() + " - " + e.getStatusText();
+                    }
+                } catch (Exception parseEx) {
+                    lastErrorMessage = e.getStatusCode() + " - " + errorBody;
+                }
             } catch (Exception e) {
-                log.warn("Test connection failed for URL: {}. Error: {}", url.replaceAll("key=.*", "key=REDACTED"), e.getMessage());
+                log.warn("Test connection unexpected error for URL: {}. Error: {}", 
+                        url.replaceAll("key=.*", "key=REDACTED"), e.getMessage());
+                lastErrorMessage = e.getMessage();
             }
         }
 
         responseMap.put("success", false);
-        responseMap.put("message", "Failed to connect to Gemini endpoints. Please check that the key is valid.");
+        responseMap.put("message", "Validation failed: " + lastErrorMessage);
         return responseMap;
     }
 }
