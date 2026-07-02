@@ -55,4 +55,9 @@ public class MarketController {
     public ResponseEntity<List<Map<String, Object>>> getDividendCalendar() {
         return ResponseEntity.ok(dividendService.getDividendCalendar());
     }
+
+    @GetMapping("/dividends/payments")
+    public ResponseEntity<List<Map<String, Object>>> getDividendPayments() {
+        return ResponseEntity.ok(dividendService.getDividendPayments());
+    }
 }

@@ -110,4 +110,44 @@ public class DividendService {
 
         return calendar;
     }
+
+    public List<Map<String, Object>> getDividendPayments() {
+        List<Holding> holdings = holdingRepository.findAll();
+        Map<String, Holding> holdingMap = new HashMap<>();
+        for (Holding h : holdings) {
+            holdingMap.put(h.getCode(), h);
+        }
+
+        List<Dividend> allDivs = dividendRepository.findAll();
+        // Sort by payment date descending
+        allDivs.sort((d1, d2) -> d2.getPaymentDate().compareTo(d1.getPaymentDate()));
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Dividend d : allDivs) {
+            Holding h = holdingMap.get(d.getCode());
+            if (h != null) {
+                String currency = h.getCurrency() != null ? h.getCurrency() : "NZD";
+                double qty = h.getQuantity() != null ? h.getQuantity() : 0.0;
+                double amt = d.getAmount() != null ? d.getAmount() : 0.0;
+                double totalLocal = qty * amt;
+                double totalBase = currencyService.convertToBase(totalLocal, currency);
+
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", d.getId());
+                map.put("code", d.getCode());
+                map.put("shareName", h.getShareName());
+                map.put("amount", amt);
+                map.put("quantity", qty);
+                map.put("totalPayoutLocal", totalLocal);
+                map.put("totalPayoutBase", totalBase);
+                map.put("exDividendDate", d.getExDividendDate());
+                map.put("paymentDate", d.getPaymentDate());
+                map.put("type", d.getType());
+                map.put("status", d.getStatus());
+                map.put("currency", currency);
+                result.add(map);
+            }
+        }
+        return result;
+    }
 }

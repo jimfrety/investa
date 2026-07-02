@@ -68,6 +68,12 @@ export async function fetchDividendCalendar() {
   return res.json();
 }
 
+export async function fetchDividendPayments() {
+  const res = await fetch(`${API_BASE}/market/dividends/payments`);
+  if (!res.ok) throw new Error('Failed to fetch dividend payments');
+  return res.json();
+}
+
 export async function postChatMessage(message) {
   const res = await fetch(`${API_BASE}/chat`, {
     method: 'POST',

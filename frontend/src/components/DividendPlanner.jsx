@@ -1,6 +1,6 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchDividendMetrics, fetchDividendCalendar } from '../api/client'
+import { fetchDividendMetrics, fetchDividendCalendar, fetchDividendPayments } from '../api/client'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
 import QueryStatsIcon from '@mui/icons-material/QueryStats'
@@ -16,6 +16,11 @@ export default function DividendPlanner({ onAskAI }) {
   const { data: calendar = [] } = useQuery({
     queryKey: ['divCalendar'],
     queryFn: fetchDividendCalendar
+  })
+
+  const { data: payments = [] } = useQuery({
+    queryKey: ['divPayments'],
+    queryFn: fetchDividendPayments
   })
 
   const annualIncome = metrics?.annualIncome ?? 18200.0;
@@ -88,6 +93,65 @@ export default function DividendPlanner({ onAskAI }) {
               <Bar dataKey="amount" fill="var(--accent-emerald)" radius={[4, 4, 0, 0]} maxBarSize={45} />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Detailed Payouts Table */}
+      <div className="glass-panel" style={{ padding: '24px' }}>
+        <h3 style={{ fontSize: '18px', color: 'var(--text-primary)', marginBottom: '8px' }}>DETAILED DIVIDEND PAYMENTS</h3>
+        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px' }}>Actual and declared historical payouts for your holdings</p>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+                <th style={{ padding: '12px 8px' }}>Symbol</th>
+                <th style={{ padding: '12px 8px' }}>Company</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Ex-Dividend Date</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Payment Date</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Currency</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Per Share</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Shares Held</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Total (Base NZD)</th>
+                <th style={{ padding: '12px 8px', textAlign: 'center' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payments.map((p, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: 'var(--text-primary)' }}>
+                  <td style={{ padding: '12px 8px', fontWeight: '700', color: 'var(--accent-indigo)' }}>{p.code}</td>
+                  <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>{p.shareName}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'right' }}>{p.exDividendDate}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600' }}>{p.paymentDate}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'right', color: 'var(--text-muted)' }}>{p.currency}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'right' }}>${p.amount.toFixed(4)}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'right' }}>{p.quantity.toLocaleString()}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '700', color: 'var(--accent-emerald)' }}>
+                    ${p.totalPayoutBase.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                    <span style={{
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      backgroundColor: p.status === 'PAID' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                      color: p.status === 'PAID' ? 'var(--accent-emerald)' : 'var(--accent-amber)'
+                    }}>
+                      {p.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {payments.length === 0 && (
+                <tr>
+                  <td colSpan="9" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No dividend payments recorded.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
