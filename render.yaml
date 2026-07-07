@@ -2,7 +2,7 @@ databases:
   - name: investa-postgres
     databaseName: investa_db
     user: investa_user
-    plan: free
+    plan: basic-256mb
 
 services:
   # 1. Spring Boot Backend Service (Docker container)
@@ -32,10 +32,6 @@ services:
     rootDir: frontend
     buildCommand: npm run build
     staticPublishPath: dist
-    plan: free
     envVars:
       - key: VITE_API_BASE
-        fromService:
-          name: investa-backend
-          type: web
-          property: host
+        sync: false
