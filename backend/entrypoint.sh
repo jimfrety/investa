@@ -6,4 +6,6 @@ if [ -n "$DB_HOST" ]; then
   export SPRING_DATASOURCE_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
 fi
 
-exec java -jar /app/app.jar
+# Limit JVM heap to stay within Render starter plan's 512MB container limit
+exec java -Xms128m -Xmx380m -jar /app/app.jar
+
