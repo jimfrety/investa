@@ -17,6 +17,8 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long customerId;
+
     @Column(nullable = false)
     private String code;
 
@@ -32,6 +34,8 @@ public class Transaction {
     private Double price;
 
     private Double brokerage;
+    
+    private String currency;
     
     @Column(nullable = false)
     private LocalDateTime timestamp;

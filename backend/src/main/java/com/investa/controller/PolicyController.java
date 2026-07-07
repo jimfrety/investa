@@ -17,9 +17,10 @@ public class PolicyController {
     private final AIRecommendationService recommendationService;
 
     @GetMapping
-    public ResponseEntity<InvestmentPolicy> getPolicy() {
-        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst()
+    public ResponseEntity<InvestmentPolicy> getPolicy(@RequestHeader("X-Customer-ID") Long customerId) {
+        InvestmentPolicy policy = policyRepository.findByCustomerId(customerId)
                 .orElseGet(() -> InvestmentPolicy.builder()
+                        .customerId(customerId)
                         .primaryObjective("Maximise long-term dividend income")
                         .secondaryObjective("Grow capital")
                         .growthSellTarget(0.35)
@@ -30,25 +31,23 @@ public class PolicyController {
                         .avoidDividendCuts(true)
                         .maxSectorExposure(0.20)
                         .cashAvailable(0.0)
-                        .seedUnrealisedGains(2516.01)
-                        .seedRealisedGains(-107.56)
-                        .seedUnrealisedCurrencyGains(563.53)
-                        .seedRealisedCurrencyGains(0.70)
-                        .seedTransactionFees(228.33)
-                        .seedDividendsReceived(691.28)
                         .build());
         return ResponseEntity.ok(policy);
     }
 
     @PutMapping
-    public ResponseEntity<InvestmentPolicy> updatePolicy(@RequestBody InvestmentPolicy updatedPolicy) {
-        InvestmentPolicy existing = policyRepository.findAll().stream().findFirst().orElse(null);
+    public ResponseEntity<InvestmentPolicy> updatePolicy(
+            @RequestHeader("X-Customer-ID") Long customerId,
+            @RequestBody InvestmentPolicy updatedPolicy) {
+        InvestmentPolicy existing = policyRepository.findByCustomerId(customerId).orElse(null);
+        updatedPolicy.setCustomerId(customerId);
         if (existing != null) {
             updatedPolicy.setId(existing.getId());
         }
         InvestmentPolicy saved = policyRepository.save(updatedPolicy);
         return ResponseEntity.ok(saved);
     }
+
     @PostMapping("/test-gemini-key")
     public ResponseEntity<java.util.Map<String, Object>> testGeminiKey(@RequestBody java.util.Map<String, String> payload) {
         String key = payload.get("key");

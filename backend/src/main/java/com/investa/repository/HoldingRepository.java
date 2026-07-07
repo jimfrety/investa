@@ -8,4 +8,6 @@ import java.util.Optional;
 @Repository
 public interface HoldingRepository extends JpaRepository<Holding, Long> {
     Optional<Holding> findByCode(String code);
+    java.util.List<Holding> findByCustomerId(Long customerId);
+    Optional<Holding> findByCustomerIdAndCode(Long customerId, String code);
 }

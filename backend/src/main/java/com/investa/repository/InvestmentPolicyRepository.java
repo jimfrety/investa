@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface InvestmentPolicyRepository extends JpaRepository<InvestmentPolicy, Long> {
+    java.util.Optional<InvestmentPolicy> findByCustomerId(Long customerId);
 }

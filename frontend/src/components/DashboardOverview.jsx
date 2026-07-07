@@ -113,10 +113,10 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
             </ResponsiveContainer>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px', marginTop: '12px' }}>
-            {sectorData.slice(0, 4).map((entry, index) => (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px', marginTop: '12px', maxHeight: '70px', overflowY: 'auto' }}>
+            {sectorData.slice(0, 8).map((entry, index) => (
               <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: COLORS[index % COLORS.length] }}></div>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: COLORS[index % COLORS.length], flexShrink: 0 }}></div>
                 <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.name}</span>
               </div>
             ))}

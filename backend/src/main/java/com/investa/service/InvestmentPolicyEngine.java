@@ -29,13 +29,13 @@ public class InvestmentPolicyEngine {
             return validation;
         }
 
-        double totalVal = holdings.stream().mapToDouble(h -> h.getQuantity() * h.getCurrentPrice()).sum();
+        double totalVal = holdings.stream().mapToDouble(h -> (h.getInvestmentValue() != null && h.getInvestmentValue() > 0) ? h.getInvestmentValue() : (h.getQuantity() * h.getCurrentPrice())).sum();
         double newTotalVal = totalVal + amount;
 
         // 1. Max Single Holding Constraint
         double existingHoldingVal = holdings.stream()
                 .filter(h -> h.getCode().equals(code))
-                .mapToDouble(h -> h.getQuantity() * h.getCurrentPrice())
+                .mapToDouble(h -> (h.getInvestmentValue() != null && h.getInvestmentValue() > 0) ? h.getInvestmentValue() : (h.getQuantity() * h.getCurrentPrice()))
                 .findFirst().orElse(0.0);
         
         double newHoldingPct = ((existingHoldingVal + amount) / newTotalVal) * 100.0;
@@ -49,8 +49,8 @@ public class InvestmentPolicyEngine {
 
         // 2. Max Sector Exposure Constraint
         double existingSectorVal = holdings.stream()
-                .filter(h -> h.getSector().equalsIgnoreCase(sector))
-                .mapToDouble(h -> h.getQuantity() * h.getCurrentPrice())
+                .filter(h -> h.getSector() != null && h.getSector().equalsIgnoreCase(sector))
+                .mapToDouble(h -> (h.getInvestmentValue() != null && h.getInvestmentValue() > 0) ? h.getInvestmentValue() : (h.getQuantity() * h.getCurrentPrice()))
                 .sum();
         
         double newSectorPct = ((existingSectorVal + amount) / newTotalVal) * 100.0;

@@ -19,8 +19,8 @@ public class DividendService {
     private final DividendRepository dividendRepository;
     private final CurrencyService currencyService;
 
-    public Map<String, Object> getDividendMetrics() {
-        List<Holding> holdings = holdingRepository.findAll();
+    public Map<String, Object> getDividendMetrics(Long customerId) {
+        List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
         
         double totalAnnualIncome = 0.0;
         double totalPortfolioValue = 0.0;
@@ -76,8 +76,8 @@ public class DividendService {
         return metrics;
     }
 
-    public List<Map<String, Object>> getDividendCalendar() {
-        List<Holding> holdings = holdingRepository.findAll();
+    public List<Map<String, Object>> getDividendCalendar(Long customerId) {
+        List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
         Map<String, Double> monthlyIncome = new LinkedHashMap<>();
         
         String[] months = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
@@ -115,8 +115,8 @@ public class DividendService {
         return calendar;
     }
 
-    public List<Map<String, Object>> getDividendPayments() {
-        List<Holding> holdings = holdingRepository.findAll();
+    public List<Map<String, Object>> getDividendPayments(Long customerId) {
+        List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
         Map<String, Holding> holdingMap = new HashMap<>();
         for (Holding h : holdings) {
             holdingMap.put(h.getCode(), h);

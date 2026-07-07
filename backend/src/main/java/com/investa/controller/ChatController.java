@@ -17,8 +17,10 @@ public class ChatController {
     private final AIRecommendationService recommendationService;
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> chat(@RequestBody ChatRequest request) {
-        Map<String, Object> response = recommendationService.generateChatResponse(request.getMessage());
+    public ResponseEntity<Map<String, Object>> chat(
+            @RequestHeader("X-Customer-ID") Long customerId,
+            @RequestBody ChatRequest request) {
+        Map<String, Object> response = recommendationService.generateChatResponse(customerId, request.getMessage());
         return ResponseEntity.ok(response);
     }
 

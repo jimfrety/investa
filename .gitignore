@@ -16,3 +16,6 @@ frontend/.env.local
 *.class
 *.log
 *.iml
+
+# Local Maven Binaries
+apache-maven-3.9.6/

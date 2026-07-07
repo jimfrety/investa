@@ -27,8 +27,8 @@ public class MarketController {
     private final RiskEngine riskEngine;
 
     @GetMapping("/watchlist")
-    public ResponseEntity<List<Watchlist>> getWatchlist() {
-        return ResponseEntity.ok(watchlistRepository.findAll());
+    public ResponseEntity<List<Watchlist>> getWatchlist(@RequestHeader("X-Customer-ID") Long customerId) {
+        return ResponseEntity.ok(watchlistRepository.findByCustomerId(customerId));
     }
 
     @GetMapping("/research/{code}")
@@ -37,27 +37,29 @@ public class MarketController {
     }
 
     @GetMapping("/rebalance")
-    public ResponseEntity<List<Map<String, Object>>> getRebalance(@RequestParam Double amount) {
-        return ResponseEntity.ok(portfolioService.getRebalanceRecommendations(amount));
+    public ResponseEntity<List<Map<String, Object>>> getRebalance(
+            @RequestHeader("X-Customer-ID") Long customerId,
+            @RequestParam Double amount) {
+        return ResponseEntity.ok(portfolioService.getRebalanceRecommendations(customerId, amount));
     }
 
     @GetMapping("/risk")
-    public ResponseEntity<Map<String, Object>> getRiskMetrics() {
-        return ResponseEntity.ok(riskEngine.calculateRiskMetrics());
+    public ResponseEntity<Map<String, Object>> getRiskMetrics(@RequestHeader("X-Customer-ID") Long customerId) {
+        return ResponseEntity.ok(riskEngine.calculateRiskMetrics(customerId));
     }
 
     @GetMapping("/dividends/metrics")
-    public ResponseEntity<Map<String, Object>> getDividendMetrics() {
-        return ResponseEntity.ok(dividendService.getDividendMetrics());
+    public ResponseEntity<Map<String, Object>> getDividendMetrics(@RequestHeader("X-Customer-ID") Long customerId) {
+        return ResponseEntity.ok(dividendService.getDividendMetrics(customerId));
     }
 
     @GetMapping("/dividends/calendar")
-    public ResponseEntity<List<Map<String, Object>>> getDividendCalendar() {
-        return ResponseEntity.ok(dividendService.getDividendCalendar());
+    public ResponseEntity<List<Map<String, Object>>> getDividendCalendar(@RequestHeader("X-Customer-ID") Long customerId) {
+        return ResponseEntity.ok(dividendService.getDividendCalendar(customerId));
     }
 
     @GetMapping("/dividends/payments")
-    public ResponseEntity<List<Map<String, Object>>> getDividendPayments() {
-        return ResponseEntity.ok(dividendService.getDividendPayments());
+    public ResponseEntity<List<Map<String, Object>>> getDividendPayments(@RequestHeader("X-Customer-ID") Long customerId) {
+        return ResponseEntity.ok(dividendService.getDividendPayments(customerId));
     }
 }

@@ -16,6 +16,8 @@ public class InvestmentPolicy {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long customerId;
+
     private String primaryObjective; // Maximise long-term dividend income
     private String secondaryObjective; // Grow capital
 
@@ -28,6 +30,11 @@ public class InvestmentPolicy {
     private Double maxSectorExposure; // e.g. 0.20 (20%)
     
     private Double cashAvailable; // Cash ready to invest
+    
+    private Double sharesiesTotalEstimatedValue;
+    private Double sharesiesTotalReturn;
+    private Double sharesiesAmountPutIn;
+    private Double sharesiesSimpleReturn;
 
     private Double seedUnrealisedGains;
     private Double seedRealisedGains;

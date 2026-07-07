@@ -7,6 +7,7 @@ import com.investa.model.Transaction;
 import com.investa.model.Dividend;
 import com.investa.model.ResearchCache;
 import com.investa.model.PortfolioSnapshot;
+import com.investa.model.Customer;
 import com.investa.repository.*;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -37,6 +38,7 @@ public class ExcelImportService {
     private final DividendRepository dividendRepository;
     private final ResearchCacheRepository researchCacheRepository;
     private final PortfolioSnapshotRepository snapshotRepository;
+    private final CustomerRepository customerRepository;
 
     @Value("${investa.excel.path}")
     private String excelFilePath;
@@ -45,11 +47,37 @@ public class ExcelImportService {
     @Transactional
     public void importExcelOnStartup() {
         try {
-            log.info("Starting startup Excel import check from: {}", excelFilePath);
+            log.info("Starting startup Excel import and user verification...");
             
-            // 1. Initialise Policy if not present
-            if (policyRepository.count() == 0) {
+            // 1. Initialise Admin user if not present
+            if (customerRepository.findByUsername("admin").isEmpty()) {
+                customerRepository.save(Customer.builder()
+                        .username("admin")
+                        .password("admin123")
+                        .name("System Administrator")
+                        .isAdmin(true)
+                        .build());
+                log.info("Created default Admin user: admin / admin123");
+            }
+
+            // 2. Initialise default Customer if not present
+            Customer defaultCust = customerRepository.findByUsername("customer1").orElse(null);
+            if (defaultCust == null) {
+                defaultCust = customerRepository.save(Customer.builder()
+                        .username("customer1")
+                        .password("password123")
+                        .name("Default Customer")
+                        .isAdmin(false)
+                        .build());
+                log.info("Created default Customer: customer1 / password123");
+            }
+
+            final Long customerId = defaultCust.getId();
+
+            // 3. Initialise Policy if not present
+            if (policyRepository.findByCustomerId(customerId).isEmpty()) {
                 InvestmentPolicy policy = InvestmentPolicy.builder()
+                        .customerId(customerId)
                         .primaryObjective("Maximise long-term dividend income")
                         .secondaryObjective("Grow capital")
                         .growthSellTarget(0.35)
@@ -59,7 +87,7 @@ public class ExcelImportService {
                         .minMarketCap(2.0e9)
                         .avoidDividendCuts(true)
                         .maxSectorExposure(0.20)
-                        .cashAvailable(0.0) // Seed cash
+                        .cashAvailable(10000.0) // Seed cash
                         .seedUnrealisedGains(2516.01)
                         .seedRealisedGains(-107.56)
                         .seedUnrealisedCurrencyGains(563.53)
@@ -68,46 +96,62 @@ public class ExcelImportService {
                         .seedDividendsReceived(691.28)
                         .build();
                 policyRepository.save(policy);
-                log.info("Created default Investment Policy on startup.");
+                log.info("Created default Investment Policy for customer1.");
             }
 
-            if (holdingRepository.count() > 0) {
-                log.info("Holdings table already populated. Skipping Excel import on startup.");
+            if (holdingRepository.findByCustomerId(customerId).size() > 0) {
+                log.info("Holdings table already populated for customer1. Verifying Current Price against Investment Value...");
+                for (Holding h : holdingRepository.findByCustomerId(customerId)) {
+                    boolean changed = false;
+                    if (h.getQuantity() != null && h.getQuantity() > 0.0 && h.getInvestmentValue() != null && h.getInvestmentValue() > 0.0) {
+                        double impliedPrice = h.getInvestmentValue() / h.getQuantity();
+                        if (h.getCurrentPrice() == null || Math.abs(h.getCurrentPrice() - impliedPrice) > 0.0001) {
+                            h.setCurrentPrice(impliedPrice);
+                            if (h.getAvgPurchasePrice() != null) {
+                                h.setUnrealisedGain((h.getQuantity() * impliedPrice) - (h.getQuantity() * h.getAvgPurchasePrice()));
+                            }
+                            changed = true;
+                        }
+                    }
+                    if (h.getLastUpdated() == null) {
+                        h.setLastUpdated(LocalDateTime.now());
+                        changed = true;
+                    }
+                    if (changed) {
+                        holdingRepository.save(h);
+                    }
+                }
                 return;
             }
 
             File file = new File(excelFilePath);
             if (!file.exists()) {
-                log.warn("Excel file not found at {}. Cannot initialize database with sheet data.", excelFilePath);
+                log.warn("Excel file not found at {}. Cannot initialize default portfolio.", excelFilePath);
                 return;
             }
 
             try (FileInputStream fis = new FileInputStream(file)) {
-                importExcelStream(fis);
+                importExcelStream(customerId, fis);
             }
             
         } catch (Exception e) {
-            log.error("Failed to seed Forecast.xlsx on startup", e);
+            log.error("Failed to seed default customer1 portfolio on startup", e);
         }
     }
 
     @Transactional
-    public void importExcelStream(InputStream is) throws Exception {
-        log.info("Executing spreadsheet import; clearing holdings, transactions, watchlist, dividends, and snapshots...");
+    public void importExcelStream(Long customerId, InputStream is) throws Exception {
+        log.info("Executing spreadsheet import for customer {}; clearing holdings, transactions, watchlist, and snapshots...", customerId);
         
-        holdingRepository.deleteAll();
-        transactionRepository.deleteAll();
-        watchlistRepository.deleteAll();
-        dividendRepository.deleteAll();
-        snapshotRepository.deleteAll();
-        researchCacheRepository.deleteAll();
-
+        holdingRepository.deleteAll(holdingRepository.findByCustomerId(customerId));
+        transactionRepository.deleteAll(transactionRepository.findByCustomerId(customerId));
+        watchlistRepository.deleteAll(watchlistRepository.findByCustomerId(customerId));
+        snapshotRepository.deleteAll(snapshotRepository.findByCustomerId(customerId));
+        
         holdingRepository.flush();
         transactionRepository.flush();
         watchlistRepository.flush();
-        dividendRepository.flush();
         snapshotRepository.flush();
-        researchCacheRepository.flush();
 
         List<RawStock> rawStocks = new ArrayList<>();
         try (Workbook workbook = new XSSFWorkbook(is)) {
@@ -159,10 +203,8 @@ public class ExcelImportService {
                 Double simpleReturn = getNumericValue(returnCell);
                 if (simpleReturn != null && returnCell != null) {
                     String formatString = returnCell.getCellStyle().getDataFormatString();
-                    log.info("Stock: {}, rawReturn: {}, formatString: {}", code, simpleReturn, formatString);
                     if (formatString != null && formatString.contains("%")) {
                         double scaled = simpleReturn * 100.0;
-                        // Heuristic: multiply by 100 if it is a small decimal and won't exceed the -100% loss limit
                         if (Math.abs(simpleReturn) <= 3.0 && scaled >= -100.0) {
                             simpleReturn = scaled;
                         }
@@ -212,7 +254,6 @@ public class ExcelImportService {
             double retPct = rs.simpleReturn != null ? rs.simpleReturn : 0.0;
             String cur = rs.currency != null && !rs.currency.isEmpty() ? rs.currency : "USD";
 
-            // If we have active holdings
             if (qty > 0 && curVal > 0) {
                 double costBasis = curVal / (1.0 + (retPct / 100.0));
                 double avgPrice = costBasis / qty;
@@ -222,15 +263,15 @@ public class ExcelImportService {
                 totalPortfolioValue += curVal;
                 totalUnrealised += unrealised;
 
-                // Seed historical exchange rate at purchase time
                 double purchaseRate = 1.0;
                 if ("USD".equalsIgnoreCase(cur)) {
-                    purchaseRate = 1.52; // current is 1.63, so positive currency gain
+                    purchaseRate = 1.52;
                 } else if ("AUD".equalsIgnoreCase(cur)) {
-                    purchaseRate = 1.03; // current is 1.08, so positive currency gain
+                    purchaseRate = 1.03;
                 }
 
                 Holding holding = Holding.builder()
+                        .customerId(customerId)
                         .shareName(rs.share)
                         .code(rs.code)
                         .market(rs.market)
@@ -255,6 +296,7 @@ public class ExcelImportService {
 
                 // Add Transaction log
                 transactionRepository.save(Transaction.builder()
+                        .customerId(customerId)
                         .code(rs.code)
                         .shareName(rs.share)
                         .type("BUY")
@@ -265,33 +307,35 @@ public class ExcelImportService {
                         .build());
 
                 // Research Cache entry
-                ResearchCache cache = ResearchCache.builder()
-                        .code(rs.code)
-                        .revenue((1 + random.nextInt(40)) + "." + random.nextInt(9) + "B")
-                        .eps(0.2 + random.nextDouble() * 10.0)
-                        .cashFlow((50 + random.nextInt(500)) * 1.0e6)
-                        .debt((10 + random.nextInt(300)) * 1.0e6)
-                        .payoutRatio("dividend".equals(rs.type) ? 0.6 : "both".equals(rs.type) ? 0.35 : 0.0)
-                        .roe(0.05 + random.nextDouble() * 0.20)
-                        .roic(0.04 + random.nextDouble() * 0.15)
-                        .peg(0.9 + random.nextDouble() * 1.5)
-                        .forwardPe(12.0 + random.nextDouble() * 30.0)
-                        .dcfValue(currentPrice * (0.8 + random.nextDouble() * 0.4))
-                        .analystTarget(currentPrice * (0.95 + random.nextDouble() * 0.3))
-                        .marginOfSafety((random.nextDouble() * 0.25) - 0.05)
-                        .rsi(35.0 + random.nextDouble() * 40.0)
-                        .macd("Neutral")
-                        .support(currentPrice * 0.92)
-                        .resistance(currentPrice * 1.08)
-                        .low52Week(currentPrice * 0.8)
-                        .high52Week(currentPrice * 1.2)
-                        .sentimentSummary("Neutral")
-                        .newsHighlights("Imported asset fundamentals.")
-                        .updatedAt(LocalDateTime.now())
-                        .build();
-                researchCacheRepository.save(cache);
+                if (researchCacheRepository.findByCode(rs.code).isEmpty()) {
+                    ResearchCache cache = ResearchCache.builder()
+                            .code(rs.code)
+                            .revenue((1 + random.nextInt(40)) + "." + random.nextInt(9) + "B")
+                            .eps(0.2 + random.nextDouble() * 10.0)
+                            .cashFlow((50 + random.nextInt(500)) * 1.0e6)
+                            .debt((10 + random.nextInt(300)) * 1.0e6)
+                            .payoutRatio("dividend".equals(rs.type) ? 0.6 : "both".equals(rs.type) ? 0.35 : 0.0)
+                            .roe(0.05 + random.nextDouble() * 0.20)
+                            .roic(0.04 + random.nextDouble() * 0.15)
+                            .peg(0.9 + random.nextDouble() * 1.5)
+                            .forwardPe(12.0 + random.nextDouble() * 30.0)
+                            .dcfValue(currentPrice * (0.8 + random.nextDouble() * 0.4))
+                            .analystTarget(currentPrice * (0.95 + random.nextDouble() * 0.3))
+                            .marginOfSafety((random.nextDouble() * 0.25) - 0.05)
+                            .rsi(35.0 + random.nextDouble() * 40.0)
+                            .macd("Neutral")
+                            .support(currentPrice * 0.92)
+                            .resistance(currentPrice * 1.08)
+                            .low52Week(currentPrice * 0.8)
+                            .high52Week(currentPrice * 1.2)
+                            .sentimentSummary("Neutral")
+                            .newsHighlights("Imported asset fundamentals.")
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                    researchCacheRepository.save(cache);
+                }
 
-                // Simulate Dividends if asset pays dividends
+                // Simulate Dividends
                 boolean isDiv = "dividend".equals(rs.type) || "both".equals(rs.type);
                 if (isDiv) {
                     double yield = "dividend".equals(rs.type) ? 5.5 : 2.5;
@@ -302,14 +346,16 @@ public class ExcelImportService {
                     for (int i = -3; i <= 3; i++) {
                         if (i == 0) continue;
                         LocalDate payDate = LocalDate.now().plusMonths(i * (12 / frequency));
-                        dividendRepository.save(Dividend.builder()
-                                .code(rs.code)
-                                .amount(perPayout)
-                                .exDividendDate(payDate.minusWeeks(2))
-                                .paymentDate(payDate)
-                                .type(frequency == 12 ? "MONTHLY" : "QUARTERLY")
-                                .status(i < 0 ? "PAID" : "DECLARED")
-                                .build());
+                        if (dividendRepository.findByCode(rs.code).stream().filter(d -> payDate.equals(d.getPaymentDate())).findFirst().isEmpty()) {
+                            dividendRepository.save(Dividend.builder()
+                                    .code(rs.code)
+                                    .amount(perPayout)
+                                    .exDividendDate(payDate.minusWeeks(2))
+                                    .paymentDate(payDate)
+                                    .type(frequency == 12 ? "MONTHLY" : "QUARTERLY")
+                                    .status(i < 0 ? "PAID" : "DECLARED")
+                                    .build());
+                        }
                     }
                 }
             } else {
@@ -322,6 +368,7 @@ public class ExcelImportService {
                 double overall = (divQuality + growthScore + valueScore + rs.risk*10.0 + fitScore + momScore) / 6.0;
 
                 watchlistRepository.save(Watchlist.builder()
+                        .customerId(customerId)
                         .code(rs.code)
                         .shareName(rs.share)
                         .market(rs.market)
@@ -338,7 +385,7 @@ public class ExcelImportService {
             }
         }
 
-        // Seed a default list of watchlist items to ensure the Watchlist is populated
+        // Seed a default list of watchlist items
         List<WatchlistItemSeed> watchlistSeeds = Arrays.asList(
             new WatchlistItemSeed("AAPL", "Apple Inc", "NASDAQ", "growth", 3, 150.0),
             new WatchlistItemSeed("MSFT", "Microsoft Corp", "NASDAQ", "growth", 3, 350.0),
@@ -347,19 +394,14 @@ public class ExcelImportService {
             new WatchlistItemSeed("PG", "Procter & Gamble Co", "NYSE", "dividend", 2, 140.0),
             new WatchlistItemSeed("JPM", "JPMorgan Chase & Co", "NYSE", "both", 3, 160.0),
             new WatchlistItemSeed("XOM", "Exxon Mobil Corp", "NYSE", "dividend", 4, 100.0),
-            new WatchlistItemSeed("PFE", "Pfizer Inc", "NYSE", "dividend", 3, 25.0),
-            new WatchlistItemSeed("DLR", "Digital Realty Trust", "NYSE", "dividend", 4, 130.0),
-            new WatchlistItemSeed("MO", "Altria Group Inc", "NYSE", "dividend", 5, 40.0),
-            new WatchlistItemSeed("PEP", "PepsiCo Inc", "NASDAQ", "both", 2, 155.0),
-            new WatchlistItemSeed("AMZN", "Amazon.com Inc", "NASDAQ", "growth", 3, 160.0),
-            new WatchlistItemSeed("TSLA", "Tesla Inc", "NASDAQ", "growth", 5, 180.0),
-            new WatchlistItemSeed("MCD", "McDonald's Corp", "NYSE", "dividend", 3, 240.0),
-            new WatchlistItemSeed("NKE", "Nike Inc", "NYSE", "both", 3, 85.0)
+            new WatchlistItemSeed("PFE", "Pfizer Inc", "NYSE", "dividend", 3, 25.0)
         );
 
         for (WatchlistItemSeed ws : watchlistSeeds) {
-            // Only seed if not already held in the holdings list
-            if (holdingRepository.findByCode(ws.code).isPresent()) {
+            if (holdingRepository.findByCustomerIdAndCode(customerId, ws.code).isPresent()) {
+                continue;
+            }
+            if (watchlistRepository.findByCustomerIdAndCode(customerId, ws.code).isPresent()) {
                 continue;
             }
             
@@ -371,6 +413,7 @@ public class ExcelImportService {
             double overall = (divQuality + growthScore + valueScore + (7 - ws.risk)*10.0 + fitScore + momScore) / 6.0;
 
             watchlistRepository.save(Watchlist.builder()
+                    .customerId(customerId)
                     .code(ws.code)
                     .shareName(ws.name)
                     .market(ws.market)
@@ -392,6 +435,7 @@ public class ExcelImportService {
             LocalDate date = LocalDate.now().minusDays(i);
             double dailyValue = startValue + ((30 - i) * 500.0) + (random.nextDouble() * 2000.0);
             snapshotRepository.save(PortfolioSnapshot.builder()
+                    .customerId(customerId)
                     .snapshotDate(date)
                     .totalValue(dailyValue)
                     .unrealisedGain(totalUnrealised * (0.8 + (30 - i) * 0.007))
@@ -407,7 +451,7 @@ public class ExcelImportService {
                     .build());
         }
         
-        log.info("Spreadsheet import seeding finished successfully. Imported {} assets.", rawStocks.size());
+        log.info("Spreadsheet import seeding finished successfully for customer {}.", customerId);
     }
 
     private String getStringValue(Cell cell) {
@@ -415,7 +459,6 @@ public class ExcelImportService {
         if (cell.getCellType() == CellType.STRING) {
             return cell.getStringCellValue().trim();
         } else if (cell.getCellType() == CellType.NUMERIC) {
-            // Check if it's a whole number
             double val = cell.getNumericCellValue();
             if (val == (long) val) {
                 return String.valueOf((long) val);

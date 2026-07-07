@@ -7,6 +7,7 @@ import com.investa.model.Watchlist;
 import com.investa.repository.HoldingRepository;
 import com.investa.repository.InvestmentPolicyRepository;
 import com.investa.repository.WatchlistRepository;
+import com.investa.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ public class AIRecommendationService {
     private final HoldingRepository holdingRepository;
     private final InvestmentPolicyRepository policyRepository;
     private final WatchlistRepository watchlistRepository;
+    private final CustomerRepository customerRepository;
     private final ResearchService researchService;
     private final PortfolioService portfolioService;
     private final DividendService dividendService;
@@ -42,20 +44,37 @@ public class AIRecommendationService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public Map<String, Object> generateChatResponse(String message) {
-        log.info("Received chat query: {}", message);
+    public Map<String, Object> generateChatResponse(Long customerId, String message) {
+        log.info("Received chat query for customer {}: {}", customerId, message);
         
-        // Resolve Gemini API key (Database config takes priority, fallback to environment variable)
-        String activeGeminiKey = geminiApiKey;
-        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst().orElse(null);
-        if (policy != null && policy.getGeminiApiKey() != null && !policy.getGeminiApiKey().trim().isEmpty()) {
-            activeGeminiKey = policy.getGeminiApiKey();
+        // Resolve Gemini API key (Customer custom key > Admin default override > Policy key > Env key)
+        String activeGeminiKey = null;
+        Optional<com.investa.model.Customer> customerOpt = customerRepository.findById(customerId);
+        if (customerOpt.isPresent()) {
+            activeGeminiKey = customerOpt.get().getCustomGeminiApiKey();
+        }
+        
+        if (activeGeminiKey == null || activeGeminiKey.trim().isEmpty()) {
+            activeGeminiKey = customerRepository.findByUsername("admin")
+                    .map(com.investa.model.Customer::getCustomGeminiApiKey)
+                    .orElse(null);
+        }
+        
+        if (activeGeminiKey == null || activeGeminiKey.trim().isEmpty()) {
+            InvestmentPolicy policy = policyRepository.findByCustomerId(customerId).orElse(null);
+            if (policy != null && policy.getGeminiApiKey() != null && !policy.getGeminiApiKey().trim().isEmpty()) {
+                activeGeminiKey = policy.getGeminiApiKey();
+            }
+        }
+        
+        if (activeGeminiKey == null || activeGeminiKey.trim().isEmpty()) {
+            activeGeminiKey = geminiApiKey;
         }
 
         // 1. Try Gemini if API Key exists
         if (activeGeminiKey != null && !activeGeminiKey.trim().isEmpty() && !activeGeminiKey.equals("${GEMINI_API_KEY}")) {
             try {
-                return callGemini(message, activeGeminiKey);
+                return callGemini(customerId, message, activeGeminiKey);
             } catch (Exception e) {
                 log.error("Error calling Gemini, falling back to OpenAI or local engine", e);
             }
@@ -64,17 +83,17 @@ public class AIRecommendationService {
         // 2. Try OpenAI if API Key exists
         if (apiKey != null && !apiKey.trim().isEmpty() && !apiKey.equals("${OPENAI_API_KEY}")) {
             try {
-                return callOpenAI(message);
+                return callOpenAI(customerId, message);
             } catch (Exception e) {
                 log.error("Error calling OpenAI, falling back to local engine", e);
             }
         }
 
         // 3. Local AI Portfolio Manager fallback response engine
-        return generateLocalAIResponse(message);
+        return generateLocalAIResponse(customerId, message);
     }
 
-    private Map<String, Object> callGemini(String userQuery, String activeGeminiKey) {
+    private Map<String, Object> callGemini(Long customerId, String userQuery, String activeGeminiKey) {
         // We will try multiple candidate API URL endpoints to ensure compatibility with all API key versions/regions
         String[] candidateUrls = {
             "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + activeGeminiKey,
@@ -91,11 +110,11 @@ public class AIRecommendationService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         // Compile context
-        List<Holding> holdings = holdingRepository.findAll();
-        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst().orElse(null);
-        Map<String, Object> summary = portfolioService.getPortfolioSummary();
-        Map<String, Object> divMetrics = dividendService.getDividendMetrics();
-        Map<String, Object> riskMetrics = riskEngine.calculateRiskMetrics();
+        List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
+        InvestmentPolicy policy = policyRepository.findByCustomerId(customerId).orElse(null);
+        Map<String, Object> summary = portfolioService.getPortfolioSummary(customerId);
+        Map<String, Object> divMetrics = dividendService.getDividendMetrics(customerId);
+        Map<String, Object> riskMetrics = riskEngine.calculateRiskMetrics(customerId);
 
         StringBuilder systemPrompt = new StringBuilder();
         systemPrompt.append("You are Investa AI, a professional portfolio manager. You know the user's complete portfolio, risk parameters, and objectives.\n\n");
@@ -170,7 +189,7 @@ public class AIRecommendationService {
         throw new RuntimeException("All Gemini API candidate URLs failed. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
     }
 
-    private Map<String, Object> callOpenAI(String userQuery) {
+    private Map<String, Object> callOpenAI(Long customerId, String userQuery) {
         String url = "https://api.openai.com/v1/chat/completions";
         
         HttpHeaders headers = new HttpHeaders();
@@ -178,11 +197,11 @@ public class AIRecommendationService {
         headers.set("Authorization", "Bearer " + apiKey);
 
         // Compile context
-        List<Holding> holdings = holdingRepository.findAll();
-        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst().orElse(null);
-        Map<String, Object> summary = portfolioService.getPortfolioSummary();
-        Map<String, Object> divMetrics = dividendService.getDividendMetrics();
-        Map<String, Object> riskMetrics = riskEngine.calculateRiskMetrics();
+        List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
+        InvestmentPolicy policy = policyRepository.findByCustomerId(customerId).orElse(null);
+        Map<String, Object> summary = portfolioService.getPortfolioSummary(customerId);
+        Map<String, Object> divMetrics = dividendService.getDividendMetrics(customerId);
+        Map<String, Object> riskMetrics = riskEngine.calculateRiskMetrics(customerId);
 
         StringBuilder systemPrompt = new StringBuilder();
         systemPrompt.append("You are Investa AI, a professional portfolio manager. You know the user's complete portfolio, risk parameters, and objectives.\n\n");
@@ -240,13 +259,13 @@ public class AIRecommendationService {
         throw new RuntimeException("OpenAI API call returned empty response or error");
     }
 
-    private Map<String, Object> generateLocalAIResponse(String userQuery) {
+    private Map<String, Object> generateLocalAIResponse(Long customerId, String userQuery) {
         String query = userQuery.toLowerCase();
         Map<String, Object> response = new HashMap<>();
         
-        Map<String, Object> summary = portfolioService.getPortfolioSummary();
-        Map<String, Object> divMetrics = dividendService.getDividendMetrics();
-        Map<String, Object> riskMetrics = riskEngine.calculateRiskMetrics();
+        Map<String, Object> summary = portfolioService.getPortfolioSummary(customerId);
+        Map<String, Object> divMetrics = dividendService.getDividendMetrics(customerId);
+        Map<String, Object> riskMetrics = riskEngine.calculateRiskMetrics(customerId);
 
         if (query.contains("invest") || query.contains("rebalance") || query.contains("rebalancing") || query.contains("allocate") || query.contains("allocation")) {
             double amt = 4000.0;
@@ -261,7 +280,7 @@ public class AIRecommendationService {
                 }
             }
 
-            List<Map<String, Object>> recs = portfolioService.getRebalanceRecommendations(amt);
+            List<Map<String, Object>> recs = portfolioService.getRebalanceRecommendations(customerId, amt);
             StringBuilder answer = new StringBuilder();
             answer.append(String.format("### Investment Allocation Recommendation ($%,.2f)\n\n", amt));
             answer.append("Based on your **Investment Policy Rules** (Primary: Maximise Dividend Income, Max Risk: 4.5, Max Single Holding: 7%), here is the optimal distribution of capital:\n\n");

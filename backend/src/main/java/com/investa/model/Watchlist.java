@@ -16,7 +16,9 @@ public class Watchlist {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    private Long customerId;
+
+    @Column(nullable = false)
     private String code;
 
     private String shareName;

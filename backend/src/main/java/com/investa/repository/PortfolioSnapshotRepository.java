@@ -8,4 +8,6 @@ import java.util.List;
 @Repository
 public interface PortfolioSnapshotRepository extends JpaRepository<PortfolioSnapshot, Long> {
     List<PortfolioSnapshot> findAllByOrderBySnapshotDateAsc();
+    List<PortfolioSnapshot> findByCustomerIdOrderBySnapshotDateAsc(Long customerId);
+    List<PortfolioSnapshot> findByCustomerId(Long customerId);
 }

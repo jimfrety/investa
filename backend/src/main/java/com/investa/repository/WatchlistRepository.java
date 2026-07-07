@@ -8,4 +8,6 @@ import java.util.Optional;
 @Repository
 public interface WatchlistRepository extends JpaRepository<Watchlist, Long> {
     Optional<Watchlist> findByCode(String code);
+    java.util.List<Watchlist> findByCustomerId(Long customerId);
+    Optional<Watchlist> findByCustomerIdAndCode(Long customerId, String code);
 }

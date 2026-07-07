@@ -16,9 +16,9 @@ public class RiskEngine {
     private final HoldingRepository holdingRepository;
     private final InvestmentPolicyRepository policyRepository;
 
-    public Map<String, Object> calculateRiskMetrics() {
-        List<Holding> holdings = holdingRepository.findAll();
-        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst().orElse(null);
+    public Map<String, Object> calculateRiskMetrics(Long customerId) {
+        List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
+        InvestmentPolicy policy = policyRepository.findByCustomerId(customerId).orElse(null);
 
         double totalValue = 0.0;
         Map<String, Double> sectorValues = new HashMap<>();
@@ -28,12 +28,17 @@ public class RiskEngine {
         double weightedRisk = 0.0;
         
         for (Holding h : holdings) {
-            double currentVal = h.getQuantity() * h.getCurrentPrice();
+            double currentVal = (h.getInvestmentValue() != null && h.getInvestmentValue() > 0) ? h.getInvestmentValue() : (h.getQuantity() * h.getCurrentPrice());
             totalValue += currentVal;
 
-            sectorValues.put(h.getSector(), sectorValues.getOrDefault(h.getSector(), 0.0) + currentVal);
-            countryValues.put(h.getCountry(), countryValues.getOrDefault(h.getCountry(), 0.0) + currentVal);
-            currencyValues.put(h.getCurrency(), currencyValues.getOrDefault(h.getCurrency(), 0.0) + currentVal);
+            String sector = (h.getSector() != null && !h.getSector().trim().isEmpty()) ? h.getSector().trim() : "Unclassified";
+            sectorValues.put(sector, sectorValues.getOrDefault(sector, 0.0) + currentVal);
+            
+            String country = h.getCountry() != null ? h.getCountry() : "Other";
+            countryValues.put(country, countryValues.getOrDefault(country, 0.0) + currentVal);
+            
+            String currency = h.getCurrency() != null ? h.getCurrency() : "NZD";
+            currencyValues.put(currency, currencyValues.getOrDefault(currency, 0.0) + currentVal);
 
             weightedRisk += (h.getRisk() != null ? h.getRisk() : 5) * currentVal;
         }
@@ -62,7 +67,7 @@ public class RiskEngine {
         // Check if any rule violated
         List<String> riskAlerts = new ArrayList<>();
         if (policy != null) {
-            double maxSector = policy.getMaxSectorExposure() * 100.0;
+            double maxSector = policy.getMaxSectorExposure() != null ? policy.getMaxSectorExposure() * 100.0 : 20.0;
             for (Map<String, Object> item : sectorExposure) {
                 double pct = (double) item.get("percentage");
                 if (pct > maxSector) {
@@ -70,12 +75,12 @@ public class RiskEngine {
                 }
             }
 
-            double maxRisk = policy.getMaxRisk();
+            double maxRisk = policy.getMaxRisk() != null ? policy.getMaxRisk() : 4.5;
             if (averageRisk > maxRisk) {
                 riskAlerts.add("Portfolio Risk Alert: Average risk is " + String.format("%.2f", averageRisk) + " (Policy Max: " + maxRisk + ")");
             }
 
-            double maxSingle = policy.getMaxSingleHolding() * 100.0;
+            double maxSingle = policy.getMaxSingleHolding() != null ? policy.getMaxSingleHolding() * 100.0 : 7.0;
             for (Holding h : holdings) {
                 double holdingPct = totalValue > 0 ? ((h.getQuantity() * h.getCurrentPrice()) / totalValue) * 100.0 : 0.0;
                 if (holdingPct > maxSingle) {

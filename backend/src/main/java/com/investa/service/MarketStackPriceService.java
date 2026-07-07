@@ -22,12 +22,48 @@ public class MarketStackPriceService {
     private final RestTemplate restTemplate = new RestTemplate();
     private static final String API_URL = "https://api.marketstack.com/v2/eod/latest?access_key=a430703e185f73b93294699210ff4523&symbols=";
 
+    private static class CachedPrice {
+        final double price;
+        final long timestamp;
+        CachedPrice(double price, long timestamp) {
+            this.price = price;
+            this.timestamp = timestamp;
+        }
+    }
+    private final Map<String, CachedPrice> priceCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long CACHE_DURATION_MS = 15 * 60 * 1000L; // 15 minutes TTL
+
     @Async
     public void syncAllHoldingPricesAsync() {
         log.info("Starting asynchronous current price sync with MarketStack API...");
         List<Holding> holdings = holdingRepository.findAll();
         if (holdings.isEmpty()) {
             log.info("No holdings found to sync.");
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        boolean allCached = holdings.stream().allMatch(h -> {
+            CachedPrice cp = priceCache.get(h.getCode().toUpperCase());
+            return cp != null && (now - cp.timestamp) < CACHE_DURATION_MS;
+        });
+
+        if (allCached) {
+            log.info("All holding prices are present in local 15-minute cache. Updating database from cache without calling MarketStack API.");
+            for (Holding h : holdings) {
+                CachedPrice cp = priceCache.get(h.getCode().toUpperCase());
+                if (cp != null && cp.price > 0) {
+                    h.setCurrentPrice(cp.price);
+                    h.setLastUpdated(java.time.LocalDateTime.now());
+                    if (h.getQuantity() != null && h.getQuantity() > 0 && h.getAvgPurchasePrice() != null) {
+                        double costBasis = h.getQuantity() * h.getAvgPurchasePrice();
+                        double curVal = h.getQuantity() * cp.price;
+                        h.setUnrealisedGain(curVal - costBasis);
+                    }
+                    holdingRepository.save(h);
+                }
+            }
+            holdingRepository.flush();
             return;
         }
 
@@ -65,6 +101,8 @@ public class MarketStackPriceService {
                             }
                             
                             final String finalCode = cleanCode;
+                            priceCache.put(finalCode.toUpperCase(), new CachedPrice(latestPrice, now));
+
                             Holding h = holdings.stream()
                                     .filter(x -> x.getCode().equalsIgnoreCase(finalCode))
                                     .findFirst()
@@ -75,7 +113,7 @@ public class MarketStackPriceService {
                                 h.setLastUpdated(java.time.LocalDateTime.now());
                                 
                                 // Re-calculate unrealised gain in local currency
-                                if (h.getQuantity() != null && h.getQuantity() > 0) {
+                                if (h.getQuantity() != null && h.getQuantity() > 0 && h.getAvgPurchasePrice() != null) {
                                     double costBasis = h.getQuantity() * h.getAvgPurchasePrice();
                                     double curVal = h.getQuantity() * latestPrice;
                                     h.setUnrealisedGain(curVal - costBasis);

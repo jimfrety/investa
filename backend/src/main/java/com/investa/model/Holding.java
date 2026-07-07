@@ -16,10 +16,12 @@ public class Holding {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long customerId;
+
     @Column(nullable = false)
     private String shareName;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String code;
 
     private String market;
@@ -35,6 +37,7 @@ public class Holding {
     private Double realisedGain;
     private Double dividendIncome;
     private Double simpleReturn; // Simple return percentage from spreadsheet
+    private Double investmentValue; // Investment value in home currency (NZD)
 
     private String currency;
     private String country;
@@ -45,4 +48,19 @@ public class Holding {
 
     private java.time.LocalDateTime lastUpdated;
     private Double purchaseExchangeRate;
+
+    public Double getCurrentPrice() {
+        if (currentPrice != null) return currentPrice;
+        if (avgPurchasePrice != null) return avgPurchasePrice;
+        return 0.0;
+    }
+
+    public Double getQuantity() {
+        return quantity != null ? quantity : 0.0;
+    }
+
+    public Double getInvestmentValue() {
+        if (investmentValue != null && investmentValue != 0.0) return investmentValue;
+        return getQuantity() * getCurrentPrice();
+    }
 }

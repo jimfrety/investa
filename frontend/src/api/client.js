@@ -89,3 +89,82 @@ export async function fetchResearch(code) {
   if (!res.ok) throw new Error('Failed to fetch research data');
   return res.json();
 }
+
+export async function loginUser(username, password) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Login failed');
+  }
+  return res.json();
+}
+
+export async function fetchCustomers() {
+  const res = await fetch(`${API_BASE}/admin/customers`);
+  if (!res.ok) throw new Error('Failed to fetch customers');
+  return res.json();
+}
+
+export async function createCustomer(customer) {
+  const res = await fetch(`${API_BASE}/admin/customers`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(customer)
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Failed to create customer');
+  }
+  return res.json();
+}
+
+export async function updateCustomer(id, customer) {
+  const res = await fetch(`${API_BASE}/admin/customers/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(customer)
+  });
+  if (!res.ok) throw new Error('Failed to update customer');
+  return res.json();
+}
+
+export async function deleteCustomer(id) {
+  const res = await fetch(`${API_BASE}/admin/customers/${id}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) throw new Error('Failed to delete customer');
+  return res.json();
+}
+
+export async function fetchSystemGeminiKey() {
+  const res = await fetch(`${API_BASE}/admin/settings/gemini`);
+  if (!res.ok) throw new Error('Failed to fetch system Gemini key');
+  return res.json();
+}
+
+export async function updateSystemGeminiKey(key) {
+  const res = await fetch(`${API_BASE}/admin/settings/gemini`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key })
+  });
+  if (!res.ok) throw new Error('Failed to update system Gemini key');
+  return res.json();
+}
+
+export async function updateProfile(profile) {
+  const res = await fetch(`${API_BASE}/auth/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(profile)
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Failed to update profile');
+  }
+  return res.json();
+}

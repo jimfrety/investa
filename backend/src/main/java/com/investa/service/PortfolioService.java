@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,9 +24,9 @@ public class PortfolioService {
     private final WatchlistRepository watchlistRepository;
     private final CurrencyService currencyService;
 
-    public Map<String, Object> getPortfolioSummary() {
-        List<Holding> holdings = holdingRepository.findAll();
-        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst()
+    public Map<String, Object> getPortfolioSummary(Long customerId) {
+        List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
+        InvestmentPolicy policy = policyRepository.findByCustomerId(customerId)
                 .orElse(InvestmentPolicy.builder().cashAvailable(0.0).build());
 
         double totalHoldingsValue = 0.0;
@@ -53,7 +52,8 @@ public class PortfolioService {
             double currentRate = currencyService.getRateToBase(currency);
             double purchaseRate = h.getPurchaseExchangeRate() != null ? h.getPurchaseExchangeRate() : currentRate;
 
-            totalHoldingsValue += currencyService.convertToBase(currentVal, currency);
+            double invVal = h.getInvestmentValue() != null ? h.getInvestmentValue() : currencyService.convertToBase(currentVal, currency);
+            totalHoldingsValue += invVal;
             totalCostBasis += currencyService.convertToBase(cost, currency);
             totalUnrealisedGain += currencyService.convertToBase(unrealised, currency);
             
@@ -75,18 +75,22 @@ public class PortfolioService {
         }
 
         double totalUnrealisedGainAsset = policy.getSeedUnrealisedGains() != null ? policy.getSeedUnrealisedGains() : calcUnrealisedGainAsset;
-        double totalRealisedGainAsset = policy.getSeedRealisedGains() != null ? policy.getSeedRealisedGains() : calcRealisedGainAsset;
+        double totalRealisedGainAsset = calcRealisedGainAsset;
         double totalUnrealisedCurrencyGain = policy.getSeedUnrealisedCurrencyGains() != null ? policy.getSeedUnrealisedCurrencyGains() : calcUnrealisedCurrencyGain;
-        double totalRealisedCurrencyGain = policy.getSeedRealisedCurrencyGains() != null ? policy.getSeedRealisedCurrencyGains() : calcRealisedCurrencyGain;
+        double totalRealisedCurrencyGain = calcRealisedCurrencyGain;
         double totalTransactionFees = policy.getSeedTransactionFees() != null ? policy.getSeedTransactionFees() : calcTransactionFees;
         double totalDividendsReceived = policy.getSeedDividendsReceived() != null ? policy.getSeedDividendsReceived() : calcDividendsReceived;
 
         double cash = policy.getCashAvailable() != null ? policy.getCashAvailable() : 0.0;
-        double netWorth = totalHoldingsValue + cash;
+        double netWorth = policy.getSharesiesTotalEstimatedValue() != null ? policy.getSharesiesTotalEstimatedValue() : totalHoldingsValue;
 
-        double totalReturn = totalUnrealisedGainAsset + totalRealisedGainAsset 
+        double totalReturn = policy.getSharesiesTotalReturn() != null ? policy.getSharesiesTotalReturn() : (totalUnrealisedGainAsset + totalRealisedGainAsset 
                 + totalUnrealisedCurrencyGain + totalRealisedCurrencyGain 
-                + totalDividendsReceived - totalTransactionFees;
+                + totalDividendsReceived - totalTransactionFees);
+
+        double amountPutIn = policy.getSharesiesAmountPutIn() != null ? policy.getSharesiesAmountPutIn() : totalCostBasis;
+        
+        double simpleReturnPercent = policy.getSharesiesSimpleReturn() != null ? policy.getSharesiesSimpleReturn() : (amountPutIn > 0 ? (totalReturn / amountPutIn) * 100.0 : 0.0);
 
         Map<String, Object> summary = new HashMap<>();
         summary.put("holdingsValue", totalHoldingsValue);
@@ -98,6 +102,8 @@ public class PortfolioService {
         summary.put("realisedGain", totalRealisedGain);
         summary.put("dividendIncome", totalDividendIncome);
         summary.put("holdingsCount", holdings.size());
+        summary.put("amountPutIn", amountPutIn);
+        summary.put("simpleReturnPercent", simpleReturnPercent);
 
         // Total Return details
         summary.put("unrealisedAssetGains", totalUnrealisedGainAsset);
@@ -112,11 +118,11 @@ public class PortfolioService {
     }
 
     @Transactional
-    public Transaction executeTrade(String code, String type, Double quantity, Double price, Double brokerage) {
-        log.info("Executing trade: {} {} shares of {} at ${}", type, quantity, code, price);
+    public Transaction executeTrade(Long customerId, String code, String type, Double quantity, Double price, Double brokerage) {
+        log.info("Executing trade for customer {}: {} {} shares of {} at ${}", customerId, type, quantity, code, price);
         
-        Optional<Holding> holdingOpt = holdingRepository.findByCode(code);
-        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst()
+        Optional<Holding> holdingOpt = holdingRepository.findByCustomerIdAndCode(customerId, code);
+        InvestmentPolicy policy = policyRepository.findByCustomerId(customerId)
                 .orElseThrow(() -> new IllegalStateException("Investment Policy not found."));
 
         // Resolve asset currency based on holding or watchlist market
@@ -124,7 +130,7 @@ public class PortfolioService {
         if (holdingOpt.isPresent()) {
             currency = holdingOpt.get().getCurrency();
         } else {
-            Optional<Watchlist> wlOpt = watchlistRepository.findByCode(code);
+            Optional<Watchlist> wlOpt = watchlistRepository.findByCustomerIdAndCode(customerId, code);
             if (wlOpt.isPresent()) {
                 String market = wlOpt.get().getMarket();
                 currency = "NZX".equals(market) ? "NZD" : "ASX".equals(market) ? "AUD" : "USD";
@@ -153,13 +159,14 @@ public class PortfolioService {
                 holding.setAvgPurchasePrice(newAvg);
                 holding.setBrokerage((holding.getBrokerage() != null ? holding.getBrokerage() : 0.0) + brokerage);
             } else {
-                Optional<Watchlist> wlOpt = watchlistRepository.findByCode(code);
+                Optional<Watchlist> wlOpt = watchlistRepository.findByCustomerIdAndCode(customerId, code);
                 String name = wlOpt.isPresent() ? wlOpt.get().getShareName() : code;
                 String market = wlOpt.isPresent() ? wlOpt.get().getMarket() : "NASDAQ";
                 String assetType = wlOpt.isPresent() ? wlOpt.get().getType() : "growth";
                 int riskVal = wlOpt.isPresent() ? wlOpt.get().getRisk() : 5;
 
                 holding = Holding.builder()
+                        .customerId(customerId)
                         .code(code)
                         .shareName(name)
                         .market(market)
@@ -209,6 +216,7 @@ public class PortfolioService {
             if (newQty == 0) {
                 holdingRepository.delete(holding);
                 watchlistRepository.save(Watchlist.builder()
+                        .customerId(customerId)
                         .code(holding.getCode())
                         .shareName(holding.getShareName())
                         .market(holding.getMarket())
@@ -234,6 +242,7 @@ public class PortfolioService {
         policyRepository.save(policy);
 
         Transaction tx = Transaction.builder()
+                .customerId(customerId)
                 .code(code)
                 .shareName(holdingOpt.isPresent() ? holdingOpt.get().getShareName() : code)
                 .type(type.toUpperCase())
@@ -246,16 +255,9 @@ public class PortfolioService {
         return transactionRepository.save(tx);
     }
 
-    public List<Map<String, Object>> getRebalanceRecommendations(double amount) {
-        List<Holding> holdings = holdingRepository.findAll();
-        List<Watchlist> watchlist = watchlistRepository.findAll();
-        InvestmentPolicy policy = policyRepository.findAll().stream().findFirst().orElse(null);
-        
-        // Sum holdings values in base currency (NZD)
-        double totalVal = holdings.stream()
-                .mapToDouble(h -> currencyService.convertToBase(h.getQuantity() * h.getCurrentPrice(), h.getCurrency()))
-                .sum();
-        double currentCash = policy != null ? policy.getCashAvailable() : 0.0;
+    public List<Map<String, Object>> getRebalanceRecommendations(Long customerId, double amount) {
+        List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
+        List<Watchlist> watchlist = watchlistRepository.findByCustomerId(customerId);
         
         List<Map<String, Object>> recommendations = new ArrayList<>();
         
@@ -285,13 +287,14 @@ public class PortfolioService {
                 currency = "NZD";
             }
             
-            Optional<Holding> hOpt = holdingRepository.findByCode(code);
+            final String finalCode = code;
+            Optional<Holding> hOpt = holdings.stream().filter(h -> h.getCode().equals(finalCode)).findFirst();
             if (hOpt.isPresent()) {
                 price = hOpt.get().getCurrentPrice();
                 shareName = hOpt.get().getShareName();
                 currency = hOpt.get().getCurrency();
             } else {
-                Optional<Watchlist> wOpt = watchlist.stream().filter(w -> w.getCode().equals(code)).findFirst();
+                Optional<Watchlist> wOpt = watchlist.stream().filter(w -> w.getCode().equals(finalCode)).findFirst();
                 if (wOpt.isPresent()) {
                     shareName = wOpt.get().getShareName();
                     String market = wOpt.get().getMarket();

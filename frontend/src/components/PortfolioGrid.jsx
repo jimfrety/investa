@@ -276,31 +276,31 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
       valueFormatter: p => `$${p.value?.toFixed(2)}` 
     },
     { 
-      headerName: 'Total Value', 
-      valueGetter: p => p.data.quantity * p.data.currentPrice,
-      flex: 1.0, 
+      headerName: 'Investment Value', 
+      valueGetter: p => {
+        if (p.data?.investmentValue !== undefined && p.data?.investmentValue !== null && p.data?.investmentValue !== 0) {
+          return p.data.investmentValue;
+        }
+        return (p.data?.quantity || 0) * (p.data?.currentPrice || 0);
+      },
+      flex: 1.1, 
       type: 'numericColumn',
       valueFormatter: p => `$${p.value?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     },
     { 
-      headerName: 'Unrealised P&L', 
-      field: 'unrealisedGain', 
-      flex: 1.1,
-      type: 'numericColumn',
-      cellRenderer: (p) => {
-        const val = p.value ?? 0.0;
-        const color = val >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)';
-        const sign = val >= 0 ? '+' : '';
-        return (
-          <span style={{ color, fontWeight: '700' }}>
-            {sign}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
-        )
-      }
-    },
-    { 
       headerName: 'Simple Return', 
       field: 'simpleReturn', 
+      valueGetter: p => {
+        if (p.data?.simpleReturn !== undefined && p.data?.simpleReturn !== null && p.data?.simpleReturn !== 0) {
+          return p.data.simpleReturn;
+        }
+        const cost = p.data?.avgPurchasePrice || 0;
+        const cur = p.data?.currentPrice || 0;
+        if (cost > 0) {
+          return ((cur - cost) / cost) * 100.0;
+        }
+        return 0.0;
+      },
       flex: 1.0,
       type: 'numericColumn',
       cellRenderer: (p) => {
