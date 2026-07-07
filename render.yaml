@@ -1,11 +1,15 @@
+databases:
+  - name: investa-postgres
+    databaseName: investa_db
+    user: investa_user
+    plan: free
+
 services:
-  # 1. Spring Boot Backend Service
+  # 1. Spring Boot Backend Service (Docker container)
   - type: web
     name: investa-backend
-    env: java
+    runtime: docker
     rootDir: backend
-    buildCommand: mvn clean package -DskipTests
-    startCommand: java -jar target/backend-0.0.1-SNAPSHOT.jar
     plan: free
     envVars:
       - key: PORT
@@ -19,15 +23,15 @@ services:
       - key: SPRING_JPA_DIALECT
         value: org.hibernate.dialect.PostgreSQLDialect
       - key: INVESTA_EXCEL_PATH
-        value: ../Forecast.xlsx
+        value: Forecast.xlsx
 
   # 2. React Frontend Static Site
   - type: web
     name: investa-frontend
-    env: static
+    runtime: static
     rootDir: frontend
     buildCommand: npm run build
-    publishDir: dist
+    staticPublishPath: dist
     plan: free
     envVars:
       - key: VITE_API_BASE
