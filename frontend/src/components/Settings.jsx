@@ -7,7 +7,7 @@ import KeyIcon from '@mui/icons-material/Key'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import LockIcon from '@mui/icons-material/Lock'
 
-export default function Settings() {
+export default function Settings({ user }) {
   const queryClient = useQueryClient()
   const { data: policy } = useQuery({
     queryKey: ['policy'],
@@ -133,7 +133,9 @@ export default function Settings() {
 
   const fetchSharesiesStatus = async () => {
     try {
-      const res = await fetch(`${API_BASE}/sharesies/status`)
+      const res = await fetch(`${API_BASE}/sharesies/status`, {
+        headers: { 'X-Customer-ID': user?.customerId }
+      })
       if (res.ok) {
         const data = await res.json()
         setSharesiesStatus(data)
@@ -164,7 +166,7 @@ export default function Settings() {
     try {
       const res = await fetch(`${API_BASE}/sharesies/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Customer-ID': user?.customerId },
         body: JSON.stringify({ email: sharesiesEmail, password: sharesiesPassword, mfaCode: sharesiesMfaCode })
       })
       const data = await res.json()
@@ -193,7 +195,10 @@ export default function Settings() {
   const handleSharesiesDisconnect = async () => {
     setSharesiesLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/sharesies/logout`, { method: 'POST' })
+      const res = await fetch(`${API_BASE}/sharesies/logout`, {
+        method: 'POST',
+        headers: { 'X-Customer-ID': user?.customerId }
+      })
       if (res.ok) {
         setSharesiesStatus({ authenticated: false, email: null, userId: null })
         setSharesiesMessage({ success: true, text: 'Disconnected from Sharesies.' })
@@ -213,7 +218,10 @@ export default function Settings() {
     setSharesiesLoading(true)
     setSharesiesMessage(null)
     try {
-      const res = await fetch(`${API_BASE}/sharesies/sync`, { method: 'POST' })
+      const res = await fetch(`${API_BASE}/sharesies/sync`, {
+        method: 'POST',
+        headers: { 'X-Customer-ID': user?.customerId }
+      })
       const data = await res.json()
       if (res.ok) {
         setSharesiesMessage({ success: true, text: data.message })

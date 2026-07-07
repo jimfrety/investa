@@ -181,7 +181,7 @@ export default function App() {
       case 'calculator':
         return <ReturnCalculator />
       case 'settings':
-        return <Settings />
+        return <Settings user={user} />
       default:
         return <DashboardOverview onAskAI={handleAskAI} summary={summary} risk={risk} />
     }
