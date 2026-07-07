@@ -9,7 +9,9 @@ RUN mvn clean package -DskipTests
 # Run stage
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 COPY --from=build /app/Forecast.xlsx Forecast.xlsx
+COPY entrypoint.sh entrypoint.sh
+RUN chmod +x entrypoint.sh
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["/app/entrypoint.sh"]

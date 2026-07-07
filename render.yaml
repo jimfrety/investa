@@ -14,10 +14,26 @@ services:
     envVars:
       - key: PORT
         value: 8080
-      - key: SPRING_DATASOURCE_URL
+      - key: DB_HOST
         fromDatabase:
           name: investa-postgres
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: investa-postgres
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: investa-postgres
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: investa-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: investa-postgres
+          property: password
       - key: SPRING_DATASOURCE_DRIVER
         value: org.postgresql.Driver
       - key: SPRING_JPA_DIALECT
