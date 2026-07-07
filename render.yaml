@@ -11,9 +11,8 @@ services:
     runtime: docker
     rootDir: backend
     plan: starter
+    healthCheckPath: /api/auth/health
     envVars:
-      - key: PORT
-        value: 8080
       - key: DB_HOST
         fromDatabase:
           name: investa-postgres

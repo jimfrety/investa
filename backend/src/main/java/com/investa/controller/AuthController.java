@@ -44,6 +44,11 @@ public class AuthController {
         return ResponseEntity.status(401).body(Map.of("success", false, "message", "Invalid username or password."));
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<?> health() {
+        return ResponseEntity.ok(Map.of("status", "UP"));
+    }
+
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(
             @RequestHeader("X-Customer-ID") Long customerId,
