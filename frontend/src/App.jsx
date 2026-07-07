@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchSummary, fetchRiskMetrics } from './api/client'
+import { fetchSummary, fetchRiskMetrics, API_BASE } from './api/client'
 
 // Components
 import DashboardOverview from './components/DashboardOverview'
@@ -57,7 +57,7 @@ export default function App() {
 
   React.useEffect(() => {
     if (user && !user.isAdmin) {
-      fetch('/api/sharesies/status')
+      fetch(`${API_BASE}/sharesies/status`)
         .then(res => res.json())
         .then(data => {
           if (!data.authenticated) {
@@ -81,7 +81,7 @@ export default function App() {
     setSharesiesLoading(true)
     setSharesiesMessage(null)
     try {
-      const res = await fetch('/api/sharesies/login', {
+      const res = await fetch(`${API_BASE}/sharesies/login`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export default function App() {
           setSharesiesMfaCode('')
           setSharesiesMfaRequired(false)
           try {
-            await fetch('/api/sharesies/sync', {
+            await fetch(`${API_BASE}/sharesies/sync`, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',

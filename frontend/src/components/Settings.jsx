@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchPolicy, updatePolicy, updateProfile } from '../api/client'
+import { fetchPolicy, updatePolicy, updateProfile, API_BASE } from '../api/client'
 import SettingsIcon from '@mui/icons-material/Settings'
 import SaveIcon from '@mui/icons-material/Save'
 import KeyIcon from '@mui/icons-material/Key'
@@ -81,7 +81,7 @@ export default function Settings() {
     setIsTesting(true)
     setTestResult(null)
     try {
-      const res = await fetch('/api/policy/test-gemini-key', {
+      const res = await fetch(`${API_BASE}/policy/test-gemini-key`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: geminiKey })
@@ -133,7 +133,7 @@ export default function Settings() {
 
   const fetchSharesiesStatus = async () => {
     try {
-      const res = await fetch('/api/sharesies/status')
+      const res = await fetch(`${API_BASE}/sharesies/status`)
       if (res.ok) {
         const data = await res.json()
         setSharesiesStatus(data)
@@ -162,7 +162,7 @@ export default function Settings() {
     setSharesiesLoading(true)
     setSharesiesMessage(null)
     try {
-      const res = await fetch('/api/sharesies/login', {
+      const res = await fetch(`${API_BASE}/sharesies/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: sharesiesEmail, password: sharesiesPassword, mfaCode: sharesiesMfaCode })
@@ -193,7 +193,7 @@ export default function Settings() {
   const handleSharesiesDisconnect = async () => {
     setSharesiesLoading(true)
     try {
-      const res = await fetch('/api/sharesies/logout', { method: 'POST' })
+      const res = await fetch(`${API_BASE}/sharesies/logout`, { method: 'POST' })
       if (res.ok) {
         setSharesiesStatus({ authenticated: false, email: null, userId: null })
         setSharesiesMessage({ success: true, text: 'Disconnected from Sharesies.' })
@@ -213,7 +213,7 @@ export default function Settings() {
     setSharesiesLoading(true)
     setSharesiesMessage(null)
     try {
-      const res = await fetch('/api/sharesies/sync', { method: 'POST' })
+      const res = await fetch(`${API_BASE}/sharesies/sync`, { method: 'POST' })
       const data = await res.json()
       if (res.ok) {
         setSharesiesMessage({ success: true, text: data.message })

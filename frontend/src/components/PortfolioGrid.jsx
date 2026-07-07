@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { fetchHoldings, executeTrade, fetchResearch } from '../api/client'
+import { fetchHoldings, executeTrade, fetchResearch, API_BASE } from '../api/client'
 import { AgGridReact } from 'ag-grid-react'
 import Dialog from '@mui/material/Dialog'
 import SearchIcon from '@mui/icons-material/Search'
@@ -142,7 +142,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
   const handleSyncPrices = async () => {
     setIsSyncing(true)
     try {
-      const res = await fetch('/api/portfolio/sync-prices', {
+      const res = await fetch(`${API_BASE}/portfolio/sync-prices`, {
         method: 'POST'
       })
       if (!res.ok) throw new Error('Price sync request failed')
@@ -186,7 +186,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
     
     try {
       setErrorMessage('Uploading spreadsheet...')
-      const res = await fetch('/api/portfolio/import', {
+      const res = await fetch(`${API_BASE}/portfolio/import`, {
         method: 'POST',
         body: formData
       })
