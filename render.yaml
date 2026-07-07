@@ -10,7 +10,7 @@ services:
     name: investa-backend
     runtime: docker
     rootDir: backend
-    plan: free
+    plan: starter
     envVars:
       - key: PORT
         value: 8080
@@ -22,8 +22,12 @@ services:
         value: org.postgresql.Driver
       - key: SPRING_JPA_DIALECT
         value: org.hibernate.dialect.PostgreSQLDialect
+      - key: SPRING_JPA_DDL_AUTO
+        value: update
       - key: INVESTA_EXCEL_PATH
         value: Forecast.xlsx
+      - key: INVESTA_FRONTEND_URL
+        sync: false
 
   # 2. React Frontend Static Site
   - type: web
