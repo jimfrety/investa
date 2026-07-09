@@ -52,10 +52,10 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Top Banner Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+      <div className="dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
         
         {/* Net Worth Chart Card */}
-        <div className="glass-panel" style={{ padding: '24px', gridColumn: 'span 2', minHeight: '320px' }}>
+        <div className="glass-panel chart-card-span2" style={{ padding: '24px', gridColumn: 'span 2', minHeight: '320px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
               <h3 style={{ fontSize: '18px', color: 'var(--text-primary)' }}>PORTFOLIO GROWTH</h3>
@@ -129,7 +129,7 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
         <h3 style={{ fontSize: '18px', color: 'var(--text-primary)', marginBottom: '4px' }}>TOTAL PORTFOLIO RETURN</h3>
         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px' }}>Comprehensive returns accounting for asset growth, currency movements, dividends, and friction</p>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', alignItems: 'center' }}>
+        <div className="return-breakdown-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', alignItems: 'center' }}>
           {/* Main Return Card */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>NET TOTAL RETURN</span>
@@ -148,7 +148,7 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
           </div>
 
           {/* Breakdown List */}
-          <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className="return-breakdown-inner" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '6px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>📈 Unrealised Asset Gains</span>

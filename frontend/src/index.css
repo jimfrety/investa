@@ -326,3 +326,295 @@ h1, h2, h3, h4, h5, h6 {
 .spin-animation {
   animation: spin 1.5s linear infinite;
 }
+
+/* ============================================================
+   MOBILE RESPONSIVE — Investa
+   Breakpoints: mobile < 768px | tablet 768–1023px | desktop ≥ 1024px
+   ============================================================ */
+
+/* Visibility helpers */
+.mobile-only { display: none !important; }
+
+/* ---- Bottom Navigation Bar (rendered always, hidden on desktop) ---- */
+.mobile-bottom-nav {
+  display: none;
+}
+
+/* ---- Stat strip (horizontal scroll on mobile) ---- */
+.header-stat-strip {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* ---- Portfolio mobile cards (hidden on desktop) ---- */
+.portfolio-mobile-cards {
+  display: none !important;
+}
+
+/* ---- AI Chat drawer width variable ---- */
+.ai-chat-drawer {
+  width: 460px;
+}
+
+/* =========================
+   MOBILE  (< 768px)
+   ========================= */
+@media (max-width: 767px) {
+  /* Show/hide helpers */
+  .desktop-only { display: none !important; }
+  .mobile-only  { display: flex !important; }
+
+  /* ---- Root layout: single column ---- */
+  .layout-container {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- Hide sidebar ---- */
+  .sidebar {
+    display: none !important;
+  }
+
+  /* ---- Main content ---- */
+  .main-content {
+    padding: 14px 14px 80px !important; /* 80px clears bottom nav */
+    max-height: none !important;
+  }
+
+  /* ---- Mobile bottom nav bar ---- */
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background: rgba(9, 12, 22, 0.97);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--border-glass);
+    align-items: stretch;
+    justify-content: space-around;
+    z-index: 900;
+    padding: 0 4px;
+    /* iOS safe area */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .mobile-nav-item {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+    padding: 6px 2px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--font-title);
+    letter-spacing: 0.02em;
+    min-width: 0;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--accent-indigo);
+    background: rgba(99, 102, 241, 0.12);
+  }
+
+  .mobile-nav-item svg {
+    font-size: 20px !important;
+  }
+
+  /* ---- App header on mobile ---- */
+  .app-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .app-header-title h1 {
+    font-size: 22px !important;
+  }
+
+  /* ---- Stat strip: horizontal scroll ---- */
+  .header-stat-strip {
+    width: 100%;
+    overflow-x: auto;
+    gap: 8px !important;
+    padding-bottom: 4px;
+    /* hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex-wrap: nowrap !important;
+  }
+  .header-stat-strip::-webkit-scrollbar { display: none; }
+
+  .header-stat-strip > * {
+    flex-shrink: 0 !important;
+    min-width: 108px !important;
+  }
+
+  /* Hide the "Assistant" button in header strip (FAB replaces it) */
+  .header-ai-btn {
+    display: none !important;
+  }
+
+  /* ---- AI Chat: full screen on mobile ---- */
+  .ai-chat-drawer {
+    width: 100vw !important;
+    right: 0 !important;
+  }
+
+  /* ---- Floating AI button: above bottom nav ---- */
+  .fab-ai {
+    bottom: 76px !important;
+    right: 16px !important;
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  /* ---- Dashboard overview grids ---- */
+  .dashboard-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* override inline gridColumn: 'span 2' */
+  .chart-card-span2 {
+    grid-column: span 1 !important;
+  }
+
+  .return-breakdown-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .return-breakdown-inner {
+    grid-column: span 1 !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .health-scores-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .quick-questions-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- Portfolio: swap grid for cards ---- */
+  .portfolio-toolbar {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .portfolio-toolbar-actions {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .portfolio-desktop-grid {
+    display: none !important;
+  }
+
+  .portfolio-mobile-cards {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ---- Watchlist ---- */
+  .watchlist-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- Dividend planner ---- */
+  .dividend-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dividend-results-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- Policy manager ---- */
+  .policy-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- Return calculator ---- */
+  .calculator-layout {
+    flex-direction: column !important;
+  }
+
+  /* ---- Settings ---- */
+  .settings-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- Generic: inputs full-width ---- */
+  .investa-input {
+    width: 100%;
+  }
+
+  /* ---- Recharts: prevent overflow ---- */
+  .recharts-wrapper,
+  .recharts-surface {
+    max-width: 100% !important;
+  }
+}
+
+/* =========================
+   TABLET  (768px – 1023px)
+   ========================= */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .layout-container {
+    grid-template-columns: 200px 1fr !important;
+  }
+
+  .sidebar {
+    padding: 16px !important;
+  }
+
+  .sidebar-item {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .main-content {
+    padding: 20px !important;
+  }
+
+  .dashboard-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .chart-card-span2 {
+    grid-column: span 1 !important;
+  }
+
+  .header-stat-strip {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .header-stat-strip::-webkit-scrollbar { display: none; }
+
+  .header-stat-strip > * {
+    flex-shrink: 0 !important;
+    min-width: 108px !important;
+  }
+
+  .app-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+}
+

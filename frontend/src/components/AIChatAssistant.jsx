@@ -150,11 +150,11 @@ Try asking:
 
   return (
     <div 
+      className="ai-chat-drawer"
       style={{
         position: 'fixed',
         top: 0,
         right: 0,
-        width: '460px',
         height: '100vh',
         backgroundColor: 'rgba(11, 15, 25, 0.95)',
         backdropFilter: 'blur(20px)',

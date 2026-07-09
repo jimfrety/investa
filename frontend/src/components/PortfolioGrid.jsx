@@ -364,9 +364,9 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
       {/* Table Actions Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="portfolio-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '700' }} className="gradient-text">Portfolio Assets</h3>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="portfolio-toolbar-actions" style={{ display: 'flex', gap: '10px' }}>
           <button className="investa-button" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => handleOpenTrade('BUY')}>
             <AddIcon fontSize="small" /> BUY STOCK
           </button>
@@ -399,8 +399,8 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
         </div>
       </div>
 
-      {/* AG Grid Table Container */}
-      <div className="ag-theme-quartz-dark" style={{ height: '480px', width: '100%' }}>
+      {/* Desktop AG Grid */}
+      <div className="portfolio-desktop-grid ag-theme-quartz-dark" style={{ height: '480px', width: '100%' }}>
         <AgGridReact
           rowData={holdings}
           columnDefs={columnDefs}
@@ -411,6 +411,54 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
           }}
           onCellValueChanged={onCellValueChanged}
         />
+      </div>
+
+      {/* Mobile Card List */}
+      <div className="portfolio-mobile-cards">
+        {holdings.length === 0 && (
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '32px', fontSize: '14px' }}>
+            No holdings found. Import your portfolio or connect Sharesies.
+          </div>
+        )}
+        {holdings.map((h) => {
+          const simpleReturn = h.simpleReturn ?? (h.avgPurchasePrice > 0 ? ((h.currentPrice - h.avgPurchasePrice) / h.avgPurchasePrice) * 100 : 0)
+          const investmentValue = h.investmentValue ?? (h.quantity * h.currentPrice)
+          const isPositive = simpleReturn >= 0
+          return (
+            <div key={h.id} className="glass-panel" style={{ padding: '16px', borderRadius: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>{h.code}</span>
+                    <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>{h.market}</span>
+                    <span style={{ fontSize: '10px', fontWeight: '700', color: isPositive ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+                      {isPositive ? '+' : ''}{simpleReturn.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{h.shareName}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '16px', fontWeight: '800' }}>${investmentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{h.quantity?.toFixed(2)} shares @ ${h.currentPrice?.toFixed(2)}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  style={{ flex: 1, padding: '8px', fontSize: '12px', fontWeight: '600', background: 'rgba(99,102,241,0.15)', color: 'var(--accent-indigo)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '8px', cursor: 'pointer' }}
+                  onClick={() => handleOpenTrade('BUY', h.code)}
+                >Buy More</button>
+                <button
+                  style={{ flex: 1, padding: '8px', fontSize: '12px', fontWeight: '600', background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)', border: '1px solid rgba(244,63,94,0.15)', borderRadius: '8px', cursor: 'pointer' }}
+                  onClick={() => handleOpenTrade('SELL', h.code)}
+                >Sell</button>
+                <button
+                  style={{ flex: 1, padding: '8px', fontSize: '12px', fontWeight: '600', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)', borderRadius: '8px', cursor: 'pointer' }}
+                  onClick={() => onAskAI(`Should I sell ${h.code} now?`)}
+                >Ask AI</button>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Trade execution modal */}

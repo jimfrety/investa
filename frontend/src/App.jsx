@@ -26,6 +26,7 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble'
 import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -257,8 +258,8 @@ export default function App() {
       {/* Main Content Section */}
       <main className="main-content">
         {/* Header Section */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <div>
+        <header className="app-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+          <div className="app-header-title">
             <h1 className="gradient-text" style={{ fontSize: '28px', fontWeight: '800' }}>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
             </h1>
@@ -267,7 +268,7 @@ export default function App() {
             </p>
           </div>
           
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div className="header-stat-strip">
             <div className="glass-panel stat-card" style={{ minWidth: '135px', padding: '12px 14px', borderRadius: '12px' }}>
               <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '600' }}>NET WORTH</span>
               <span style={{ fontSize: '18px', fontWeight: '800' }}>${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -299,7 +300,7 @@ export default function App() {
               </span>
             </div>
 
-            <button className="investa-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 12px' }} onClick={() => setIsChatOpen(!isChatOpen)}>
+            <button className="investa-button header-ai-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 12px', flexShrink: 0 }} onClick={() => setIsChatOpen(!isChatOpen)}>
               <ForumIcon /> Assistant
             </button>
           </div>
@@ -314,6 +315,7 @@ export default function App() {
       {/* Floating Action AI Button (Bottom Right) */}
       {!isChatOpen && (
         <div 
+          className="fab-ai"
           onClick={() => setIsChatOpen(true)}
           style={{
             position: 'fixed',
@@ -337,6 +339,38 @@ export default function App() {
           <ChatBubbleIcon style={{ color: 'white' }} />
         </div>
       )}
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="mobile-bottom-nav">
+        <div className={`mobile-nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
+          <DashboardIcon />
+          <span>Home</span>
+        </div>
+        <div className={`mobile-nav-item ${activeTab === 'portfolio' ? 'active' : ''}`} onClick={() => setActiveTab('portfolio')}>
+          <AccountBalanceWalletIcon />
+          <span>Holdings</span>
+        </div>
+        <div className={`mobile-nav-item ${activeTab === 'dividends' ? 'active' : ''}`} onClick={() => setActiveTab('dividends')}>
+          <CalendarMonthIcon />
+          <span>Dividends</span>
+        </div>
+        <div className={`mobile-nav-item ${activeTab === 'watchlist' ? 'active' : ''}`} onClick={() => setActiveTab('watchlist')}>
+          <VisibilityIcon />
+          <span>Watchlist</span>
+        </div>
+        <div className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+          <SettingsIcon />
+          <span>Settings</span>
+        </div>
+        <div
+          className="mobile-nav-item"
+          onClick={() => setIsChatOpen(true)}
+          style={{ color: 'var(--accent-indigo)' }}
+        >
+          <ChatBubbleIcon />
+          <span>AI</span>
+        </div>
+      </nav>
 
       {/* Slide-out AI Panel Drawer */}
       <AIChatAssistant 
