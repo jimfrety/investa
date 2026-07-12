@@ -1,22 +1,45 @@
 import React from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchSnapshots } from '../api/client'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import ShowChartIcon from '@mui/icons-material/ShowChart'
 
 export default function DashboardOverview({ onAskAI, summary, risk }) {
-  // Demo historical data for AreaChart (represents portfolio snapshot history)
-  const historicalData = [
-    { name: 'W1', value: 175000 },
-    { name: 'W2', value: 178500 },
-    { name: 'W3', value: 181200 },
-    { name: 'W4', value: 180500 },
-    { name: 'W5', value: 183400 },
-    { name: 'W6', value: 185600 },
-    { name: 'W7', value: 187200 },
-    { name: 'Today', value: summary?.netWorth ?? 185000 }
-  ]
+  // Fetch real portfolio snapshots
+  const { data: rawSnapshots = [] } = useQuery({
+    queryKey: ['snapshots'],
+    queryFn: fetchSnapshots,
+    staleTime: 5 * 60 * 1000 // 5 min
+  })
+
+  // Format snapshots for the chart — label with "Mon DD" or "Today"
+  const historicalData = React.useMemo(() => {
+    if (rawSnapshots.length === 0) return []
+    const today = new Date().toISOString().slice(0, 10)
+    return rawSnapshots.map((s) => {
+      const date = s.snapshotDate // 'YYYY-MM-DD' string from Spring
+      const isToday = date === today
+      const label = isToday
+        ? 'Today'
+        : new Date(date + 'T00:00:00').toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' })
+      return { name: label, value: s.totalValue ?? 0 }
+    })
+  }, [rawSnapshots])
+
+  // Growth % from first to latest snapshot
+  const growthPct = React.useMemo(() => {
+    if (historicalData.length < 2) return null
+    const first = historicalData[0].value
+    const last = historicalData[historicalData.length - 1].value
+    if (first === 0) return null
+    return ((last - first) / first) * 100
+  }, [historicalData])
+
+  const hasEnoughData = historicalData.length >= 2
 
   // Sector Exposure Data for PieChart
   const sectorData = risk?.sectorExposure?.map(s => ({
@@ -59,31 +82,60 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
               <h3 style={{ fontSize: '18px', color: 'var(--text-primary)' }}>PORTFOLIO GROWTH</h3>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Historical valuation over the last 8 weeks</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                {hasEnoughData
+                  ? `${historicalData.length} data point${historicalData.length !== 1 ? 's' : ''} · net portfolio value over time`
+                  : 'Tracking starts today — come back tomorrow to see your first data point'}
+              </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-emerald)', fontSize: '14px', fontWeight: '700' }}>
-              <ArrowUpwardIcon fontSize="small" /> +6.8%
-            </div>
+            {growthPct !== null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: growthPct >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)', fontSize: '14px', fontWeight: '700' }}>
+                {growthPct >= 0 ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />}
+                {growthPct >= 0 ? '+' : ''}{growthPct.toFixed(2)}%
+              </div>
+            )}
           </div>
           
           <div style={{ width: '100%', height: '220px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={historicalData}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--accent-indigo)" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="var(--accent-indigo)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-glass)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                  formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Valuation']}
-                />
-                <Area type="monotone" dataKey="value" stroke="var(--accent-indigo)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorValue)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {hasEnoughData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={historicalData}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--accent-indigo)" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="var(--accent-indigo)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-glass)', borderRadius: '8px', color: 'var(--text-primary)' }}
+                    formatter={(value) => [`$${Number(value).toLocaleString('en-NZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Net Worth']}
+                  />
+                  <Area type="monotone" dataKey="value" stroke="var(--accent-indigo)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorValue)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              /* No-data placeholder */
+              <div style={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                color: 'var(--text-muted)'
+              }}>
+                <ShowChartIcon style={{ fontSize: '48px', opacity: 0.3 }} />
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', margin: 0 }}>Building your history</p>
+                  <p style={{ fontSize: '12px', margin: '4px 0 0' }}>Today's value has been recorded. Your growth chart will appear once you have multiple data points.</p>
+                </div>
+                <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--accent-indigo)' }}>
+                  ${(summary?.netWorth ?? 0).toLocaleString('en-NZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} today
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

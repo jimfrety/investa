@@ -6,6 +6,12 @@ export async function fetchSummary() {
   return res.json();
 }
 
+export async function fetchSnapshots() {
+  const res = await fetch(`${API_BASE}/portfolio/snapshots`);
+  if (!res.ok) throw new Error('Failed to fetch snapshots');
+  return res.json();
+}
+
 export async function fetchHoldings() {
   const res = await fetch(`${API_BASE}/portfolio/holdings`);
   if (!res.ok) throw new Error('Failed to fetch holdings');

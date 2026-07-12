@@ -1,8 +1,10 @@
 package com.investa.controller;
 
 import com.investa.model.Holding;
+import com.investa.model.PortfolioSnapshot;
 import com.investa.model.Transaction;
 import com.investa.repository.HoldingRepository;
+import com.investa.repository.PortfolioSnapshotRepository;
 import com.investa.repository.TransactionRepository;
 import com.investa.service.PortfolioService;
 import lombok.Data;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import com.investa.service.ExcelImportService;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +30,7 @@ public class PortfolioController {
     private final TransactionRepository transactionRepository;
     private final ExcelImportService excelImportService;
     private final com.investa.service.MarketStackPriceService priceService;
+    private final PortfolioSnapshotRepository snapshotRepository;
 
     @PostMapping("/import")
     public ResponseEntity<Map<String, Object>> importPortfolio(
@@ -48,7 +52,39 @@ public class PortfolioController {
 
     @GetMapping("/summary")
     public ResponseEntity<Map<String, Object>> getSummary(@RequestHeader("X-Customer-ID") Long customerId) {
-        return ResponseEntity.ok(portfolioService.getPortfolioSummary(customerId));
+        Map<String, Object> summary = portfolioService.getPortfolioSummary(customerId);
+
+        // Auto-record today's snapshot (idempotent — skips if one already exists for today)
+        LocalDate today = LocalDate.now();
+        boolean alreadyRecorded = snapshotRepository
+                .findByCustomerIdOrderBySnapshotDateAsc(customerId)
+                .stream()
+                .anyMatch(s -> today.equals(s.getSnapshotDate()));
+        if (!alreadyRecorded) {
+            Number netWorth = (Number) summary.get("netWorth");
+            Number cashBalance = (Number) summary.get("cashBalance");
+            Number unrealisedGain = (Number) summary.get("unrealisedGain");
+            Number realisedGain = (Number) summary.get("realisedGain");
+            Number dividendIncome = (Number) summary.get("dividendIncome");
+            snapshotRepository.save(PortfolioSnapshot.builder()
+                    .customerId(customerId)
+                    .snapshotDate(today)
+                    .totalValue(netWorth != null ? netWorth.doubleValue() : 0.0)
+                    .cashBalance(cashBalance != null ? cashBalance.doubleValue() : 0.0)
+                    .unrealisedGain(unrealisedGain != null ? unrealisedGain.doubleValue() : 0.0)
+                    .realisedGain(realisedGain != null ? realisedGain.doubleValue() : 0.0)
+                    .dividendIncome(dividendIncome != null ? dividendIncome.doubleValue() : 0.0)
+                    .build());
+        }
+
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/snapshots")
+    public ResponseEntity<List<PortfolioSnapshot>> getSnapshots(@RequestHeader("X-Customer-ID") Long customerId) {
+        return ResponseEntity.ok(
+                snapshotRepository.findByCustomerIdOrderBySnapshotDateAsc(customerId)
+        );
     }
 
     @GetMapping("/holdings")
