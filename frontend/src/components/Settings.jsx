@@ -6,6 +6,7 @@ import SaveIcon from '@mui/icons-material/Save'
 import KeyIcon from '@mui/icons-material/Key'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import LockIcon from '@mui/icons-material/Lock'
+import ShieldIcon from '@mui/icons-material/Shield'
 
 export default function Settings({ user }) {
   const queryClient = useQueryClient()
@@ -25,6 +26,19 @@ export default function Settings({ user }) {
   const [seedTransactionFees, setSeedTransactionFees] = useState(0)
   const [seedDividendsReceived, setSeedDividendsReceived] = useState(0)
 
+  // Investment Policy boundaries states
+  const [primaryObj, setPrimaryObj] = useState('')
+  const [secondaryObj, setSecondaryObj] = useState('')
+  const [growthTarget, setGrowthTarget] = useState(35)
+  const [maxRisk, setMaxRisk] = useState(4.5)
+  const [maxSingle, setMaxSingle] = useState(7)
+  const [minCoverage, setMinCoverage] = useState(1.3)
+  const [minCap, setMinCap] = useState(2.0)
+  const [avoidCuts, setAvoidCuts] = useState(true)
+  const [maxSector, setMaxSector] = useState(20)
+  const [cashAvailable, setCashAvailable] = useState(0)
+  const [policySuccessMsg, setPolicySuccessMsg] = useState('')
+
   // Profile Update State
   const [profileUsername, setProfileUsername] = useState(() => localStorage.getItem('username') || '')
   const [profileName, setProfileName] = useState(() => localStorage.getItem('name') || '')
@@ -42,6 +56,17 @@ export default function Settings({ user }) {
       setSeedRealisedCurrencyGains(policy.seedRealisedCurrencyGains ?? 0.0)
       setSeedTransactionFees(policy.seedTransactionFees ?? 0.0)
       setSeedDividendsReceived(policy.seedDividendsReceived ?? 0.0)
+
+      setPrimaryObj(policy.primaryObjective || '')
+      setSecondaryObj(policy.secondaryObjective || '')
+      setGrowthTarget(Math.round((policy.growthSellTarget ?? 0.35) * 100))
+      setMaxRisk(policy.maxRisk ?? 4.5)
+      setMaxSingle(Math.round((policy.maxSingleHolding ?? 0.07) * 100))
+      setMinCoverage(policy.minDividendCoverage ?? 1.3)
+      setMinCap((policy.minMarketCap ?? 2.0e9) / 1.0e9)
+      setAvoidCuts(policy.avoidDividendCuts !== false)
+      setMaxSector(Math.round((policy.maxSectorExposure ?? 0.20) * 100))
+      setCashAvailable(policy.cashAvailable ?? 0.0)
     }
   }, [policy])
 
@@ -49,10 +74,45 @@ export default function Settings({ user }) {
     mutationFn: updatePolicy,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['policy'] })
+      queryClient.invalidateQueries({ queryKey: ['summary'] })
+      queryClient.invalidateQueries({ queryKey: ['risk'] })
+      queryClient.invalidateQueries({ queryKey: ['watchlist'] })
+      queryClient.invalidateQueries({ queryKey: ['holdings'] })
       setSuccessMsg('Settings updated successfully! Investa AI will now use this key.')
       setTimeout(() => setSuccessMsg(''), 5000)
     }
   })
+
+  const policyMutation = useMutation({
+    mutationFn: updatePolicy,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['policy'] })
+      queryClient.invalidateQueries({ queryKey: ['summary'] })
+      queryClient.invalidateQueries({ queryKey: ['risk'] })
+      queryClient.invalidateQueries({ queryKey: ['watchlist'] })
+      queryClient.invalidateQueries({ queryKey: ['holdings'] })
+      setPolicySuccessMsg('Investment policy boundaries updated successfully!')
+      setTimeout(() => setPolicySuccessMsg(''), 5000)
+    }
+  })
+
+  const handlePolicySave = (e) => {
+    e.preventDefault()
+    if (!policy) return
+    policyMutation.mutate({
+      ...policy,
+      primaryObjective: primaryObj,
+      secondaryObjective: secondaryObj,
+      growthSellTarget: growthTarget / 100.0,
+      maxRisk: Number(maxRisk),
+      maxSingleHolding: maxSingle / 100.0,
+      minDividendCoverage: Number(minCoverage),
+      minMarketCap: minCap * 1.0e9,
+      avoidDividendCuts: avoidCuts,
+      maxSectorExposure: maxSector / 100.0,
+      cashAvailable: Number(cashAvailable)
+    })
+  }
 
   const handleSave = (e) => {
     e.preventDefault()
@@ -239,7 +299,7 @@ export default function Settings({ user }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '650px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <SettingsIcon style={{ color: 'var(--accent-indigo)' }} />
         <h3 style={{ fontSize: '18px', fontWeight: '700' }} className="gradient-text">System & AI Settings</h3>
@@ -370,6 +430,162 @@ export default function Settings({ user }) {
             </button>
           </div>
 
+        </form>
+      </div>
+
+      {/* Investment Policy Boundaries Card */}
+      <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+          <ShieldIcon style={{ color: 'var(--accent-indigo)', fontSize: '24px' }} />
+          <div>
+            <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
+              Investment Policy Boundaries
+            </h4>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+              Configure safety and diversification rules. The AI wealth manager and suitability engine operate within these constraints.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handlePolicySave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Primary Objective</label>
+              <input 
+                type="text"
+                value={primaryObj}
+                onChange={(e) => setPrimaryObj(e.target.value)}
+                className="investa-input"
+              />
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Secondary Objective</label>
+              <input 
+                type="text"
+                value={secondaryObj}
+                onChange={(e) => setSecondaryObj(e.target.value)}
+                className="investa-input"
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Cash Available ($ NZD)</label>
+              <input 
+                type="number"
+                value={cashAvailable}
+                onChange={(e) => setCashAvailable(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Max Portfolio Risk Rating ({maxRisk})</label>
+              <input 
+                type="range"
+                min="1.0"
+                max="7.0"
+                step="0.1"
+                value={maxRisk}
+                onChange={(e) => setMaxRisk(Number(e.target.value))}
+                style={{ accentColor: 'var(--accent-indigo)' }}
+              />
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Scale 1 (low) to 7 (high)</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Max Single Holding Allocation ({maxSingle}%)</label>
+              <input 
+                type="range"
+                min="1"
+                max="25"
+                value={maxSingle}
+                onChange={(e) => setMaxSingle(Number(e.target.value))}
+                style={{ accentColor: 'var(--accent-indigo)' }}
+              />
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Capital limit per asset</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Max Sector Exposure ({maxSector}%)</label>
+              <input 
+                type="range"
+                min="5"
+                max="50"
+                value={maxSector}
+                onChange={(e) => setMaxSector(Number(e.target.value))}
+                style={{ accentColor: 'var(--accent-indigo)' }}
+              />
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Sector boundary limits</span>
+            </div>
+          </div>
+
+          <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Growth Profit Sell Trigger ({growthTarget}%)</label>
+              <input 
+                type="number"
+                value={growthTarget}
+                onChange={(e) => setGrowthTarget(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Min Dividend Coverage Ratio</label>
+              <input 
+                type="number"
+                step="0.1"
+                value={minCoverage}
+                onChange={(e) => setMinCoverage(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Min Market Capitalisation ($B)</label>
+              <input 
+                type="number"
+                step="0.5"
+                value={minCap}
+                onChange={(e) => setMinCap(Number(e.target.value))}
+                className="investa-input"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+            <input 
+              type="checkbox"
+              id="avoidCuts"
+              checked={avoidCuts}
+              onChange={(e) => setAvoidCuts(e.target.checked)}
+              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)', cursor: 'pointer' }}
+            />
+            <label htmlFor="avoidCuts" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)', cursor: 'pointer', userSelect: 'none' }}>
+              Avoid stocks with historical dividend cuts within the last 3 years
+            </label>
+          </div>
+
+          {policySuccessMsg && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-emerald)', fontSize: '13px', fontWeight: '600' }}>
+              <CheckCircleIcon fontSize="small" /> {policySuccessMsg}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '6px' }}>
+            <button 
+              type="submit" 
+              className="investa-button"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              disabled={policyMutation.isPending}
+            >
+              <SaveIcon fontSize="small" /> 
+              {policyMutation.isPending ? 'SAVING...' : 'SAVE POLICY'}
+            </button>
+          </div>
         </form>
       </div>
 

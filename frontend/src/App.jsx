@@ -6,7 +6,6 @@ import { fetchSummary, fetchRiskMetrics, API_BASE } from './api/client'
 import DashboardOverview from './components/DashboardOverview'
 import PortfolioGrid from './components/PortfolioGrid'
 import DividendPlanner from './components/DividendPlanner'
-import PolicyManager from './components/PolicyManager'
 import WatchlistOpportunity from './components/WatchlistOpportunity'
 import AIChatAssistant from './components/AIChatAssistant'
 import ReturnCalculator from './components/ReturnCalculator'
@@ -175,8 +174,6 @@ export default function App() {
         return <PortfolioGrid onTradeExecuted={handleRefetchAll} onAskAI={handleAskAI} />
       case 'dividends':
         return <DividendPlanner onAskAI={handleAskAI} />
-      case 'policy':
-        return <PolicyManager onPolicyUpdated={handleRefetchAll} />
       case 'watchlist':
         return <WatchlistOpportunity onAskAI={handleAskAI} onTradeExecuted={handleRefetchAll} />
       case 'calculator':
@@ -220,9 +217,6 @@ export default function App() {
             </li>
             <li className={`sidebar-item ${activeTab === 'dividends' ? 'active' : ''}`} onClick={() => setActiveTab('dividends')}>
               <CalendarMonthIcon fontSize="small" /> Dividend Planner
-            </li>
-            <li className={`sidebar-item ${activeTab === 'policy' ? 'active' : ''}`} onClick={() => setActiveTab('policy')}>
-              <ShieldIcon fontSize="small" /> Investment Policy
             </li>
             <li className={`sidebar-item ${activeTab === 'watchlist' ? 'active' : ''}`} onClick={() => setActiveTab('watchlist')}>
               <VisibilityIcon fontSize="small" /> Watchlist & Fit
