@@ -381,6 +381,7 @@ public class ExcelImportService {
                         .momentum(momScore)
                         .overallScore(Math.round(overall * 10.0) / 10.0)
                         .targetPrice(10.0 + random.nextDouble() * 100.0)
+                        .dividendYield(Watchlist.getDivYieldForCode(rs.code, rs.type))
                         .build());
             }
         }
@@ -426,6 +427,7 @@ public class ExcelImportService {
                     .momentum(momScore)
                     .overallScore(Math.round(overall * 10.0) / 10.0)
                     .targetPrice(ws.targetPrice)
+                    .dividendYield(Watchlist.getDivYieldForCode(ws.code, ws.type))
                     .build());
         }
 

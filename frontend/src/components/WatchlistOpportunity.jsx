@@ -37,6 +37,10 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted }) {
               {/* Score breakdown metrics grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '11px', marginBottom: '16px' }}>
                 <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ color: 'var(--text-muted)' }}>Gross Yield</div>
+                  <strong style={{ color: 'var(--accent-cyan)' }}>{item.dividendYield != null ? `${item.dividendYield.toFixed(2)}%` : '0.00%'}</strong>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
                   <div style={{ color: 'var(--text-muted)' }}>Div Quality</div>
                   <strong style={{ color: 'var(--accent-emerald)' }}>{item.dividendQuality}</strong>
                 </div>
