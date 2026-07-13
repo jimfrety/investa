@@ -12,6 +12,15 @@ export async function fetchSnapshots() {
   return res.json();
 }
 
+export async function fetchWallet() {
+  const res = await fetch(`${API_BASE}/sharesies/wallet`);
+  if (!res.ok) {
+    if (res.status === 401) return null; // Not authenticated
+    throw new Error('Failed to fetch wallet balance');
+  }
+  return res.json();
+}
+
 export async function fetchHoldings() {
   const res = await fetch(`${API_BASE}/portfolio/holdings`);
   if (!res.ok) throw new Error('Failed to fetch holdings');

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { fetchHoldings, executeTrade, fetchResearch, API_BASE } from '../api/client'
+import { fetchHoldings, executeTrade, fetchResearch, fetchSummary, fetchWatchlist, fetchWallet, API_BASE } from '../api/client'
 import { AgGridReact } from 'ag-grid-react'
 import Dialog from '@mui/material/Dialog'
 import SearchIcon from '@mui/icons-material/Search'
@@ -91,6 +91,82 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
     queryKey: ['holdings'],
     queryFn: fetchHoldings
   })
+
+  const { data: summary } = useQuery({
+    queryKey: ['summary'],
+    queryFn: fetchSummary
+  })
+
+  const { data: watchlist = [] } = useQuery({
+    queryKey: ['watchlist'],
+    queryFn: fetchWatchlist
+  })
+
+  const { data: wallet } = useQuery({
+    queryKey: ['wallet'],
+    queryFn: fetchWallet,
+    retry: false
+  })
+
+  const formattedBalances = React.useMemo(() => {
+    if (!wallet) return null;
+    const balances = [];
+    if (Array.isArray(wallet)) {
+      wallet.forEach(item => {
+        if (item && typeof item === 'object') {
+          const curr = item.currency || item.curr || item.currency_code || item.code || 'NZD';
+          const bal = item.available || item.available_balance || item.balance || item.amount || item.total || '0';
+          balances.push({ currency: curr.toUpperCase(), amount: parseFloat(bal) });
+        }
+      });
+    } else if (typeof wallet === 'object') {
+      Object.keys(wallet).forEach(key => {
+        const val = wallet[key];
+        if (val && typeof val === 'object') {
+          const curr = val.currency || val.curr || val.currency_code || val.code || key;
+          const bal = val.available || val.available_balance || val.balance || val.amount || val.total || '0';
+          balances.push({ currency: curr.toUpperCase(), amount: parseFloat(bal) });
+        } else if (val !== null && val !== undefined) {
+          balances.push({ currency: key.toUpperCase(), amount: parseFloat(val) });
+        }
+      });
+    }
+    return balances.length > 0 ? balances : null;
+  }, [wallet]);
+
+  const selectedCurrency = React.useMemo(() => {
+    const held = holdings.find(h => h.code === tradeCode);
+    if (held && held.currency) return held.currency.toUpperCase();
+    
+    const watchItem = watchlist.find(w => w.code === tradeCode);
+    if (watchItem && watchItem.market) {
+      return watchItem.market === "NZX" ? "NZD" : watchItem.market === "ASX" ? "AUD" : "USD";
+    }
+    
+    const nzSymbols = ["FNZ", "NPF", "GNE", "AIR", "XRO", "SPK", "PKLB", "EUF"];
+    const auSymbols = ["VHY", "HVST", "OZY", "GCI", "HVN", "ARX"];
+    
+    if (nzSymbols.includes(tradeCode)) return "NZD";
+    if (auSymbols.includes(tradeCode)) return "AUD";
+    return "USD";
+  }, [tradeCode, holdings, watchlist]);
+
+  const localValidationWarning = React.useMemo(() => {
+    if (tradeType !== 'BUY') return '';
+    const amountToBuy = Number(tradeQty) || 0;
+    if (amountToBuy <= 0) return '';
+    
+    const totalCashNZD = summary?.cashBalance ?? 0;
+    let rate = 1.0;
+    if (selectedCurrency === 'USD') rate = 1.65;
+    if (selectedCurrency === 'AUD') rate = 1.10;
+    
+    const costInNZD = amountToBuy * rate;
+    if (costInNZD > totalCashNZD) {
+      return `Insufficient funds. Est. cost of $${costInNZD.toFixed(2)} NZD exceeds your available balance of $${totalCashNZD.toFixed(2)} NZD.`;
+    }
+    return '';
+  }, [tradeQty, selectedCurrency, tradeType, summary]);
 
   const tradeMutation = useMutation({
     mutationFn: executeTrade,
@@ -482,6 +558,31 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
         </h3>
         
         <form onSubmit={handleTradeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          {/* Available balance block */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid var(--border-glass)',
+            padding: '12px',
+            borderRadius: '10px',
+            fontSize: '13px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Available Balance:</span>
+              <span style={{ fontSize: '10px', fontWeight: '700', color: formattedBalances ? 'var(--accent-emerald)' : 'var(--text-muted)' }}>
+                {formattedBalances ? '● Connected' : 'Manual Portfolio'}
+              </span>
+            </div>
+            <strong style={{ color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
+               {formattedBalances 
+                 ? `${formattedBalances.map(b => `$${b.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${b.currency}`).join(' / ')}`
+                 : `$${(summary?.cashBalance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} NZD`}
+            </strong>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Ticker Symbol</label>
             <select 
@@ -539,6 +640,20 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
               className="investa-input"
             />
           </div>
+
+          {localValidationWarning && (
+            <div style={{ 
+              color: 'var(--accent-amber)', 
+              fontSize: '12px', 
+              fontWeight: '600', 
+              padding: '8px 12px', 
+              background: 'rgba(245, 158, 11, 0.08)', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(245, 158, 11, 0.15)' 
+            }}>
+              ⚠️ {localValidationWarning}
+            </div>
+          )}
 
           {errorMessage && (
             <div style={{ color: 'var(--accent-rose)', fontSize: '12px', fontWeight: '600' }}>
