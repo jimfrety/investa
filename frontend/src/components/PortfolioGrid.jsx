@@ -497,7 +497,9 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
 
           <div style={{ display: 'flex', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Quantity</label>
+              <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                {tradeType === 'BUY' ? 'Amount ($ NZD)' : 'Quantity (Shares)'}
+              </label>
               <input 
                 type="number"
                 value={tradeQty}
@@ -506,6 +508,11 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
                 step="0.01"
                 className="investa-input"
               />
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                {tradeType === 'BUY' 
+                  ? `Est. Shares: ~${tradePrice > 0 ? (tradeQty / tradePrice).toFixed(4) : 0}`
+                  : `Est. Proceeds: $${(tradeQty * tradePrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>

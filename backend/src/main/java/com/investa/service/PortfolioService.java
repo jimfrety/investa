@@ -23,6 +23,7 @@ public class PortfolioService {
     private final InvestmentPolicyRepository policyRepository;
     private final WatchlistRepository watchlistRepository;
     private final CurrencyService currencyService;
+    private final SharesiesService sharesiesService;
 
     public Map<String, Object> getPortfolioSummary(Long customerId) {
         List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
@@ -131,7 +132,7 @@ public class PortfolioService {
 
     @Transactional
     public Transaction executeTrade(Long customerId, String code, String type, Double quantity, Double price, Double brokerage) {
-        log.info("Executing trade for customer {}: {} {} shares of {} at ${}", customerId, type, quantity, code, price);
+        log.info("Executing trade for customer {}: {} {} shares/amount of {} at ${}", customerId, type, quantity, code, price);
         
         Optional<Holding> holdingOpt = holdingRepository.findByCustomerIdAndCode(customerId, code);
         InvestmentPolicy policy = policyRepository.findByCustomerId(customerId)
@@ -165,22 +166,39 @@ public class PortfolioService {
         }
 
         double cash = policy.getCashAvailable() != null ? policy.getCashAvailable() : 0.0;
-        double totalCost = (quantity * price) + (type.equalsIgnoreCase("BUY") ? brokerage : -brokerage);
-        double totalCostInBase = currencyService.convertToBase(totalCost, currency);
 
         if (type.equalsIgnoreCase("BUY")) {
+            // For BUY, the quantity parameter represents the cash amount to invest (according to Sharesies API buy(company, amount))
+            double amountToBuy = quantity;
+            double totalCostInBase = currencyService.convertToBase(amountToBuy, currency);
+
             if (cash < totalCostInBase) {
                 throw new IllegalArgumentException("Insufficient cash available. Required: $" + String.format("%.2f", totalCostInBase) + " NZD, Available: $" + String.format("%.2f", cash) + " NZD");
             }
+
+            // Call Sharesies if authenticated
+            if (sharesiesService.isAuthenticated(customerId)) {
+                boolean ok = sharesiesService.buy(customerId, code, amountToBuy);
+                if (!ok) {
+                    throw new IllegalStateException("Sharesies BUY order failed. Please check connection/balance.");
+                }
+            }
+
             policy.setCashAvailable(cash - totalCostInBase);
             
+            // Calculate actual shares bought based on amount and price
+            double actualShares = (amountToBuy - brokerage) / price;
+            if (actualShares <= 0) {
+                throw new IllegalArgumentException("Buy amount must be greater than brokerage fee.");
+            }
+
             Holding holding;
             if (holdingOpt.isPresent()) {
                 holding = holdingOpt.get();
                 double oldQty = holding.getQuantity();
                 double oldAvg = holding.getAvgPurchasePrice();
-                double newQty = oldQty + quantity;
-                double newAvg = ((oldQty * oldAvg) + (quantity * price) + brokerage) / newQty;
+                double newQty = oldQty + actualShares;
+                double newAvg = ((oldQty * oldAvg) + amountToBuy) / newQty;
                 
                 holding.setQuantity(newQty);
                 holding.setAvgPurchasePrice(newAvg);
@@ -199,7 +217,7 @@ public class PortfolioService {
                         .market(market)
                         .type(assetType)
                         .risk(riskVal)
-                        .quantity(quantity)
+                        .quantity(actualShares)
                         .avgPurchasePrice(price)
                         .currentPrice(price)
                         .brokerage(brokerage)
@@ -222,24 +240,34 @@ public class PortfolioService {
             holdingRepository.save(holding);
             
         } else if (type.equalsIgnoreCase("SELL")) {
+            // For SELL, the quantity parameter represents the number of shares (according to Sharesies API sell(company, shares))
+            double sharesToSell = quantity;
             if (holdingOpt.isEmpty()) {
                 throw new IllegalArgumentException("No holding found for " + code);
             }
             Holding holding = holdingOpt.get();
             double oldQty = holding.getQuantity();
-            if (oldQty < quantity) {
-                throw new IllegalArgumentException("Cannot sell more shares than held. Held: " + oldQty + ", Sell: " + quantity);
+            if (oldQty < sharesToSell) {
+                throw new IllegalArgumentException("Cannot sell more shares than held. Held: " + oldQty + ", Sell: " + sharesToSell);
             }
             
-            double saleProceeds = (quantity * price) - brokerage;
+            // Call Sharesies if authenticated
+            if (sharesiesService.isAuthenticated(customerId)) {
+                boolean ok = sharesiesService.sell(customerId, code, sharesToSell);
+                if (!ok) {
+                    throw new IllegalStateException("Sharesies SELL order failed. Please check connection/holdings.");
+                }
+            }
+
+            double saleProceeds = (sharesToSell * price) - brokerage;
             double saleProceedsInBase = currencyService.convertToBase(saleProceeds, currency);
             policy.setCashAvailable(cash + saleProceedsInBase);
 
-            double costBasisSold = quantity * holding.getAvgPurchasePrice();
-            double gainOnSale = (quantity * price) - costBasisSold - brokerage;
+            double costBasisSold = sharesToSell * holding.getAvgPurchasePrice();
+            double gainOnSale = (sharesToSell * price) - costBasisSold - brokerage;
             holding.setRealisedGain((holding.getRealisedGain() != null ? holding.getRealisedGain() : 0.0) + gainOnSale);
 
-            double newQty = oldQty - quantity;
+            double newQty = oldQty - sharesToSell;
             if (newQty == 0) {
                 holdingRepository.delete(holding);
                 watchlistRepository.save(Watchlist.builder()
@@ -258,7 +286,7 @@ public class PortfolioService {
                         .build());
             } else {
                 holding.setQuantity(newQty);
-                holding.setUnrealisedGain((newQty * holding.getCurrentPrice()) - (newQty * holding.getAvgPurchasePrice()));
+                holding.setUnrealisedGain((newQty * price) - (newQty * holding.getAvgPurchasePrice()));
                 holding.setLastUpdated(LocalDateTime.now());
                 holdingRepository.save(holding);
             }

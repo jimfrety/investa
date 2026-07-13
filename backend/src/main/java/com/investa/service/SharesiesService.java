@@ -1467,4 +1467,110 @@ public class SharesiesService {
         }
         return resMap;
     }
+
+    public String getFundIdForSymbol(Long customerId, String symbol) {
+        if (symbol == null) return null;
+        String upper = symbol.toUpperCase();
+        for (Map.Entry<String, String> entry : instrumentCache.entrySet()) {
+            if (upper.equals(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        // Fallback: search the API directly for this symbol
+        try {
+            SharesiesSession session = getSession(customerId);
+            HttpHeaders headers = createHeaders(customerId);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            String url = session.getDataBaseUrl() + "/api/v1/instruments?Page=1&PerPage=10&Query=" + upper;
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Object instObj = response.getBody().get("instruments");
+                if (instObj instanceof List instruments) {
+                    for (Object instItem : instruments) {
+                        if (instItem instanceof Map inst) {
+                            String id = (String) inst.get("id");
+                            String code = (String) inst.get("symbol");
+                            if (code == null) code = (String) inst.get("code");
+                            if (id != null && code != null) {
+                                String cleanCode = code.toUpperCase();
+                                instrumentCache.put(id, cleanCode);
+                                if (upper.equals(cleanCode)) {
+                                    return id;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to query fund ID for symbol: {}", symbol, e);
+        }
+        return null;
+    }
+
+    public boolean buy(Long customerId, String symbol, Double amount) {
+        if (!isAuthenticated(customerId)) {
+            log.warn("Cannot execute Sharesies buy: Customer {} is not authenticated.", customerId);
+            return false;
+        }
+        String fundId = getFundIdForSymbol(customerId, symbol);
+        if (fundId == null) {
+            log.warn("Cannot execute Sharesies buy: Could not resolve fund ID for symbol {}", symbol);
+            return false;
+        }
+        SharesiesSession session = getSession(customerId);
+        try {
+            HttpHeaders headers = createHeaders(customerId);
+            Map<String, Object> body = new HashMap<>();
+            body.put("action", "place");
+            body.put("amount", amount);
+            body.put("fund_id", fundId);
+            body.put("expected_fee", amount * 0.005);
+            body.put("acting_as_id", session.getUserId());
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            String url = session.getAppBaseUrl() + "/api/cart/immediate-buy-v2";
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Sharesies BUY order placed successfully for customer {}: Symbol={}, Amount={}", customerId, symbol, amount);
+                return true;
+            }
+            log.warn("Sharesies BUY order returned non-success status: {}", response.getStatusCode());
+        } catch (Exception e) {
+            log.error("Error executing Sharesies BUY order for customer {}: {}", customerId, e.getMessage(), e);
+        }
+        return false;
+    }
+
+    public boolean sell(Long customerId, String symbol, Double shares) {
+        if (!isAuthenticated(customerId)) {
+            log.warn("Cannot execute Sharesies sell: Customer {} is not authenticated.", customerId);
+            return false;
+        }
+        String fundId = getFundIdForSymbol(customerId, symbol);
+        if (fundId == null) {
+            log.warn("Cannot execute Sharesies sell: Could not resolve fund ID for symbol {}", symbol);
+            return false;
+        }
+        SharesiesSession session = getSession(customerId);
+        try {
+            HttpHeaders headers = createHeaders(customerId);
+            Map<String, Object> body = new HashMap<>();
+            body.put("shares", shares);
+            body.put("fund_id", fundId);
+            body.put("acting_as_id", session.getUserId());
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            String url = session.getAppBaseUrl() + "/api/fund/sell";
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Sharesies SELL order placed successfully for customer {}: Symbol={}, Shares={}", customerId, symbol, shares);
+                return true;
+            }
+            log.warn("Sharesies SELL order returned non-success status: {}", response.getStatusCode());
+        } catch (Exception e) {
+            log.error("Error executing Sharesies SELL order for customer {}: {}", customerId, e.getMessage(), e);
+        }
+        return false;
+    }
 }
