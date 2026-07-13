@@ -193,8 +193,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
       setTradePrice(50.0)
     }
     
-    setTradeQty(10)
-    setTradeBrokerage(29.95)
+    setTradeQty(type === 'BUY' ? 100 : 10)
     setErrorMessage('')
     setValidationWarning('')
     setIsTradeOpen(true)
@@ -206,12 +205,17 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
       setErrorMessage('Please fill in valid quantity and price.')
       return
     }
+
+    const calculatedBrokerage = tradeType === 'BUY'
+      ? (tradeQty * 0.005)
+      : (tradeQty * tradePrice * 0.005)
+
     tradeMutation.mutate({
       code: tradeCode,
       type: tradeType,
       quantity: Number(tradeQty),
       price: Number(tradePrice),
-      brokerage: Number(tradeBrokerage)
+      brokerage: Number(calculatedBrokerage.toFixed(2))
     })
   }
 
@@ -596,49 +600,54 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
             </select>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                {tradeType === 'BUY' ? 'Amount ($ NZD)' : 'Quantity (Shares)'}
-              </label>
-              <input 
-                type="number"
-                value={tradeQty}
-                onChange={(e) => setTradeQty(Number(e.target.value))}
-                min="0.01"
-                step="0.01"
-                className="investa-input"
-              />
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                {tradeType === 'BUY' 
-                  ? `Est. Shares: ~${tradePrice > 0 ? (tradeQty / tradePrice).toFixed(4) : 0}`
-                  : `Est. Proceeds: $${(tradeQty * tradePrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-              </span>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Price ($)</label>
-              <input 
-                type="number"
-                value={tradePrice}
-                onChange={(e) => setTradePrice(Number(e.target.value))}
-                min="0.01"
-                step="0.01"
-                className="investa-input"
-              />
-            </div>
-          </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Brokerage fee ($)</label>
+            <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+              {tradeType === 'BUY' ? 'Amount to Invest ($)' : 'Quantity of Shares to Sell'}
+            </label>
             <input 
               type="number"
-              value={tradeBrokerage}
-              onChange={(e) => setTradeBrokerage(Number(e.target.value))}
-              min="0"
+              value={tradeQty}
+              onChange={(e) => setTradeQty(Number(e.target.value))}
+              min="0.01"
               step="0.01"
               className="investa-input"
+              required
             />
+          </div>
+
+          {/* Pricing & Fees Info Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px',
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid var(--border-glass)',
+            padding: '12px',
+            borderRadius: '10px',
+            fontSize: '12px'
+          }}>
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Current Price:</span>
+              <div style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '13px', marginTop: '2px' }}>
+                ${tradePrice.toFixed(2)} {selectedCurrency}
+              </div>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Est. Fee (0.5%):</span>
+              <div style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '13px', marginTop: '2px' }}>
+                ${(tradeType === 'BUY' ? (tradeQty * 0.005) : (tradeQty * tradePrice * 0.005)).toFixed(2)} {selectedCurrency}
+              </div>
+            </div>
+            <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--border-glass)', paddingTop: '8px', marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>
+                {tradeType === 'BUY' ? 'Estimated Shares:' : 'Estimated Proceeds:'}
+              </span>
+              <strong style={{ color: 'var(--accent-cyan)', fontSize: '14px' }}>
+                {tradeType === 'BUY' 
+                  ? `~${tradePrice > 0 ? ((tradeQty - (tradeQty * 0.005)) / tradePrice).toFixed(4) : 0} shares`
+                  : `$${((tradeQty * tradePrice) - (tradeQty * tradePrice * 0.005)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${selectedCurrency}`}
+              </strong>
+            </div>
           </div>
 
           {localValidationWarning && (

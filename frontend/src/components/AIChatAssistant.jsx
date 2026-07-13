@@ -97,7 +97,7 @@ Try asking:
         await executeTrade({
           code: d.code,
           type: 'BUY',
-          quantity: d.shares,
+          quantity: d.amount || (d.shares * d.price),
           price: d.price,
           brokerage: 15.00 // discounted brokerage for rebalance bundles
         })
