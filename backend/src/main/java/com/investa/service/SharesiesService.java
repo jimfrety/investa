@@ -776,8 +776,7 @@ public class SharesiesService {
                                         Double costVal = Double.valueOf(avgPriceVal);
                                         Double costPrice = costVal;
                                         if (portItem.get("average_price") == null && portItem.get("avg_cost") == null && quantity > 0.0 && (portItem.get("cost_basis") != null || portItem.get("total_cost_basis") != null)) {
-                                            double netCost = costVal - parsedFees;
-                                            costPrice = netCost / quantity;
+                                            costPrice = costVal / quantity;
                                         }
                                         
                                         if (quantity > 0.0) {
