@@ -382,6 +382,7 @@ public class ExcelImportService {
                         .overallScore(Math.round(overall * 10.0) / 10.0)
                         .targetPrice(10.0 + random.nextDouble() * 100.0)
                         .dividendYield(Watchlist.getDivYieldForCode(rs.code, rs.type))
+                        .currentPrice(Watchlist.getCurrentPriceForCode(rs.code))
                         .build());
             }
         }
@@ -428,6 +429,7 @@ public class ExcelImportService {
                     .overallScore(Math.round(overall * 10.0) / 10.0)
                     .targetPrice(ws.targetPrice)
                     .dividendYield(Watchlist.getDivYieldForCode(ws.code, ws.type))
+                    .currentPrice(Watchlist.getCurrentPriceForCode(ws.code))
                     .build());
         }
 

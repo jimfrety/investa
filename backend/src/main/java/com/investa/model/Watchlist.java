@@ -35,6 +35,31 @@ public class Watchlist {
     
     private Double targetPrice;
     private Double dividendYield;
+    private Double currentPrice;
+
+    public static double getCurrentPriceForCode(String code) {
+        if (code == null) return 50.0;
+        switch (code.toUpperCase()) {
+            case "AAPL": return 175.50;
+            case "MSFT": return 395.20;
+            case "NVDA": return 120.40;
+            case "KO": return 58.30;
+            case "PG": return 155.10;
+            case "JPM": return 185.00;
+            case "XOM": return 112.50;
+            case "PFE": return 27.80;
+            case "CRWD": return 290.00;
+            case "JEPI": return 55.40;
+            case "O": return 53.15;
+            case "SPK": return 4.95;
+            case "GNE": return 2.35;
+            case "ENB": return 48.20;
+            case "XRO": return 118.00;
+            case "VZ": return 39.50;
+            default:
+                return 45.0 + Math.random() * 50.0;
+        }
+    }
 
     public static double getDivYieldForCode(String code, String type) {
         if (code == null) return 0.0;

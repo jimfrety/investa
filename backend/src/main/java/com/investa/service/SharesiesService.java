@@ -647,6 +647,7 @@ public class SharesiesService {
                                             .targetPrice(0.0)
                                             .type("GROWTH")
                                             .dividendYield(Watchlist.getDivYieldForCode(ticker, "growth"))
+                                            .currentPrice(Watchlist.getCurrentPriceForCode(ticker))
                                             .build();
                                     watchlistRepository.save(wItem);
                                 }

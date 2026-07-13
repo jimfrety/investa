@@ -26,7 +26,12 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
                   <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>{item.shareName}</h4>
-                  <span style={{ fontSize: '12px', color: 'var(--accent-cyan)', fontWeight: '700' }}>{item.code} · {item.market}</span>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '2px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--accent-cyan)', fontWeight: '700' }}>{item.code} · {item.market}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                      ${item.currentPrice != null ? item.currentPrice.toFixed(2) : '0.00'}
+                    </span>
+                  </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                   <span style={{ fontSize: '24px', fontWeight: '800', color: 'var(--accent-indigo)' }}>{item.overallScore}</span>

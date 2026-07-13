@@ -284,6 +284,7 @@ public class PortfolioService {
                         .momentum(70)
                         .overallScore(75.0)
                         .dividendYield(Watchlist.getDivYieldForCode(holding.getCode(), holding.getType()))
+                        .currentPrice(Watchlist.getCurrentPriceForCode(holding.getCode()))
                         .build());
             } else {
                 holding.setQuantity(newQty);
