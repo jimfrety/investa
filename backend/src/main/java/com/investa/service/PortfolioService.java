@@ -87,23 +87,23 @@ public class PortfolioService {
             calcDividendsReceived += divIncome * currentRate;
         }
 
-        double totalUnrealisedGainAsset = policy.getSeedUnrealisedGains() != null ? policy.getSeedUnrealisedGains() : calcUnrealisedGainAsset;
+        double totalUnrealisedGainAsset = (holdings.size() > 0) ? calcUnrealisedGainAsset : (policy.getSeedUnrealisedGains() != null ? policy.getSeedUnrealisedGains() : 0.0);
         double totalRealisedGainAsset = calcRealisedGainAsset;
-        double totalUnrealisedCurrencyGain = policy.getSeedUnrealisedCurrencyGains() != null ? policy.getSeedUnrealisedCurrencyGains() : calcUnrealisedCurrencyGain;
+        double totalUnrealisedCurrencyGain = (holdings.size() > 0) ? calcUnrealisedCurrencyGain : (policy.getSeedUnrealisedCurrencyGains() != null ? policy.getSeedUnrealisedCurrencyGains() : 0.0);
         double totalRealisedCurrencyGain = calcRealisedCurrencyGain;
-        double totalTransactionFees = policy.getSeedTransactionFees() != null ? policy.getSeedTransactionFees() : calcTransactionFees;
-        double totalDividendsReceived = policy.getSeedDividendsReceived() != null ? policy.getSeedDividendsReceived() : calcDividendsReceived;
+        double totalTransactionFees = (holdings.size() > 0) ? calcTransactionFees : (policy.getSeedTransactionFees() != null ? policy.getSeedTransactionFees() : 0.0);
+        double totalDividendsReceived = (holdings.size() > 0) ? calcDividendsReceived : (policy.getSeedDividendsReceived() != null ? policy.getSeedDividendsReceived() : 0.0);
 
         double cash = policy.getCashAvailable() != null ? policy.getCashAvailable() : 0.0;
-        double netWorth = policy.getSharesiesTotalEstimatedValue() != null ? policy.getSharesiesTotalEstimatedValue() : totalHoldingsValue;
+        double netWorth = (holdings.size() > 0) ? (totalHoldingsValue + cash) : (policy.getSharesiesTotalEstimatedValue() != null ? policy.getSharesiesTotalEstimatedValue() : cash);
 
-        double totalReturn = policy.getSharesiesTotalReturn() != null ? policy.getSharesiesTotalReturn() : (totalUnrealisedGainAsset + totalRealisedGainAsset 
-                + totalUnrealisedCurrencyGain + totalRealisedCurrencyGain 
-                + totalDividendsReceived - totalTransactionFees);
+        double totalReturn = (holdings.size() > 0) 
+                ? (totalUnrealisedGainAsset + totalRealisedGainAsset + totalUnrealisedCurrencyGain + totalRealisedCurrencyGain + totalDividendsReceived - totalTransactionFees)
+                : (policy.getSharesiesTotalReturn() != null ? policy.getSharesiesTotalReturn() : 0.0);
 
-        double amountPutIn = policy.getSharesiesAmountPutIn() != null ? policy.getSharesiesAmountPutIn() : totalCostBasis;
+        double amountPutIn = (holdings.size() > 0) ? totalCostBasis : (policy.getSharesiesAmountPutIn() != null ? policy.getSharesiesAmountPutIn() : 0.0);
         
-        double simpleReturnPercent = policy.getSharesiesSimpleReturn() != null ? policy.getSharesiesSimpleReturn() : (amountPutIn > 0 ? (totalReturn / amountPutIn) * 100.0 : 0.0);
+        double simpleReturnPercent = amountPutIn > 0 ? (totalReturn / amountPutIn) * 100.0 : 0.0;
 
         Map<String, Object> summary = new HashMap<>();
         summary.put("holdingsValue", totalHoldingsValue);
