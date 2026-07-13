@@ -762,16 +762,22 @@ public class SharesiesService {
                                     if (fundId == null) continue;
                                     String sharesVal = getFirstPresentKey(portItem, "shares_owned", "shares", "quantity", "units", "total_shares", "balance", "amount", "total_units", "current_shares");
                                     String avgPriceVal = getFirstPresentKey(portItem, "average_price", "avg_cost", "cost_price", "average_cost_price", "purchase_price", "avg_purchase_price", "cost_basis", "total_cost_basis");
+                                    String feesValStr = getFirstPresentKey(portItem, "transaction_fees", "fees", "brokerage");
                                     
                                     if (sharesVal == null) sharesVal = "0.0";
                                     if (avgPriceVal == null) avgPriceVal = "0.0";
+                                    double parsedFees = 0.0;
+                                    if (feesValStr != null) {
+                                        try { parsedFees = Double.parseDouble(feesValStr); } catch (NumberFormatException ignored) {}
+                                    }
 
                                     try {
                                         Double quantity = Double.valueOf(sharesVal);
                                         Double costVal = Double.valueOf(avgPriceVal);
                                         Double costPrice = costVal;
                                         if (portItem.get("average_price") == null && portItem.get("avg_cost") == null && quantity > 0.0 && (portItem.get("cost_basis") != null || portItem.get("total_cost_basis") != null)) {
-                                            costPrice = costVal / quantity;
+                                            double netCost = costVal - parsedFees;
+                                            costPrice = netCost / quantity;
                                         }
                                         
                                         if (quantity > 0.0) {
@@ -815,21 +821,30 @@ public class SharesiesService {
                                             if (invValueLocal > 0.0 && quantity > 0.0) {
                                                 currentPrice = invValueLocal / quantity;
                                             } else if (invValueLocal == 0.0 && quantity > 0.0 && currentPrice > 0.0) {
-                                                invValueLocal = quantity * currentPrice;
+                                        invValueLocal = quantity * currentPrice;
                                             }
 
                                             Integer riskVal = extractRisk(instInfo, extractRisk(portItem, 5));
 
                                             double unregGain = (quantity * currentPrice) - (quantity * costPrice);
-                                            String ugValStr = getFirstPresentKey(portItem, "unrealised_gain", "unrealised_pnl", "gain", "gain_loss", "total_gain", "unrealised_cop_gain", "unrealised_cop_pnl");
-                                            if (ugValStr != null) {
-                                                try {
-                                                    double parsedUg = Double.parseDouble(ugValStr);
-                                                    if (!"NZD".equalsIgnoreCase(currency) && ugValStr.toLowerCase().contains("nzd")) {
-                                                        parsedUg = currencyService.convertFromBase(parsedUg, currency);
-                                                    }
-                                                    unregGain = parsedUg;
-                                                } catch (Exception ignored) {}
+                                            if (portItem.get("total_return_detail") instanceof Map trDetail) {
+                                                Object ucg = trDetail.get("unrealised_capital_gains");
+                                                if (ucg != null) {
+                                                    try {
+                                                        unregGain = Double.parseDouble(ucg.toString());
+                                                    } catch (Exception ignored) {}
+                                                }
+                                            } else {
+                                                String ugValStr = getFirstPresentKey(portItem, "unrealised_gain", "unrealised_pnl", "gain", "gain_loss", "total_gain", "unrealised_cop_gain", "unrealised_cop_pnl");
+                                                if (ugValStr != null) {
+                                                    try {
+                                                        double parsedUg = Double.parseDouble(ugValStr);
+                                                        if (!"NZD".equalsIgnoreCase(currency) && ugValStr.toLowerCase().contains("nzd")) {
+                                                            parsedUg = currencyService.convertFromBase(parsedUg, currency);
+                                                        }
+                                                        unregGain = parsedUg;
+                                                    } catch (Exception ignored) {}
+                                                }
                                             }
 
                                             double simpRet = 0.0;
@@ -847,7 +862,7 @@ public class SharesiesService {
                                             }
 
                                             Double purchaseExchangeRate = null;
-                                            double feesLocal = 0.0;
+                                            double feesLocal = parsedFees;
                                             double divLocal = 0.0;
                                             double costBasisLocal = quantity * costPrice;
                                             if (costBasisLocal > 0.0 && !"NZD".equalsIgnoreCase(currency)) {
@@ -878,11 +893,6 @@ public class SharesiesService {
                                                 String divlStr = getFirstPresentKey(portItem, "dividends_received", "dividends");
                                                 if (divlStr != null) {
                                                     try { divLocal = Double.parseDouble(divlStr); } catch (Exception ignored) {}
-                                                }
-
-                                                String feesStr = getFirstPresentKey(portItem, "transaction_fees", "fees", "brokerage");
-                                                if (feesStr != null) {
-                                                    try { feesLocal = Double.parseDouble(feesStr); } catch (Exception ignored) {}
                                                 }
 
                                                 double liveRate = (invValue > 0.0) ? (ivHome / invValue) : currencyService.getRateToBase(currency);
