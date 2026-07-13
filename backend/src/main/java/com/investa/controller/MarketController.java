@@ -50,6 +50,13 @@ public class MarketController {
         double maxRisk = policy.getMaxRisk() != null ? policy.getMaxRisk() : 4.5;
 
         for (Watchlist item : watchlist) {
+            if (item.getCurrentPrice() == null) {
+                item.setCurrentPrice(Watchlist.getCurrentPriceForCode(item.getCode()));
+            }
+            if (item.getDividendYield() == null) {
+                item.setDividendYield(Watchlist.getDivYieldForCode(item.getCode(), item.getType()));
+            }
+
             int fit = 75;
             if (item.getRisk() != null) {
                 if (item.getRisk() > maxRisk) {
