@@ -602,7 +602,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-              {tradeType === 'BUY' ? 'Amount to Invest ($)' : 'Quantity of Shares to Sell'}
+              {tradeType === 'BUY' ? `Amount to Invest (${selectedCurrency})` : 'Quantity of Shares to Sell'}
             </label>
             <input 
               type="number"
