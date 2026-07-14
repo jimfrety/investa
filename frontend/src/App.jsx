@@ -288,12 +288,12 @@ export default function App() {
               </span>
             </div>
 
-            <div className="glass-panel stat-card" style={{ minWidth: '135px', padding: '12px 14px', borderRadius: '12px' }}>
-              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '600' }}>SIMPLE RETURN</span>
-              <span style={{ fontSize: '18px', fontWeight: '800', color: simpleReturn >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
-                {simpleReturn >= 0 ? '+' : ''}${simpleReturn.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div className="glass-panel stat-card" style={{ minWidth: '150px', padding: '12px 14px', borderRadius: '12px' }}>
+              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '600' }}>UNREALISED GAIN/LOSS</span>
+              <span style={{ fontSize: '18px', fontWeight: '800', color: unrealised >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+                {unrealised >= 0 ? '+' : ''}${unrealised.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 <span style={{ fontSize: '11px', fontWeight: '600', marginLeft: '4px', opacity: 0.8 }}>
-                  ({simpleReturnPercent >= 0 ? '+' : ''}{simpleReturnPercent.toFixed(2)}%)
+                  ({unrealisedPct >= 0 ? '+' : ''}{unrealisedPct.toFixed(2)}%)
                 </span>
               </span>
             </div>
