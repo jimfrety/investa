@@ -107,7 +107,7 @@ public class PortfolioService {
         double netWorth = (holdings.size() > 0) ? (totalHoldingsValue + cash) : (policy.getSharesiesTotalEstimatedValue() != null ? policy.getSharesiesTotalEstimatedValue() : cash);
 
         double totalReturn = (holdings.size() > 0) 
-                ? (totalUnrealisedGainAsset + totalRealisedGainAsset + totalUnrealisedCurrencyGain + totalRealisedCurrencyGain + totalDividendsReceived)
+                ? (totalUnrealisedGain + totalUnrealisedCurrencyGain + totalDividendsReceived + totalTransactionFees)
                 : (policy.getSharesiesTotalReturn() != null ? policy.getSharesiesTotalReturn() : 0.0);
 
         double amountPutIn = (holdings.size() > 0) ? totalCostBasis : (policy.getSharesiesAmountPutIn() != null ? policy.getSharesiesAmountPutIn() : 0.0);
