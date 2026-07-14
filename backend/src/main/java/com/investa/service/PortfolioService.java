@@ -104,13 +104,14 @@ public class PortfolioService {
         double totalDividendsReceived = (holdings.size() > 0) ? calcDividendsReceived : (policy.getSeedDividendsReceived() != null ? policy.getSeedDividendsReceived() : 0.0);
 
         double cash = policy.getCashAvailable() != null ? policy.getCashAvailable() : 0.0;
-        double netWorth = (holdings.size() > 0) ? (totalHoldingsValue + cash) : (policy.getSharesiesTotalEstimatedValue() != null ? policy.getSharesiesTotalEstimatedValue() : cash);
 
         double totalReturn = (holdings.size() > 0) 
                 ? (totalUnrealisedGain + totalUnrealisedCurrencyGain + totalDividendsReceived + totalTransactionFees)
                 : (policy.getSharesiesTotalReturn() != null ? policy.getSharesiesTotalReturn() : 0.0);
 
         double amountPutIn = (holdings.size() > 0) ? totalCostBasis : (policy.getSharesiesAmountPutIn() != null ? policy.getSharesiesAmountPutIn() : 0.0);
+
+        double netWorth = (holdings.size() > 0) ? (totalReturn + amountPutIn) : (policy.getSharesiesTotalEstimatedValue() != null ? policy.getSharesiesTotalEstimatedValue() : cash);
         
         double simpleReturnPercent = amountPutIn > 0 ? (totalReturn / amountPutIn) * 100.0 : 0.0;
 
