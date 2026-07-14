@@ -850,15 +850,6 @@ public class SharesiesService {
                                             if (costPrice > 0.0) {
                                                 simpRet = ((currentPrice - costPrice) / costPrice) * 100.0;
                                             }
-                                            String srVal = getFirstPresentKey(portItem, "simple_return", "unrealised_simple_return", "total_return", "unrealised_total_return", "return_percentage", "return_pct");
-                                            if (srVal != null) {
-                                                try {
-                                                    double parsedRet = Double.parseDouble(srVal);
-                                                    if (!(parsedRet == -100.0 && currentPrice > 0.0 && costPrice > 0.0)) {
-                                                        simpRet = parsedRet;
-                                                    }
-                                                } catch (NumberFormatException ignored) {}
-                                            }
 
                                             Double purchaseExchangeRate = null;
                                             double feesLocal = parsedFees;

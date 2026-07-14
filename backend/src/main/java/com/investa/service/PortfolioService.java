@@ -85,6 +85,11 @@ public class PortfolioService {
             double brokerage = h.getBrokerage() != null ? h.getBrokerage() : 0.0;
             calcTransactionFees += brokerage * currentRate;
             calcDividendsReceived += divHome;
+
+            // Log validation for each share
+            double simpleReturnVal = currentVal - cost;
+            double validationDiff = currentVal - simpleReturnVal;
+            System.out.println("VALIDATION [Share: " + h.getCode() + "]: Current Value (" + currentVal + ") - Simple Return (" + simpleReturnVal + ") = " + validationDiff + " (Total Cost Basis: " + cost + ")");
         }
         
         if (holdings.size() > 0) {
@@ -107,7 +112,11 @@ public class PortfolioService {
 
         double amountPutIn = (holdings.size() > 0) ? totalCostBasis : (policy.getSharesiesAmountPutIn() != null ? policy.getSharesiesAmountPutIn() : 0.0);
         
-        double simpleReturnPercent = amountPutIn > 0 ? (totalReturn / amountPutIn) * 100.0 : 0.0;
+        double portfolioSimpleReturn = (holdings.size() > 0)
+                ? (totalHoldingsValue - totalCostBasis)
+                : (policy.getSharesiesTotalReturn() != null ? policy.getSharesiesTotalReturn() : 0.0);
+
+        double simpleReturnPercent = amountPutIn > 0 ? (portfolioSimpleReturn / amountPutIn) * 100.0 : 0.0;
 
         Map<String, Object> summary = new HashMap<>();
         summary.put("holdingsValue", totalHoldingsValue);
@@ -120,6 +129,7 @@ public class PortfolioService {
         summary.put("dividendIncome", totalDividendIncome);
         summary.put("holdingsCount", holdings.size());
         summary.put("amountPutIn", amountPutIn);
+        summary.put("simpleReturn", portfolioSimpleReturn);
         summary.put("simpleReturnPercent", simpleReturnPercent);
 
         // Total Return details
