@@ -58,7 +58,7 @@ public class PortfolioService {
         for (Holding h : holdings) {
             double currentVal = h.getQuantity() * h.getCurrentPrice();
             double cost = h.getQuantity() * h.getAvgPurchasePrice();
-            double unrealised = cost - currentVal;
+            double unrealised = currentVal - cost;
             h.setUnrealisedGain(unrealised);
             
             String currency = h.getCurrency() != null ? h.getCurrency() : "NZD";
@@ -79,7 +79,7 @@ public class PortfolioService {
             // Detailed Total Return Component calculations in base currency (NZD)
             calcUnrealisedGainAsset += unrealised * currentRate;
             calcRealisedGainAsset += realised * currentRate;
-            calcUnrealisedCurrencyGain += (purchaseRate - currentRate) * cost;
+            calcUnrealisedCurrencyGain += (currentRate - purchaseRate) * cost;
             calcRealisedCurrencyGain += realised * (currentRate - purchaseRate);
             
             double brokerage = h.getBrokerage() != null ? h.getBrokerage() : 0.0;
@@ -87,13 +87,13 @@ public class PortfolioService {
             calcDividendsReceived += divHome;
 
             // Log validation for each share
-            double unrealisedVal = cost - currentVal;
-            double validationDiff = cost - unrealisedVal;
-            System.out.println("VALIDATION [Share: " + h.getCode() + "]: Total Cost Basis (" + cost + ") - Unrealised Gain/Loss (" + unrealisedVal + ") = " + validationDiff + " (Current Value: " + currentVal + ")");
+            double unrealisedVal = currentVal - cost;
+            double validationDiff = currentVal - unrealisedVal;
+            System.out.println("VALIDATION [Share: " + h.getCode() + "]: Current Value (" + currentVal + ") - Unrealised Gain/Loss (" + unrealisedVal + ") = " + validationDiff + " (Total Cost Basis: " + cost + ")");
         }
         
         if (holdings.size() > 0) {
-            totalUnrealisedGain = totalCostBasis - totalHoldingsValue;
+            totalUnrealisedGain = totalHoldingsValue - totalCostBasis;
         }
 
         double totalUnrealisedGainAsset = (holdings.size() > 0) ? calcUnrealisedGainAsset : (policy.getSeedUnrealisedGains() != null ? policy.getSeedUnrealisedGains() : 0.0);

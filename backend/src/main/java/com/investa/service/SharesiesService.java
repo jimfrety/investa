@@ -865,14 +865,14 @@ public class SharesiesService {
                                                 try { divHome = Double.parseDouble(divhStr); } catch (Exception ignored) {}
                                             }
 
+                                            double ivHome = invValue;
+                                            String ivhStr = getFirstPresentKey(portItem, "investment_value_home", "market_value_home", "value_home", "current_value_home");
+                                            if (ivhStr != null) {
+                                                try { ivHome = Double.parseDouble(ivhStr); } catch (Exception ignored) {}
+                                            }
+
                                             double costBasisLocal = quantity * costPrice;
                                             if (costBasisLocal > 0.0 && !"NZD".equalsIgnoreCase(currency)) {
-                                                double ivHome = 0.0;
-                                                String ivhStr = getFirstPresentKey(portItem, "investment_value_home", "market_value_home", "value_home", "current_value_home");
-                                                if (ivhStr != null) {
-                                                    try { ivHome = Double.parseDouble(ivhStr); } catch (Exception ignored) {}
-                                                }
-
                                                 double trHome = 0.0;
                                                 String trhStr = getFirstPresentKey(portItem, "total_return_home", "return_home", "pnl_home");
                                                 if (trhStr != null) {
@@ -905,7 +905,7 @@ public class SharesiesService {
                                                     .currentPrice(currentPrice)
                                                     .unrealisedGain(unregGain)
                                                     .simpleReturn(simpRet)
-                                                    .investmentValue(invValue)
+                                                    .investmentValue(ivHome)
                                                     .market(market)
                                                     .currency(currency)
                                                     .country(country)
