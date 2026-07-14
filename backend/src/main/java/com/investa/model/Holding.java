@@ -36,6 +36,7 @@ public class Holding {
     private Double unrealisedGain;
     private Double realisedGain;
     private Double dividendIncome;
+    private Double dividendIncomeHome;
     private Double simpleReturn; // Simple return percentage from spreadsheet
     private Double investmentValue; // Investment value in home currency (NZD)
 

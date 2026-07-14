@@ -863,6 +863,17 @@ public class SharesiesService {
                                             Double purchaseExchangeRate = null;
                                             double feesLocal = parsedFees;
                                             double divLocal = 0.0;
+                                            String divlStr = getFirstPresentKey(portItem, "dividends_received", "dividends");
+                                            if (divlStr != null) {
+                                                try { divLocal = Double.parseDouble(divlStr); } catch (Exception ignored) {}
+                                            }
+
+                                            double divHome = divLocal;
+                                            String divhStr = getFirstPresentKey(portItem, "dividends_received_home", "dividends_home");
+                                            if (divhStr != null) {
+                                                try { divHome = Double.parseDouble(divhStr); } catch (Exception ignored) {}
+                                            }
+
                                             double costBasisLocal = quantity * costPrice;
                                             if (costBasisLocal > 0.0 && !"NZD".equalsIgnoreCase(currency)) {
                                                 double ivHome = 0.0;
@@ -881,17 +892,6 @@ public class SharesiesService {
                                                 String ucghStr = getFirstPresentKey(portItem, "unrealised_capital_gains_home", "unrealised_gain_home", "unrealised_pnl_home");
                                                 if (ucghStr != null) {
                                                     try { ucgHome = Double.parseDouble(ucghStr); } catch (Exception ignored) {}
-                                                }
-
-                                                double divHome = 0.0;
-                                                String divhStr = getFirstPresentKey(portItem, "dividends_received_home", "dividends_home");
-                                                if (divhStr != null) {
-                                                    try { divHome = Double.parseDouble(divhStr); } catch (Exception ignored) {}
-                                                }
-
-                                                String divlStr = getFirstPresentKey(portItem, "dividends_received", "dividends");
-                                                if (divlStr != null) {
-                                                    try { divLocal = Double.parseDouble(divlStr); } catch (Exception ignored) {}
                                                 }
 
                                                 double liveRate = (invValue > 0.0) ? (ivHome / invValue) : currencyService.getRateToBase(currency);
@@ -923,6 +923,7 @@ public class SharesiesService {
                                                     .purchaseExchangeRate(purchaseExchangeRate)
                                                     .brokerage(feesLocal)
                                                     .dividendIncome(divLocal)
+                                                    .dividendIncomeHome(divHome)
                                                     .lastUpdated(java.time.LocalDateTime.now())
                                                     .notes("Synced from Sharesies API with live instrument data")
                                                     .build();

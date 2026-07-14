@@ -74,8 +74,9 @@ public class PortfolioService {
             totalRealisedGain += currencyService.convertToBase(realised, currency);
 
             double divIncome = h.getDividendIncome() != null ? h.getDividendIncome() : 0.0;
-            totalDividendIncome += currencyService.convertToBase(divIncome, currency);
-
+            double divHome = h.getDividendIncomeHome() != null ? h.getDividendIncomeHome() : currencyService.convertToBase(divIncome, currency);
+            totalDividendIncome += divHome;
+ 
             // Detailed Total Return Component calculations in base currency (NZD)
             calcUnrealisedGainAsset += unrealised * currentRate;
             calcRealisedGainAsset += realised * currentRate;
@@ -84,7 +85,7 @@ public class PortfolioService {
             
             double brokerage = h.getBrokerage() != null ? h.getBrokerage() : 0.0;
             calcTransactionFees += brokerage * currentRate;
-            calcDividendsReceived += divIncome * currentRate;
+            calcDividendsReceived += divHome;
         }
 
         double totalUnrealisedGainAsset = (holdings.size() > 0) ? calcUnrealisedGainAsset : (policy.getSeedUnrealisedGains() != null ? policy.getSeedUnrealisedGains() : 0.0);
