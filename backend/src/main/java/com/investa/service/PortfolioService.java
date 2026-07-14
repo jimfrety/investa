@@ -67,8 +67,7 @@ public class PortfolioService {
 
             double invVal = h.getInvestmentValue() != null ? h.getInvestmentValue() : currencyService.convertToBase(currentVal, currency);
             totalHoldingsValue += invVal;
-            totalCostBasis += currencyService.convertToBase(cost, currency);
-            totalUnrealisedGain += currencyService.convertToBase(unrealised, currency);
+            totalCostBasis += cost * purchaseRate;
             
             double realised = h.getRealisedGain() != null ? h.getRealisedGain() : 0.0;
             totalRealisedGain += currencyService.convertToBase(realised, currency);
@@ -86,6 +85,10 @@ public class PortfolioService {
             double brokerage = h.getBrokerage() != null ? h.getBrokerage() : 0.0;
             calcTransactionFees += brokerage * currentRate;
             calcDividendsReceived += divHome;
+        }
+        
+        if (holdings.size() > 0) {
+            totalUnrealisedGain = totalHoldingsValue - totalCostBasis;
         }
 
         double totalUnrealisedGainAsset = (holdings.size() > 0) ? calcUnrealisedGainAsset : (policy.getSeedUnrealisedGains() != null ? policy.getSeedUnrealisedGains() : 0.0);

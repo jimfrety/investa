@@ -203,9 +203,9 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
           <div className="return-breakdown-inner" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '6px' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>📈 Unrealised Asset Gains</span>
-                <span style={{ fontWeight: '700', color: (summary?.unrealisedAssetGains ?? 0) >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
-                  {(summary?.unrealisedAssetGains ?? 0) >= 0 ? '+' : ''}${(summary?.unrealisedAssetGains ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span style={{ color: 'var(--text-secondary)' }}>📈 Unrealised Gain/Loss</span>
+                <span style={{ fontWeight: '700', color: (summary?.unrealisedGain ?? 0) >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+                  {(summary?.unrealisedGain ?? 0) >= 0 ? '+' : ''}${(summary?.unrealisedGain ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '6px' }}>
