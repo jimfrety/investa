@@ -20,8 +20,11 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
   const historicalData = React.useMemo(() => {
     if (rawSnapshots.length === 0) return []
     
+    // Filter out any snapshots with invalid, zero, or negative total values
+    const validSnapshots = rawSnapshots.filter(s => s.totalValue && s.totalValue > 0)
+    
     // Explicitly sort snapshots chronologically (ascending by date)
-    const sortedSnapshots = [...rawSnapshots].sort((a, b) => {
+    const sortedSnapshots = [...validSnapshots].sort((a, b) => {
       if (!a.snapshotDate || !b.snapshotDate) return 0
       return a.snapshotDate.localeCompare(b.snapshotDate)
     })

@@ -433,11 +433,13 @@ public class ExcelImportService {
                     .build());
         }
 
-        // Re-generate snapshots history
-        double startValue = totalPortfolioValue - 15000.0;
+        // Re-generate snapshots history (ensuring all generated values are strictly positive)
+        double startValue = Math.max(1000.0, totalPortfolioValue * 0.7);
+        double incrementalStep = (totalPortfolioValue - startValue) / 30.0;
         for (int i = 30; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
-            double dailyValue = startValue + ((30 - i) * 500.0) + (random.nextDouble() * 2000.0);
+            double dailyValue = startValue + ((30 - i) * incrementalStep) + (random.nextDouble() * (totalPortfolioValue * 0.05));
+            dailyValue = Math.max(100.0, dailyValue);
             snapshotRepository.save(PortfolioSnapshot.builder()
                     .customerId(customerId)
                     .snapshotDate(date)
