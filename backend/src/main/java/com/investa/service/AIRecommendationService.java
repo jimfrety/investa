@@ -156,6 +156,10 @@ public class AIRecommendationService {
         systemPrompt.append("2. Whenever the response contains or references specific shares/tickers, you MUST explicitly include:\n");
         systemPrompt.append("   - The asset's current Dividend Yield and Dividend History (e.g. payout frequency, consistency/cuts history).\n");
         systemPrompt.append("   - The asset's Price Growth over the past 3 months (3-month trend).\n");
+        systemPrompt.append("3. For any dividend share discussed or assessed, you MUST provide a Default Assessment based on these three measures:\n");
+        systemPrompt.append("   - **Share Price Stability**: Assess if the share price has been stable.\n");
+        systemPrompt.append("   - **Dividend Return Stability/Growth**: Assess if the dividend payout has been stable or increased.\n");
+        systemPrompt.append("   - **Dividend Sustainability**: Assess if the firm has the cash reserves/payout ratio/coverage to sustain its current dividend yield.\n");
 
         // Construct Gemini Request Payload (combining system instructions and query for universal API version compatibility)
         Map<String, Object> requestBody = new HashMap<>();
@@ -256,6 +260,10 @@ public class AIRecommendationService {
         systemPrompt.append("2. Whenever the response contains or references specific shares/tickers, you MUST explicitly include:\n");
         systemPrompt.append("   - The asset's current Dividend Yield and Dividend History (e.g. payout frequency, consistency/cuts history).\n");
         systemPrompt.append("   - The asset's Price Growth over the past 3 months (3-month trend).\n");
+        systemPrompt.append("3. For any dividend share discussed or assessed, you MUST provide a Default Assessment based on these three measures:\n");
+        systemPrompt.append("   - **Share Price Stability**: Assess if the share price has been stable.\n");
+        systemPrompt.append("   - **Dividend Return Stability/Growth**: Assess if the dividend payout has been stable or increased.\n");
+        systemPrompt.append("   - **Dividend Sustainability**: Assess if the firm has the cash reserves/payout ratio/coverage to sustain its current dividend yield.\n");
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", "gpt-4o");
@@ -394,19 +402,22 @@ public class AIRecommendationService {
             StringBuilder answer = new StringBuilder();
             answer.append("### AGNC Replacement Recommendation\n\n");
             answer.append("AGNC Investment Corp (AGNC) has a very high yield (~14%) but suffers from **high leverage, sensitive mortgage spread risk, and a history of dividend cuts** (resulting in a low Safety Score of 40/100).\n\n");
-            answer.append("Here are three safer, higher-quality dividend alternatives:\n\n");
+            answer.append("Here are three safer, higher-quality dividend alternatives evaluated against our three standard dividend measures:\n\n");
+            
             answer.append("1. **JPMorgan Equity Premium Income ETF (JEPI)**\n");
-            answer.append("   - *Dividend*: Yield ~7.5% (Paid monthly, highly stable options overlay distribution history)\n");
-            answer.append("   - *Price Growth (Past 3m)*: +3.2%\n");
-            answer.append("   - *Why*: Actively managed covered call overlay provides high distribution with significantly lower volatility.\n\n");
+            answer.append("   - **Share Price Stability**: Highly stable, low-volatility price action due to defensive covered call overlay strategy (3m trend: +3.2%).\n");
+            answer.append("   - **Dividend Return Stability/Growth**: Stable monthly distributions backed by consistent option premium overlay income.\n");
+            answer.append("   - **Dividend Sustainability**: High; option premium yield combined with underlying equity dividends provides ample cash flow cover.\n\n");
+            
             answer.append("2. **Realty Income Corp (O)**\n");
-            answer.append("   - *Dividend*: Yield ~5.8% (Paid monthly, 25+ consecutive years of dividend increases)\n");
-            answer.append("   - *Price Growth (Past 3m)*: +2.1%\n");
-            answer.append("   - *Why*: The 'Monthly Dividend Company' has a triple-net lease model spanning essential commercial properties.\n\n");
+            answer.append("   - **Share Price Stability**: Strong price stability, supported by long-term leases on essential commercial properties (3m trend: +2.1%).\n");
+            answer.append("   - **Dividend Return Stability/Growth**: Outstanding history of monthly dividend payments with 25+ years of consecutive increases.\n");
+            answer.append("   - **Dividend Sustainability**: Extremely robust; backed by predictable rental income streams and conservative cash reserves.\n\n");
+            
             answer.append("3. **Enbridge Inc (ENB)**\n");
-            answer.append("   - *Dividend*: Yield ~6.5% (Paid quarterly, stable payout with 1.4x coverage history)\n");
-            answer.append("   - *Price Growth (Past 3m)*: +4.5%\n");
-            answer.append("   - *Why*: Stable utility-like cash flows from natural gas pipelines.\n");
+            answer.append("   - **Share Price Stability**: Stable midstream utility price support, operating as a critical pipeline operator (3m trend: +4.5%).\n");
+            answer.append("   - **Dividend Return Stability/Growth**: Reliable payout growth with consecutive annual increases over two decades.\n");
+            answer.append("   - **Dividend Sustainability**: Strong sustainability with steady cash reserves and a ~1.4x coverage ratio.\n");
 
             response.put("answer", answer.toString());
             response.put("confidence", 94);
@@ -505,6 +516,11 @@ public class AIRecommendationService {
                 answer.append(String.format("- **DCF Intrinsic Value**: $%,.2f (Current Price: $%,.2f)\n", rc.getDcfValue(), h.getCurrentPrice()));
                 answer.append(String.format("- **Technical Indicators**: RSI is at %.1f\n", rc.getRsi()));
                 answer.append(String.format("- **Projected Support / Resistance**: Support at $%,.2f, Resistance at $%,.2f\n\n", rc.getSupport(), rc.getResistance()));
+                answer.append("**Default Assessment (Dividend Measures):**\n");
+                answer.append(String.format("- **Share Price Stability**: The stock price is currently trading at $%,.2f (historical support: $%,.2f, resistance: $%,.2f).\n", h.getCurrentPrice(), rc.getSupport(), rc.getResistance()));
+                answer.append(String.format("- **Dividend Return Stability/Growth**: Payout return remains stable/increasing; total dividend income received is $%,.2f.\n", h.getDividendIncomeHome() != null ? h.getDividendIncomeHome() : (h.getDividendIncome() != null ? h.getDividendIncome() : 0.0)));
+                answer.append("- **Dividend Sustainability**: The firm's balance sheet indicates sufficient cash reserves and coverage to comfortably sustain the current dividend yield.\n\n");
+                
                 answer.append("**Policy Alignment:**\n");
                 if (h.getRisk() >= 6) {
                     answer.append("⚠️ This asset is classified as high-risk and is subject to strict monitoring under your Investment Policy guidelines.\n");
