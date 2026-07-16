@@ -19,8 +19,15 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
   // Format snapshots for the chart — label with "Mon DD" or "Today"
   const historicalData = React.useMemo(() => {
     if (rawSnapshots.length === 0) return []
+    
+    // Explicitly sort snapshots chronologically (ascending by date)
+    const sortedSnapshots = [...rawSnapshots].sort((a, b) => {
+      if (!a.snapshotDate || !b.snapshotDate) return 0
+      return a.snapshotDate.localeCompare(b.snapshotDate)
+    })
+    
     const today = new Date().toISOString().slice(0, 10)
-    return rawSnapshots.map((s) => {
+    return sortedSnapshots.map((s) => {
       const date = s.snapshotDate // 'YYYY-MM-DD' string from Spring
       const isToday = date === today
       const label = isToday
