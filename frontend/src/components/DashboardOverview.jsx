@@ -41,13 +41,11 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
   }, [rawSnapshots])
 
   // Growth % from first to latest snapshot
+  // Growth % calculated as (Total Return / Amount Put In) * 100
   const growthPct = React.useMemo(() => {
-    if (historicalData.length < 2) return null
-    const first = historicalData[0].value
-    const last = historicalData[historicalData.length - 1].value
-    if (first === 0) return null
-    return ((last - first) / first) * 100
-  }, [historicalData])
+    if (!summary || !summary.amountPutIn) return null
+    return (summary.totalReturn / summary.amountPutIn) * 100
+  }, [summary])
 
   const hasEnoughData = historicalData.length >= 2
 
