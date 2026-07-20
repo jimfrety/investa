@@ -87,7 +87,7 @@ public class SharesiesService {
     }
 
     // Cache to map Sharesies fund UUIDs -> Ticker Code (e.g. "uuid-123" -> "MSFT")
-    private final Map<String, String> instrumentCache = new HashMap<>();
+    private final Map<String, String> instrumentCache = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Object>> catalogCache = new ConcurrentHashMap<>();
 
     private HttpHeaders createHeaders(Long customerId) {
@@ -203,8 +203,7 @@ public class SharesiesService {
 
                     log.info("Sharesies login successful for customer {}. User ID: {}", customerId, session.getUserId());
                     
-                    // Pre-populate instruments mapping cache
-                    loadInstrumentCatalog(customerId);
+                    // Pre-populate instruments mapping cache has been disabled to prevent out-of-memory errors
                     return "SUCCESS";
                 } else {
                     log.warn("Sharesies login at {} returned unauthenticated: {}", appUrl, body);
@@ -225,51 +224,6 @@ public class SharesiesService {
         log.info("Logged out customer {} from Sharesies session.", customerId);
     }
 
-    @SuppressWarnings("unchecked")
-    private void loadInstrumentCatalog(Long customerId) {
-        SharesiesSession session = getSession(customerId);
-        try {
-            log.info("Loading Sharesies instrument catalog across all pages...");
-            HttpHeaders headers = createHeaders(customerId);
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            int page = 1;
-            int totalPages = 1;
-            do {
-                String url = session.getDataBaseUrl() + "/api/v1/instruments?Page=" + page + "&PerPage=500&Sort=marketCap&PriceChangeTime=1y&Query=";
-                ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    if (page == 1 && response.getBody().get("numberOfPages") != null) {
-                        try {
-                            totalPages = Integer.parseInt(response.getBody().get("numberOfPages").toString());
-                        } catch (Exception ignored) {}
-                    }
-                    Object instObj = response.getBody().get("instruments");
-                    if (instObj instanceof List instruments) {
-                        for (Object instItem : instruments) {
-                            if (instItem instanceof Map inst) {
-                                String id = (String) inst.get("id");
-                                String symbol = (String) inst.get("symbol");
-                                if (symbol == null) {
-                                    symbol = (String) inst.get("code");
-                                }
-                                if (id != null) {
-                                    this.catalogCache.put(id, inst);
-                                    if (symbol != null) {
-                                        this.instrumentCache.put(id, symbol.toUpperCase());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                page++;
-            } while (page <= totalPages && page <= 25); // Cap at 25 pages
-            log.info("Catalog loaded. Cached {} instrument details and symbols.", this.catalogCache.size());
-        } catch (Exception e) {
-            log.warn("Failed to load instrument catalog. Falling back to lazy on-demand loading.", e);
-        }
-    }
 
     private String getSymbolForFundId(Long customerId, String fundId) {
         if (instrumentCache.containsKey(fundId)) {
@@ -1204,21 +1158,6 @@ public class SharesiesService {
         return allTransactions;
     }
 
-    private String getFundIdForSymbol(String symbol) {
-        if (symbol == null) return null;
-        for (Map.Entry<String, String> entry : instrumentCache.entrySet()) {
-            if (symbol.equalsIgnoreCase(entry.getValue())) {
-                return entry.getKey();
-            }
-        }
-        for (Map.Entry<String, Map<String, Object>> entry : catalogCache.entrySet()) {
-            Object symObj = entry.getValue().get("symbol");
-            if (symObj != null && symbol.equalsIgnoreCase(symObj.toString())) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
 
     private double fetchFeesFromOrderHistory(Long customerId, SharesiesSession session, String fundId, String currency) {
         double totalFeesForFund = 0.0;
@@ -1386,7 +1325,7 @@ public class SharesiesService {
 
             // Calculate Dividends using get_dividends endpoint
             for (Holding h : holdings) {
-                String fundId = getFundIdForSymbol(h.getCode());
+                String fundId = getFundIdForSymbol(customerId, h.getCode());
                 String cur = h.getCurrency() != null ? h.getCurrency() : "NZD";
                 
                 double divsLocal = 0.0;
