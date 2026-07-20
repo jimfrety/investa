@@ -258,9 +258,32 @@ export default function App() {
             <h1 className="gradient-text" style={{ fontSize: '28px', fontWeight: '800' }}>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-              Logged in as {user.name || user.username}
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
+                Logged in as {user.name || user.username}
+              </p>
+              <button 
+                className="mobile-only" 
+                onClick={handleLogout}
+                style={{ 
+                  background: 'none', 
+                  color: 'var(--accent-rose)', 
+                  fontSize: '11px', 
+                  fontWeight: '700', 
+                  cursor: 'pointer', 
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                  border: '1px solid rgba(244, 63, 94, 0.2)',
+                  alignItems: 'center',
+                  gap: '4px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                <LogoutIcon style={{ fontSize: '11px' }} /> Sign Out
+              </button>
+            </div>
           </div>
           
           <div className="header-stat-strip">
