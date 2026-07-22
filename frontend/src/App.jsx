@@ -581,7 +581,7 @@ export default function App() {
                   </button>
                   <button 
                     className="investa-button-secondary" 
-                    style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)' }}
+                    style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)', color: '#ffffff' }}
                     onClick={() => setShowSharesiesPrompt(false)}
                   >
                     DISMISS & USE OFFLINE MODE
@@ -635,7 +635,7 @@ export default function App() {
                   <button 
                     type="button"
                     className="investa-button-secondary" 
-                    style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)' }}
+                    style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)', color: '#ffffff' }}
                     onClick={() => setModalMode('prompt')}
                     disabled={sharesiesLoading}
                   >
@@ -692,7 +692,7 @@ export default function App() {
                   <button 
                     type="button"
                     className="investa-button-secondary" 
-                    style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)' }}
+                    style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)', color: '#ffffff' }}
                     onClick={() => setModalMode('login')}
                     disabled={sharesiesLoading}
                   >
