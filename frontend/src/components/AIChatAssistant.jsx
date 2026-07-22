@@ -10,7 +10,7 @@ import HandshakeIcon from '@mui/icons-material/Handshake'
 import CheckIcon from '@mui/icons-material/Check'
 
 // Helper function to extract potential stock tickers from response text
-const extractTickers = (text, watchlist = []) => {
+const extractTickers = (text, watchlist = [], messages = []) => {
   if (!text) return []
   
   // 1. Find all fully qualified tickers first, e.g. ASX:SSG or NZX:MEL
@@ -30,7 +30,8 @@ const extractTickers = (text, watchlist = []) => {
     'I', 'A', 'AN', 'THE', 'AND', 'BUT', 'OR', 'IF', 'OF', 'FOR', 'TO', 'BY', 'ON', 'AT', 'IN', 'NO', 'YES',
     'AI', 'US', 'USA', 'USD', 'NZD', 'AUD', 'RSI', 'DCF', 'ETF', 'RSI', 
     'HOLD', 'BUY', 'SELL', 'PAID', 'EX', 'FAQ', 'NZ', 'AU', 'UK', 'PE',
-    'RSI', 'DCF', 'NAV', 'P/E', 'EPS', 'CAGR', 'RSI', 'MACD', 'SMA'
+    'RSI', 'DCF', 'NAV', 'P/E', 'EPS', 'CAGR', 'RSI', 'MACD', 'SMA',
+    'ASX', 'NZX', 'NYSE', 'NASDAQ'
   ])
   
   const cleanMatches = matches.filter(word => !excludeWords.has(word))
@@ -40,13 +41,30 @@ const extractTickers = (text, watchlist = []) => {
     if (qualifiedMatches.some(q => q.endsWith(':' + symbol))) return
     
     // Qualify it!
-    const watchlistMatch = watchlist.find(item => {
-      const itemCode = item.code.toUpperCase()
-      const cleanItemCode = itemCode.includes(':') ? itemCode.substring(itemCode.indexOf(':') + 1) : itemCode
-      return cleanItemCode === symbol
-    })
+    // 1. Search conversation history for this symbol with a market prefix
+    let foundMarket = null
+    const historyRegex = new RegExp('\\b([A-Z]{2,6}):' + symbol + '\\b', 'i')
+    for (let idx = messages.length - 1; idx >= 0; idx--) {
+      const histMatch = messages[idx].text.match(historyRegex)
+      if (histMatch) {
+        foundMarket = histMatch[1].toUpperCase()
+        break
+      }
+    }
     
-    const market = watchlistMatch ? (watchlistMatch.market || 'NZX').toUpperCase() : 'NZX'
+    // 2. Fall back to watchlist
+    if (!foundMarket) {
+      const watchlistMatch = watchlist.find(item => {
+        const itemCode = item.code.toUpperCase()
+        const cleanItemCode = itemCode.includes(':') ? itemCode.substring(itemCode.indexOf(':') + 1) : itemCode
+        return cleanItemCode === symbol
+      })
+      if (watchlistMatch) {
+        foundMarket = (watchlistMatch.market || 'NZX').toUpperCase()
+      }
+    }
+    
+    const market = foundMarket || 'NZX'
     result.push(market + ':' + symbol)
   })
   
@@ -287,7 +305,7 @@ Try asking:
       {/* Messages Thread list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column' }}>
         {messages.map((msg, i) => {
-          const detectedTickers = msg.sender === 'assistant' ? extractTickers(msg.text, watchlist) : []
+          const detectedTickers = msg.sender === 'assistant' ? extractTickers(msg.text, watchlist, messages.slice(0, i)) : []
 
           return (
             <div 
