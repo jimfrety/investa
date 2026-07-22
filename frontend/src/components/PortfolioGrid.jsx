@@ -36,9 +36,44 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
     "SPK", "S"
   ].sort()
 
+  const { data: holdings = [], refetch } = useQuery({
+    queryKey: ['holdings'],
+    queryFn: fetchHoldings
+  })
+
+  const { data: summary } = useQuery({
+    queryKey: ['summary'],
+    queryFn: fetchSummary
+  })
+
+  const { data: watchlist = [] } = useQuery({
+    queryKey: ['watchlist'],
+    queryFn: fetchWatchlist
+  })
+
+  const { data: wallet } = useQuery({
+    queryKey: ['wallet'],
+    queryFn: fetchWallet,
+    retry: false
+  })
+
+  const selectableSymbols = React.useMemo(() => {
+    const symbolsSet = new Set(masterSymbols)
+    holdings.forEach(h => {
+      if (h.code) symbolsSet.add(h.code)
+    })
+    watchlist.forEach(w => {
+      if (w.code) symbolsSet.add(w.code)
+    })
+    return Array.from(symbolsSet).sort()
+  }, [holdings, watchlist, masterSymbols])
+
   const getShareName = (symbolCode) => {
     const held = holdings.find(h => h.code === symbolCode)
     if (held) return held.shareName
+
+    const watchItem = watchlist.find(w => w.code === symbolCode)
+    if (watchItem) return watchItem.shareName
 
     const fallbackNames = {
       "CRWD": "CrowdStrike Inc",
@@ -86,27 +121,6 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
     }
     return fallbackNames[symbolCode] || symbolCode
   }
-
-  const { data: holdings = [], refetch } = useQuery({
-    queryKey: ['holdings'],
-    queryFn: fetchHoldings
-  })
-
-  const { data: summary } = useQuery({
-    queryKey: ['summary'],
-    queryFn: fetchSummary
-  })
-
-  const { data: watchlist = [] } = useQuery({
-    queryKey: ['watchlist'],
-    queryFn: fetchWatchlist
-  })
-
-  const { data: wallet } = useQuery({
-    queryKey: ['wallet'],
-    queryFn: fetchWallet,
-    retry: false
-  })
 
   const formattedBalances = React.useMemo(() => {
     if (!wallet) return null;
@@ -183,12 +197,20 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
 
   const handleOpenTrade = (type, defaultCode = 'JEPI') => {
     setTradeType(type)
-    setTradeCode(defaultCode)
     
-    // Autofill current price if held
-    const held = holdings.find(h => h.code === defaultCode)
+    let codeToUse = defaultCode
+    if (selectableSymbols.length > 0 && !selectableSymbols.includes(codeToUse)) {
+      codeToUse = selectableSymbols[0]
+    }
+    setTradeCode(codeToUse)
+    
+    // Autofill current price if held or watchlisted
+    const held = holdings.find(h => h.code === codeToUse)
+    const watchItem = watchlist.find(w => w.code === codeToUse)
     if (held) {
       setTradePrice(held.currentPrice)
+    } else if (watchItem && watchItem.currentPrice) {
+      setTradePrice(watchItem.currentPrice)
     } else {
       setTradePrice(50.0)
     }
@@ -289,8 +311,13 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
   const handleCodeChange = (code) => {
     setTradeCode(code)
     const held = holdings.find(h => h.code === code)
+    const watchItem = watchlist.find(w => w.code === code)
     if (held) {
       setTradePrice(held.currentPrice)
+    } else if (watchItem && watchItem.currentPrice) {
+      setTradePrice(watchItem.currentPrice)
+    } else {
+      setTradePrice(50.0)
     }
     setValidationWarning('')
   }
@@ -589,14 +616,45 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>Ticker Symbol</label>
-            <select 
+            <select
               value={tradeCode}
               onChange={(e) => handleCodeChange(e.target.value)}
               className="investa-input"
             >
-              {masterSymbols.map(s => (
-                <option key={s} value={s}>{s} - {getShareName(s)}</option>
-              ))}
+              {/* Current Holdings — top priority */}
+              {holdings.length > 0 && (
+                <optgroup label="── Current Holdings ──">
+                  {holdings.map(h => (
+                    <option key={`holding-${h.code}`} value={h.code}>
+                      {h.code} – {h.shareName} ({h.quantity?.toFixed(2)} shares @ ${h.currentPrice?.toFixed(2)})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+
+              {/* Watchlist items not already in holdings */}
+              {watchlist.filter(w => !holdings.some(h => h.code === w.code)).length > 0 && (
+                <optgroup label="── Watchlist ──">
+                  {watchlist
+                    .filter(w => !holdings.some(h => h.code === w.code))
+                    .map(w => (
+                      <option key={`watch-${w.code}`} value={w.code}>
+                        {w.code} – {w.shareName} (${w.currentPrice?.toFixed(2)})
+                      </option>
+                    ))}
+                </optgroup>
+              )}
+
+              {/* All other master symbols */}
+              {masterSymbols.filter(s => !holdings.some(h => h.code === s) && !watchlist.some(w => w.code === s)).length > 0 && (
+                <optgroup label="── Other Stocks ──">
+                  {masterSymbols
+                    .filter(s => !holdings.some(h => h.code === s) && !watchlist.some(w => w.code === s))
+                    .map(s => (
+                      <option key={`master-${s}`} value={s}>{s} – {getShareName(s)}</option>
+                    ))}
+                </optgroup>
+              )}
             </select>
           </div>
 
