@@ -98,8 +98,31 @@ public class AIRecommendationService {
                 String code = (String) share.get("code");
                 String name = (String) share.get("shareName");
                 ResearchCache rc = researchService.getResearch(code);
+                
                 double currentPrice = Watchlist.getCurrentPriceForCode(code);
                 double divYield = Watchlist.getDivYieldForCode(code, "growth");
+                
+                try {
+                    String fundId = sharesiesService.getFundIdForSymbol(customerId, code);
+                    if (fundId != null) {
+                        Map<String, Object> instInfo = sharesiesService.getInstrumentDetails(customerId, fundId);
+                        String priceStr = SharesiesService.getFirstPresentKey(instInfo, "current_price", "price", "last_price", "market_price", "unit_price", "close_price", "latest_price");
+                        if (priceStr != null) {
+                            currentPrice = Double.parseDouble(priceStr);
+                        }
+                        Object yieldObj = SharesiesService.getFirstPresentKey(instInfo, "dividend_yield", "dividendYield", "yield");
+                        if (yieldObj != null) {
+                            double parsedYield = Double.parseDouble(yieldObj.toString());
+                            if (parsedYield > 0 && parsedYield < 1.0) {
+                                parsedYield = parsedYield * 100.0;
+                            }
+                            divYield = parsedYield;
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to dynamically fetch live metrics for AI prompt: " + code, e);
+                }
+
                 researchedSharesPrompt.append(String.format("- %s (%s): Current Price $%,.2f, Dividend Yield %,.2f%%, DCF Fair Value $%,.2f, Risk Rating %d/7. Support: $%,.2f, Resistance: $%,.2f. Payout ratio: %,.1f%%, forward PE: %.1f, Margin of Safety: %,.1f%%. Price stability: %s. Dividend return stability: stable/increasing. Dividend sustainability: high based on coverage/reserves.\n",
                         name, code, currentPrice, divYield, rc.getDcfValue(), 3, rc.getSupport(), rc.getResistance(), rc.getPayoutRatio() * 100.0, rc.getForwardPe(), rc.getMarginOfSafety() * 100.0,
                         rc.getRsi() > 70 ? "Overbought" : (rc.getRsi() < 30 ? "Oversold" : "Stable")));
@@ -373,6 +396,27 @@ public class AIRecommendationService {
                 ResearchCache rc = researchService.getResearch(code);
                 double currentPrice = Watchlist.getCurrentPriceForCode(code);
                 double divYield = Watchlist.getDivYieldForCode(code, "growth");
+                
+                try {
+                    String fundId = sharesiesService.getFundIdForSymbol(customerId, code);
+                    if (fundId != null) {
+                        Map<String, Object> instInfo = sharesiesService.getInstrumentDetails(customerId, fundId);
+                        String priceStr = SharesiesService.getFirstPresentKey(instInfo, "current_price", "price", "last_price", "market_price", "unit_price", "close_price", "latest_price");
+                        if (priceStr != null) {
+                            currentPrice = Double.parseDouble(priceStr);
+                        }
+                        Object yieldObj = SharesiesService.getFirstPresentKey(instInfo, "dividend_yield", "dividendYield", "yield");
+                        if (yieldObj != null) {
+                            double parsedYield = Double.parseDouble(yieldObj.toString());
+                            if (parsedYield > 0 && parsedYield < 1.0) {
+                                parsedYield = parsedYield * 100.0;
+                            }
+                            divYield = parsedYield;
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to dynamically fetch live metrics for local AI response: " + code, e);
+                }
 
                 answer.append(String.format("- **%s** (%s):\n", name, code));
                 answer.append(String.format("  * **Current Price**: $%,.2f\n", currentPrice));

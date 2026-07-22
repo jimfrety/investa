@@ -60,6 +60,7 @@ public class Watchlist {
             case "ENB": return 48.20;
             case "XRO": return 118.00;
             case "VZ": return 39.50;
+            case "SSG": return 1.39;
             default:
                 return 45.0 + Math.random() * 50.0;
         }
@@ -88,6 +89,7 @@ public class Watchlist {
             case "PG": return 2.45;
             case "XOM": return 3.20;
             case "PFE": return 5.80;
+            case "SSG": return 7.35;
             default:
                 if ("dividend".equalsIgnoreCase(type)) {
                     return 5.5;

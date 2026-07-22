@@ -77,7 +77,7 @@ public class SharesiesService {
         return getSession(customerId).getUserId();
     }
 
-    private String getFirstPresentKey(Map map, String... keys) {
+    public static String getFirstPresentKey(Map map, String... keys) {
         for (String key : keys) {
             if (map.get(key) != null) {
                 return map.get(key).toString();
@@ -236,6 +236,8 @@ public class SharesiesService {
         String shareName = upperCode;
         String market = "NZX";
         Integer riskVal = 3;
+        double priceVal = Watchlist.getCurrentPriceForCode(upperCode);
+        double yieldVal = Watchlist.getDivYieldForCode(upperCode, "growth");
         
         try {
             String fundId = getFundIdForSymbol(customerId, upperCode);
@@ -251,6 +253,25 @@ public class SharesiesService {
                 }
                 Integer risk = extractRisk(instInfo, 3);
                 if (risk != null) riskVal = risk;
+
+                // Resolve price from instInfo if available
+                String priceStr = getFirstPresentKey(instInfo, "current_price", "price", "last_price", "market_price", "unit_price", "close_price", "latest_price");
+                if (priceStr != null) {
+                    try {
+                        priceVal = Double.parseDouble(priceStr);
+                    } catch (Exception e) {}
+                }
+                
+                // Resolve dividend yield if available
+                Object yieldObj = getFirstPresentKey(instInfo, "dividend_yield", "dividendYield", "yield");
+                if (yieldObj != null) {
+                    try {
+                        yieldVal = Double.parseDouble(yieldObj.toString());
+                        if (yieldVal > 0 && yieldVal < 1.0) {
+                            yieldVal = yieldVal * 100.0;
+                        }
+                    } catch (Exception e) {}
+                }
             }
         } catch (Exception e) {
             log.warn("Failed to fetch details for adding stock to watchlist: " + upperCode, e);
@@ -267,8 +288,8 @@ public class SharesiesService {
                 .overallScore(70.0)
                 .targetPrice(0.0)
                 .type("GROWTH")
-                .dividendYield(Watchlist.getDivYieldForCode(upperCode, "growth"))
-                .currentPrice(Watchlist.getCurrentPriceForCode(upperCode))
+                .dividendYield(yieldVal)
+                .currentPrice(priceVal)
                 .build();
                 
         return watchlistRepository.save(wItem);
@@ -658,6 +679,28 @@ public class SharesiesService {
                                     Integer riskVal = extractRisk(instInfo, 3);
                                     if (riskVal == null || riskVal == 0) riskVal = 3;
 
+                                    double priceVal = Watchlist.getCurrentPriceForCode(ticker);
+                                    double yieldVal = Watchlist.getDivYieldForCode(ticker, "growth");
+
+                                    // Resolve price from instInfo if available
+                                    String priceStr = getFirstPresentKey(instInfo, "current_price", "price", "last_price", "market_price", "unit_price", "close_price", "latest_price");
+                                    if (priceStr != null) {
+                                        try {
+                                            priceVal = Double.parseDouble(priceStr);
+                                        } catch (Exception e) {}
+                                    }
+                                    
+                                    // Resolve dividend yield if available
+                                    Object yieldObj = getFirstPresentKey(instInfo, "dividend_yield", "dividendYield", "yield");
+                                    if (yieldObj != null) {
+                                        try {
+                                            yieldVal = Double.parseDouble(yieldObj.toString());
+                                            if (yieldVal > 0 && yieldVal < 1.0) {
+                                                yieldVal = yieldVal * 100.0;
+                                            }
+                                        } catch (Exception e) {}
+                                    }
+
                                     Watchlist wItem = Watchlist.builder()
                                             .customerId(customerId)
                                             .code(ticker)
@@ -669,8 +712,8 @@ public class SharesiesService {
                                             .overallScore(70.0)
                                             .targetPrice(0.0)
                                             .type("GROWTH")
-                                            .dividendYield(Watchlist.getDivYieldForCode(ticker, "growth"))
-                                            .currentPrice(Watchlist.getCurrentPriceForCode(ticker))
+                                            .dividendYield(yieldVal)
+                                            .currentPrice(priceVal)
                                             .build();
                                     watchlistRepository.save(wItem);
                                 }
