@@ -1570,4 +1570,96 @@ public class SharesiesService {
         }
         return false;
     }
+
+    public List<Map<String, Object>> searchInstruments(Long customerId, String pattern) {
+        List<Map<String, Object>> results = new ArrayList<>();
+        if (pattern == null || pattern.trim().isEmpty()) {
+            return results;
+        }
+
+        String raw = pattern.trim().toUpperCase();
+        String marketFilter = null;
+        String symbolPattern = null;
+        boolean endsWithWildcard = false;
+        boolean startsWithWildcard = false;
+
+        String symbolPart = raw;
+        if (raw.contains(":")) {
+            int colonIdx = raw.indexOf(":");
+            marketFilter = raw.substring(0, colonIdx);
+            symbolPart = raw.substring(colonIdx + 1);
+        }
+
+        if (symbolPart.startsWith("*")) {
+            startsWithWildcard = true;
+            symbolPart = symbolPart.substring(1);
+        }
+        if (symbolPart.endsWith("*")) {
+            endsWithWildcard = true;
+            symbolPart = symbolPart.substring(0, symbolPart.length() - 1);
+        }
+
+        symbolPattern = symbolPart;
+
+        try {
+            SharesiesSession session = getSession(customerId);
+            HttpHeaders headers = createHeaders(customerId);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            
+            String searchQuery = symbolPattern.replaceAll("[^A-Za-z0-9]", "");
+            if (searchQuery.isEmpty()) {
+                searchQuery = "A";
+            }
+
+            String url = session.getDataBaseUrl() + "/api/v1/instruments?Page=1&PerPage=100&Query=" + searchQuery;
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Object instObj = response.getBody().get("instruments");
+                if (instObj instanceof List instruments) {
+                    for (Object instItem : instruments) {
+                        if (instItem instanceof Map inst) {
+                            String code = (String) inst.get("symbol");
+                            if (code == null) code = (String) inst.get("code");
+                            if (code == null) continue;
+                            code = code.toUpperCase();
+
+                            String market = getFirstPresentKey(inst, "exchange", "market", "exchange_code");
+                            if (market == null) market = "NZX";
+                            market = market.toUpperCase();
+
+                            // Filter by market
+                            if (marketFilter != null && !marketFilter.isEmpty() && !marketFilter.equals(market)) {
+                                continue;
+                            }
+
+                            // Filter by symbol pattern
+                            boolean match = false;
+                            if (startsWithWildcard && endsWithWildcard) {
+                                match = code.contains(symbolPattern);
+                            } else if (startsWithWildcard) {
+                                match = code.endsWith(symbolPattern);
+                            } else if (endsWithWildcard) {
+                                match = code.startsWith(symbolPattern);
+                            } else {
+                                match = code.equals(symbolPattern);
+                            }
+
+                            if (match) {
+                                Map<String, Object> matchDetails = new HashMap<>();
+                                matchDetails.put("code", market + ":" + code);
+                                matchDetails.put("shareName", inst.get("name"));
+                                matchDetails.put("market", market);
+                                matchDetails.put("symbol", code);
+                                matchDetails.put("id", inst.get("id"));
+                                results.add(matchDetails);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to search instruments for pattern: {}", pattern, e);
+        }
+        return results;
+    }
 }

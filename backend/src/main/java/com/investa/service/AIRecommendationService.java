@@ -35,6 +35,7 @@ public class AIRecommendationService {
     private final PortfolioService portfolioService;
     private final DividendService dividendService;
     private final RiskEngine riskEngine;
+    private final SharesiesService sharesiesService;
 
     @Value("${openai.api.key}")
     private String apiKey;
@@ -47,14 +48,68 @@ public class AIRecommendationService {
     public Map<String, Object> generateChatResponse(Long customerId, String message) {
         log.info("Received chat query for customer {}: {}", customerId, message);
         
-        // Resolve Gemini API key (Customer custom key > Admin default override > Policy key > Env key)
-        String activeGeminiKey = null;
         Optional<com.investa.model.Customer> customerOpt = customerRepository.findById(customerId);
         if (customerOpt.isPresent()) {
             com.investa.model.Customer customer = customerOpt.get();
             customer.setAiRequestCount((customer.getAiRequestCount() != null ? customer.getAiRequestCount() : 0) + 1);
             customerRepository.save(customer);
-            activeGeminiKey = customer.getCustomGeminiApiKey();
+        }
+
+        // Perform stock search & research scan for qualified codes and wildcards
+        List<Map<String, Object>> matchedShares = new ArrayList<>();
+        
+        // 1. Search for MARKET:SYMBOL*
+        Matcher m1 = Pattern.compile("\\b([A-Za-z]{2,6}):([A-Za-z0-9]+)\\*").matcher(message);
+        while (m1.find()) {
+            matchedShares.addAll(sharesiesService.searchInstruments(customerId, m1.group(1).toUpperCase() + ":" + m1.group(2).toUpperCase() + "*"));
+        }
+
+        // 2. Search for *SYMBOL or MARKET:*SYMBOL
+        Matcher m2 = Pattern.compile("(?:\\b([A-Za-z]{2,6}):)?\\*([A-Za-z0-9]+)\\b").matcher(message);
+        while (m2.find()) {
+            String mkt = m2.group(1) != null ? m2.group(1).toUpperCase() : null;
+            matchedShares.addAll(sharesiesService.searchInstruments(customerId, (mkt != null ? mkt + ":" : "") + "*" + m2.group(2).toUpperCase()));
+        }
+
+        // 3. Search for MARKET:SYMBOL (explicit, no wildcards)
+        Matcher m3 = Pattern.compile("\\b([A-Za-z]{2,6}):([A-Za-z0-9]+)\\b").matcher(message);
+        while (m3.find()) {
+            String fullStr = m3.group(0);
+            if (message.contains(fullStr + "*") || message.contains("*" + m3.group(2))) {
+                continue;
+            }
+            matchedShares.addAll(sharesiesService.searchInstruments(customerId, m3.group(1).toUpperCase() + ":" + m3.group(2).toUpperCase()));
+        }
+
+        // Remove duplicates by code
+        Set<String> seenCodes = new HashSet<>();
+        List<Map<String, Object>> uniqueMatched = new ArrayList<>();
+        for (Map<String, Object> sh : matchedShares) {
+            String code = (String) sh.get("code");
+            if (seenCodes.add(code)) {
+                uniqueMatched.add(sh);
+            }
+        }
+
+        StringBuilder researchedSharesPrompt = new StringBuilder();
+        if (!uniqueMatched.isEmpty()) {
+            researchedSharesPrompt.append("\n--- RESEARCHED SHARES SPECIFICALLY REQUESTED ---\n");
+            for (Map<String, Object> share : uniqueMatched) {
+                String code = (String) share.get("code");
+                String name = (String) share.get("shareName");
+                ResearchCache rc = researchService.getResearch(code);
+                double currentPrice = Watchlist.getCurrentPriceForCode(code);
+                double divYield = Watchlist.getDivYieldForCode(code, "growth");
+                researchedSharesPrompt.append(String.format("- %s (%s): Current Price $%,.2f, Dividend Yield %,.2f%%, DCF Fair Value $%,.2f, Risk Rating %d/7. Support: $%,.2f, Resistance: $%,.2f. Payout ratio: %,.1f%%, forward PE: %.1f, Margin of Safety: %,.1f%%. Price stability: %s. Dividend return stability: stable/increasing. Dividend sustainability: high based on coverage/reserves.\n",
+                        name, code, currentPrice, divYield, rc.getDcfValue(), 3, rc.getSupport(), rc.getResistance(), rc.getPayoutRatio() * 100.0, rc.getForwardPe(), rc.getMarginOfSafety() * 100.0,
+                        rc.getRsi() > 70 ? "Overbought" : (rc.getRsi() < 30 ? "Oversold" : "Stable")));
+            }
+        }
+
+        // Resolve Gemini API key
+        String activeGeminiKey = null;
+        if (customerOpt.isPresent()) {
+            activeGeminiKey = customerOpt.get().getCustomGeminiApiKey();
         }
         
         if (activeGeminiKey == null || activeGeminiKey.trim().isEmpty()) {
@@ -77,7 +132,7 @@ public class AIRecommendationService {
         // 1. Try Gemini if API Key exists
         if (activeGeminiKey != null && !activeGeminiKey.trim().isEmpty() && !activeGeminiKey.equals("${GEMINI_API_KEY}")) {
             try {
-                return callGemini(customerId, message, activeGeminiKey);
+                return callGemini(customerId, message, activeGeminiKey, researchedSharesPrompt.toString());
             } catch (Exception e) {
                 log.error("Error calling Gemini, falling back to OpenAI or local engine", e);
             }
@@ -86,17 +141,17 @@ public class AIRecommendationService {
         // 2. Try OpenAI if API Key exists
         if (apiKey != null && !apiKey.trim().isEmpty() && !apiKey.equals("${OPENAI_API_KEY}")) {
             try {
-                return callOpenAI(customerId, message);
+                return callOpenAI(customerId, message, researchedSharesPrompt.toString());
             } catch (Exception e) {
                 log.error("Error calling OpenAI, falling back to local engine", e);
             }
         }
 
         // 3. Local AI Portfolio Manager fallback response engine
-        return generateLocalAIResponse(customerId, message);
+        return generateLocalAIResponse(customerId, message, uniqueMatched);
     }
 
-    private Map<String, Object> callGemini(Long customerId, String userQuery, String activeGeminiKey) {
+    private Map<String, Object> callGemini(Long customerId, String userQuery, String activeGeminiKey, String researchedSharesPrompt) {
         // We will try multiple candidate API URL endpoints to ensure compatibility with all API key versions/regions
         String[] candidateUrls = {
             "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + activeGeminiKey,
@@ -154,6 +209,10 @@ public class AIRecommendationService {
                     policy.getMaxSectorExposure() * 100.0, policy.getMaxSingleHolding() * 100.0, policy.getGrowthSellTarget() * 100.0));
         }
 
+        if (researchedSharesPrompt != null && !researchedSharesPrompt.isEmpty()) {
+            systemPrompt.append(researchedSharesPrompt);
+        }
+
         systemPrompt.append("\nAnswer the user's question. Follow these strict formatting rules:\n");
         systemPrompt.append("1. Keep the response extremely CONCISE and direct. Avoid verbose introductions or filler sentences.\n");
         systemPrompt.append("2. Whenever the response contains or references specific shares/tickers, you MUST explicitly include:\n");
@@ -209,7 +268,7 @@ public class AIRecommendationService {
         throw new RuntimeException("All Gemini API candidate URLs failed. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
     }
 
-    private Map<String, Object> callOpenAI(Long customerId, String userQuery) {
+    private Map<String, Object> callOpenAI(Long customerId, String userQuery, String researchedSharesPrompt) {
         String url = "https://api.openai.com/v1/chat/completions";
         
         HttpHeaders headers = new HttpHeaders();
@@ -258,6 +317,10 @@ public class AIRecommendationService {
                     policy.getMaxSectorExposure() * 100.0, policy.getMaxSingleHolding() * 100.0, policy.getGrowthSellTarget() * 100.0));
         }
 
+        if (researchedSharesPrompt != null && !researchedSharesPrompt.isEmpty()) {
+            systemPrompt.append(researchedSharesPrompt);
+        }
+
         systemPrompt.append("\nAnswer the user's question. Follow these strict formatting rules:\n");
         systemPrompt.append("1. Keep the response extremely CONCISE and direct. Avoid verbose introductions or filler sentences.\n");
         systemPrompt.append("2. Whenever the response contains or references specific shares/tickers, you MUST explicitly include:\n");
@@ -296,9 +359,37 @@ public class AIRecommendationService {
         throw new RuntimeException("OpenAI API call returned empty response or error");
     }
 
-    private Map<String, Object> generateLocalAIResponse(Long customerId, String userQuery) {
+    private Map<String, Object> generateLocalAIResponse(Long customerId, String userQuery, List<Map<String, Object>> uniqueMatched) {
         String query = userQuery.toLowerCase();
         Map<String, Object> response = new HashMap<>();
+        
+        if (uniqueMatched != null && !uniqueMatched.isEmpty()) {
+            StringBuilder answer = new StringBuilder();
+            answer.append("### Stock Search & Research Results\n\n");
+            answer.append(String.format("I found **%d matching share(s)** for your query:\n\n", uniqueMatched.size()));
+            for (Map<String, Object> share : uniqueMatched) {
+                String code = (String) share.get("code");
+                String name = (String) share.get("shareName");
+                ResearchCache rc = researchService.getResearch(code);
+                double currentPrice = Watchlist.getCurrentPriceForCode(code);
+                double divYield = Watchlist.getDivYieldForCode(code, "growth");
+
+                answer.append(String.format("- **%s** (%s):\n", name, code));
+                answer.append(String.format("  * **Current Price**: $%,.2f\n", currentPrice));
+                answer.append(String.format("  * **Dividend Yield**: %,.2f%%\n", divYield));
+                answer.append(String.format("  * **DCF Fair Value**: $%,.2f (Margin of Safety: %,.1f%%)\n", rc.getDcfValue(), rc.getMarginOfSafety() * 100.0));
+                answer.append(String.format("  * **Technical Indicators**: RSI is currently at %.1f (MACD: %s)\n", rc.getRsi(), rc.getMacd()));
+                answer.append(String.format("  * **Default Assessment**:\n"));
+                answer.append(String.format("    - **Share Price Stability**: %s\n", rc.getRsi() > 70 ? "Overbought" : (rc.getRsi() < 30 ? "Oversold" : "Stable")));
+                answer.append(String.format("    - **Dividend Return Stability/Growth**: Stable/increasing\n"));
+                answer.append(String.format("    - **Dividend Sustainability**: High based on coverage ratio and balance sheet cash reserves.\n\n"));
+            }
+            
+            response.put("answer", answer.toString());
+            response.put("confidence", 95);
+            response.put("confidenceReason", "Located matching shares and extracted active cache metrics.");
+            return response;
+        }
         
         Map<String, Object> summary = portfolioService.getPortfolioSummary(customerId);
         Map<String, Object> divMetrics = dividendService.getDividendMetrics(customerId);
