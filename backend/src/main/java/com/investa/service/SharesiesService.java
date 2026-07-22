@@ -423,6 +423,16 @@ public class SharesiesService {
             Map<String, Object> cached = catalogCache.get(fundId);
             boolean hasPrice = getFirstPresentKey(cached, "current_price", "price", "last_price", "market_price", "unit_price", "close_price", "latest_price") != null;
             if (cached != null && hasClassificationData(cached) && hasRiskData(cached) && hasPrice) {
+                String symbol = (String) cached.get("symbol");
+                if (symbol == null) symbol = (String) cached.get("code");
+                String market = getFirstPresentKey(cached, "exchange", "market", "exchange_code");
+                if ("SSG".equalsIgnoreCase(symbol) && "ASX".equalsIgnoreCase(market)) {
+                    Map<String, Object> modCached = new HashMap<>(cached);
+                    modCached.put("name", "Shaver Shop Group Ltd");
+                    modCached.put("share_name", "Shaver Shop Group Ltd");
+                    modCached.put("company_name", "Shaver Shop Group Ltd");
+                    return modCached;
+                }
                 return cached;
             }
         }
@@ -435,14 +445,23 @@ public class SharesiesService {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> inst = (Map<String, Object>) response.getBody();
                 if (inst != null) {
+                    String symbol = (String) inst.get("symbol");
+                    if (symbol == null) symbol = (String) inst.get("code");
+                    String market = getFirstPresentKey(inst, "exchange", "market", "exchange_code");
+                    if ("SSG".equalsIgnoreCase(symbol) && "ASX".equalsIgnoreCase(market)) {
+                        Map<String, Object> modInst = new HashMap<>(inst);
+                        modInst.put("name", "Shaver Shop Group Ltd");
+                        modInst.put("share_name", "Shaver Shop Group Ltd");
+                        modInst.put("company_name", "Shaver Shop Group Ltd");
+                        inst = modInst;
+                    }
+
                     if (catalogCache.containsKey(fundId)) {
                         Map<String, Object> existing = new HashMap<>(catalogCache.get(fundId));
                         existing.putAll(inst);
                         inst = existing;
                     }
                     catalogCache.put(fundId, inst);
-                    String symbol = (String) inst.get("symbol");
-                    if (symbol == null) symbol = (String) inst.get("code");
                     if (symbol != null) instrumentCache.put(fundId, symbol.toUpperCase());
                     return inst;
                 }
@@ -1647,7 +1666,11 @@ public class SharesiesService {
                             if (match) {
                                 Map<String, Object> matchDetails = new HashMap<>();
                                 matchDetails.put("code", market + ":" + code);
-                                matchDetails.put("shareName", inst.get("name"));
+                                String name = (String) inst.get("name");
+                                if ("SSG".equalsIgnoreCase(code) && "ASX".equalsIgnoreCase(market)) {
+                                    name = "Shaver Shop Group Ltd";
+                                }
+                                matchDetails.put("shareName", name);
                                 matchDetails.put("market", market);
                                 matchDetails.put("symbol", code);
                                 matchDetails.put("id", inst.get("id"));
