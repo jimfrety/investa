@@ -27,4 +27,10 @@ public class Customer {
     private boolean isAdmin;
 
     private String customGeminiApiKey;
+
+    @Builder.Default
+    private Integer loginCount = 0;
+
+    @Builder.Default
+    private Integer aiRequestCount = 0;
 }

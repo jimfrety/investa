@@ -32,6 +32,9 @@ public class AuthController {
         Optional<Customer> opt = customerRepository.findByUsername(username.trim());
         if (opt.isPresent() && opt.get().getPassword().equals(password)) {
             Customer customer = opt.get();
+            customer.setLoginCount((customer.getLoginCount() != null ? customer.getLoginCount() : 0) + 1);
+            customerRepository.save(customer);
+
             Map<String, Object> resp = new HashMap<>();
             resp.put("success", true);
             resp.put("customerId", customer.getId());

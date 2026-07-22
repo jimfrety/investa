@@ -139,9 +139,9 @@ public class MarketController {
     public ResponseEntity<?> removeFromWatchlist(
             @RequestHeader("X-Customer-ID") Long customerId,
             @PathVariable String code) {
-        List<Watchlist> items = watchlistRepository.findByCustomerIdAndCode(customerId, code.toUpperCase());
-        if (!items.isEmpty()) {
-            watchlistRepository.deleteAll(items);
+        Optional<Watchlist> item = watchlistRepository.findByCustomerIdAndCode(customerId, code.toUpperCase());
+        if (item.isPresent()) {
+            watchlistRepository.delete(item.get());
         }
         return ResponseEntity.ok(Map.of("success", true, "message", "Stock removed from watchlist."));
     }

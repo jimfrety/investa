@@ -220,6 +220,8 @@ export default function AdminConsole({ onLogout }) {
                   <tr style={{ borderBottom: '1px solid var(--border-glass)', color: 'var(--text-secondary)', fontSize: '13px' }}>
                     <th style={{ padding: '12px 8px' }}>Customer Name</th>
                     <th style={{ padding: '12px 8px' }}>Username</th>
+                    <th style={{ padding: '12px 8px' }}>Logins</th>
+                    <th style={{ padding: '12px 8px' }}>AI Requests</th>
                     <th style={{ padding: '12px 8px' }}>AI Overrides</th>
                     <th style={{ padding: '12px 8px', textAlign: 'right' }}>Actions</th>
                   </tr>
@@ -231,6 +233,8 @@ export default function AdminConsole({ onLogout }) {
                         {cust.name || 'Unnamed Client'} {cust.admin && <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'var(--accent-indigo)', marginLeft: '6px' }}>Admin</span>}
                       </td>
                       <td style={{ padding: '16px 8px', color: 'var(--text-secondary)' }}>{cust.username}</td>
+                      <td style={{ padding: '16px 8px', color: 'var(--accent-cyan)', fontWeight: '700' }}>{cust.loginCount || 0}</td>
+                      <td style={{ padding: '16px 8px', color: 'var(--accent-indigo)', fontWeight: '700' }}>{cust.aiRequestCount || 0}</td>
                       <td style={{ padding: '16px 8px' }}>
                         {cust.customGeminiApiKey ? (
                           <span style={{ color: 'var(--accent-emerald)', fontSize: '13px' }}>Custom Key Saved</span>

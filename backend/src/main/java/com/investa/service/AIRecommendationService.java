@@ -51,7 +51,10 @@ public class AIRecommendationService {
         String activeGeminiKey = null;
         Optional<com.investa.model.Customer> customerOpt = customerRepository.findById(customerId);
         if (customerOpt.isPresent()) {
-            activeGeminiKey = customerOpt.get().getCustomGeminiApiKey();
+            com.investa.model.Customer customer = customerOpt.get();
+            customer.setAiRequestCount((customer.getAiRequestCount() != null ? customer.getAiRequestCount() : 0) + 1);
+            customerRepository.save(customer);
+            activeGeminiKey = customer.getCustomGeminiApiKey();
         }
         
         if (activeGeminiKey == null || activeGeminiKey.trim().isEmpty()) {

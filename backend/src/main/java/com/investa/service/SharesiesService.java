@@ -228,9 +228,9 @@ public class SharesiesService {
         if (code == null || code.trim().isEmpty()) return null;
         String upperCode = code.trim().toUpperCase();
         
-        List<Watchlist> existing = watchlistRepository.findByCustomerIdAndCode(customerId, upperCode);
-        if (!existing.isEmpty()) {
-            return existing.get(0);
+        Optional<Watchlist> existing = watchlistRepository.findByCustomerIdAndCode(customerId, upperCode);
+        if (existing.isPresent()) {
+            return existing.get();
         }
         
         String shareName = upperCode;
@@ -418,7 +418,7 @@ public class SharesiesService {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> getInstrumentDetails(Long customerId, String fundId) {
+    public Map<String, Object> getInstrumentDetails(Long customerId, String fundId) {
         if (catalogCache.containsKey(fundId)) {
             Map<String, Object> cached = catalogCache.get(fundId);
             boolean hasPrice = getFirstPresentKey(cached, "current_price", "price", "last_price", "market_price", "unit_price", "close_price", "latest_price") != null;
