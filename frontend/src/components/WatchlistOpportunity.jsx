@@ -8,6 +8,7 @@ import CheckIcon from '@mui/icons-material/Check'
 import DeleteIcon from '@mui/icons-material/Delete'
 import PersonIcon from '@mui/icons-material/Person'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import CloseIcon from '@mui/icons-material/Close'
 
 export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeTab: propActiveTab, setActiveTab: propSetActiveTab }) {
   const queryClient = useQueryClient()
@@ -22,6 +23,17 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
   const [recommendNotes, setRecommendNotes] = useState('')
   const [recommendError, setRecommendError] = useState('')
   const [recommendSuccess, setRecommendSuccess] = useState('')
+
+  const [ignoredRecIds, setIgnoredRecIds] = useState(() => {
+    const saved = localStorage.getItem('ignoredRecommendationIds')
+    return saved ? JSON.parse(saved) : []
+  })
+
+  const handleIgnoreRecommendation = (id) => {
+    const updated = [...ignoredRecIds, id]
+    setIgnoredRecIds(updated)
+    localStorage.setItem('ignoredRecommendationIds', JSON.stringify(updated))
+  }
 
   // Queries
   const { data: watchlist = [], refetch: refetchWatchlist } = useQuery({
@@ -99,6 +111,12 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
   const isAlreadyWatchlisted = (code) => {
     return watchlist.some(item => item.code.toUpperCase() === code.toUpperCase())
   }
+
+  const visibleRecommendations = recommendations.filter(rec => {
+    const inWatchlist = isAlreadyWatchlisted(rec.code)
+    const isIgnored = ignoredRecIds.includes(rec.id)
+    return !inWatchlist && !isIgnored
+  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -245,7 +263,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-          {recommendations.map((rec) => (
+          {visibleRecommendations.map((rec) => (
             <div key={rec.id} className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '200px' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
@@ -280,27 +298,38 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
                   </span>
                 </div>
 
-                {isAlreadyWatchlisted(rec.code) ? (
-                  <button 
-                    className="investa-button-secondary" 
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', opacity: 0.6, cursor: 'default' }}
-                    disabled
-                  >
-                    <CheckIcon fontSize="small" /> Watchlisted
-                  </button>
-                ) : (
+                <div style={{ display: 'flex', gap: '8px' }}>
                   <button 
                     className="investa-button" 
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px' }}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '12px', padding: '8px 12px' }}
                     onClick={() => handleAddWatchlist(rec.code)}
                   >
-                    <AddIcon fontSize="small" /> Add to Watchlist
+                    <AddIcon fontSize="small" /> Add
                   </button>
-                )}
+                  <button 
+                    className="investa-button-secondary" 
+                    style={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '4px', 
+                      fontSize: '12px', 
+                      padding: '8px 12px', 
+                      border: '1px solid rgba(244, 63, 94, 0.2)', 
+                      backgroundColor: 'rgba(244, 63, 94, 0.05)', 
+                      color: 'var(--accent-rose)',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => handleIgnoreRecommendation(rec.id)}
+                  >
+                    <CloseIcon fontSize="small" /> Ignore
+                  </button>
+                </div>
               </div>
             </div>
           ))}
-          {recommendations.length === 0 && (
+          {visibleRecommendations.length === 0 && (
             <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', gridColumn: '1 / -1' }}>
               <p style={{ color: 'var(--text-muted)' }}>No community recommendations shared yet. Be the first to recommend a stock!</p>
             </div>
