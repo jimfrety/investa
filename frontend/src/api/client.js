@@ -183,3 +183,37 @@ export async function updateProfile(profile) {
   }
   return res.json();
 }
+
+export async function addToWatchlist(code) {
+  const res = await fetch(`${API_BASE}/market/watchlist`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code })
+  });
+  if (!res.ok) throw new Error('Failed to add stock to watchlist');
+  return res.json();
+}
+
+export async function removeFromWatchlist(code) {
+  const res = await fetch(`${API_BASE}/market/watchlist/${code}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) throw new Error('Failed to remove stock from watchlist');
+  return res.json();
+}
+
+export async function fetchRecommendations() {
+  const res = await fetch(`${API_BASE}/market/recommendations`);
+  if (!res.ok) throw new Error('Failed to fetch recommendations');
+  return res.json();
+}
+
+export async function recommendStock(payload) {
+  const res = await fetch(`${API_BASE}/market/recommendations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error('Failed to submit recommendation');
+  return res.json();
+}

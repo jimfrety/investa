@@ -1,14 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { postChatMessage, executeTrade } from '../api/client'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { postChatMessage, executeTrade, addToWatchlist, recommendStock, fetchWatchlist } from '../api/client'
 import CloseIcon from '@mui/icons-material/Close'
 import SendIcon from '@mui/icons-material/Send'
 import ForumIcon from '@mui/icons-material/Forum'
 import VerifiedIcon from '@mui/icons-material/Verified'
 import LoopIcon from '@mui/icons-material/Loop'
 import HandshakeIcon from '@mui/icons-material/Handshake'
+import CheckIcon from '@mui/icons-material/Check'
+
+// Helper function to extract potential stock tickers from response text
+const extractTickers = (text) => {
+  if (!text) return []
+  // Find all words that are 1 to 5 letters, all uppercase
+  const regex = /\b[A-Z]{1,5}\b/g
+  const matches = text.match(regex) || []
+  
+  // Filter out common non-ticker uppercase words, helper words, and currencies
+  const excludeWords = new Set([
+    'I', 'A', 'AN', 'THE', 'AND', 'BUT', 'OR', 'IF', 'OF', 'FOR', 'TO', 'BY', 'ON', 'AT', 'IN', 'NO', 'YES',
+    'AI', 'US', 'USA', 'USD', 'NZD', 'AUD', 'RSI', 'DCF', 'ETF', 'RSI', 
+    'HOLD', 'BUY', 'SELL', 'PAID', 'EX', 'FAQ', 'NZ', 'AU', 'UK', 'PE',
+    'RSI', 'DCF', 'NAV', 'P/E', 'EPS', 'CAGR', 'RSI', 'MACD', 'SMA'
+  ])
+  
+  return Array.from(new Set(matches))
+    .filter(word => !excludeWords.has(word))
+}
 
 export default function AIChatAssistant({ isOpen, onClose, preloadMessage, clearPreload, onRefetch }) {
+  const queryClient = useQueryClient()
   const [inputMessage, setInputMessage] = useState('')
   const [messages, setMessages] = useState([
     {
@@ -30,6 +51,11 @@ Try asking:
   const [executingTrades, setExecutingTrades] = useState(false)
   const [tradeSuccessMsg, setTradeSuccessMsg] = useState('')
 
+  // Inline recommendation form states
+  const [activeRecommendTicker, setActiveRecommendTicker] = useState(null) // { messageIndex, ticker }
+  const [activeRecommendNotes, setActiveRecommendNotes] = useState('')
+  const [recommendStatus, setRecommendStatus] = useState({}) // ticker -> string status
+
   const chatEndRef = useRef(null)
 
   const scrollToBottom = () => {
@@ -39,6 +65,12 @@ Try asking:
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Fetch watchlist to check existing items
+  const { data: watchlist = [], refetch: refetchWatchlist } = useQuery({
+    queryKey: ['watchlist'],
+    queryFn: fetchWatchlist
+  })
 
   // Handle preloaded prompts from the overview page
   useEffect(() => {
@@ -84,6 +116,36 @@ Try asking:
     
     // Call API
     chatMutation.mutate(text)
+  }
+
+  // Watchlist & Recommendation actions
+  const handleAddToWatchlist = async (ticker) => {
+    try {
+      await addToWatchlist(ticker)
+      queryClient.invalidateQueries({ queryKey: ['watchlist'] })
+      refetchWatchlist()
+      if (onRefetch) onRefetch()
+    } catch (err) {
+      console.error('Failed to add to watchlist', err)
+    }
+  }
+
+  const handleRecommendClick = (messageIndex, ticker) => {
+    setActiveRecommendTicker({ messageIndex, ticker })
+    setActiveRecommendNotes('')
+  }
+
+  const handleRecommendSubmit = async (ticker) => {
+    if (!activeRecommendNotes.trim()) return
+    try {
+      await recommendStock({ code: ticker, notes: activeRecommendNotes })
+      setRecommendStatus(prev => ({ ...prev, [ticker]: 'Recommended!' }))
+      queryClient.invalidateQueries({ queryKey: ['recommendations'] })
+      setActiveRecommendTicker(null)
+      setActiveRecommendNotes('')
+    } catch (err) {
+      setRecommendStatus(prev => ({ ...prev, [ticker]: 'Error: ' + err.message }))
+    }
   }
 
   // Sizing execution loop
@@ -146,6 +208,10 @@ Try asking:
     return parts.map((part, i) => i % 2 === 1 ? <strong key={i} style={{ color: 'var(--text-primary)' }}>{part}</strong> : part)
   }
 
+  const isAlreadyWatchlisted = (code) => {
+    return watchlist.some(item => item.code.toUpperCase() === code.toUpperCase())
+  }
+
   if (!isOpen) return null
 
   return (
@@ -190,72 +256,170 @@ Try asking:
 
       {/* Messages Thread list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column' }}>
-        {messages.map((msg, i) => (
-          <div 
-            key={i} 
-            className={`chat-bubble ${msg.sender}`}
-            style={{
-              alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-              backgroundColor: msg.sender === 'user' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(99, 102, 241, 0.08)',
-              border: msg.sender === 'user' ? '1px solid var(--border-glass)' : '1px solid rgba(99, 102, 241, 0.15)'
-            }}
-          >
-            {parseMarkdown(msg.text)}
+        {messages.map((msg, i) => {
+          const detectedTickers = msg.sender === 'assistant' ? extractTickers(msg.text) : []
 
-            {/* Confidence Gauge if from Assistant */}
-            {msg.sender === 'assistant' && msg.confidence > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px' }}>
-                <span className="confidence-badge">
-                  <VerifiedIcon fontSize="inherit" /> CONFIDENCE: {msg.confidence}%
-                </span>
-                <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{msg.confidenceReason}</span>
-              </div>
-            )}
+          return (
+            <div 
+              key={i} 
+              className={`chat-bubble ${msg.sender}`}
+              style={{
+                alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                backgroundColor: msg.sender === 'user' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(99, 102, 241, 0.08)',
+                border: msg.sender === 'user' ? '1px solid var(--border-glass)' : '1px solid rgba(99, 102, 241, 0.15)'
+              }}
+            >
+              {parseMarkdown(msg.text)}
 
-            {/* Auto trade action triggers */}
-            {msg.sender === 'assistant' && msg.action === 'REBALANCE' && msg.rebalanceDetails && (
-              <div 
-                style={{ 
-                  marginTop: '16px', 
-                  padding: '16px', 
-                  backgroundColor: 'rgba(16, 185, 129, 0.05)', 
-                  border: '1px solid rgba(16, 185, 129, 0.2)', 
-                  borderRadius: '10px' 
-                }}
-              >
-                <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent-emerald)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <HandshakeIcon /> ACTIONS APPROVED BY POLICY ENGINE
+              {/* Detected Tickers Quick Action Strip */}
+              {detectedTickers.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '14px', borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '10px' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '700', letterSpacing: '0.05em' }}>
+                    DETECTED STOCKS:
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {detectedTickers.map(ticker => {
+                      const isWatchlisted = isAlreadyWatchlisted(ticker)
+                      const isRecommendingThis = activeRecommendTicker && activeRecommendTicker.messageIndex === i && activeRecommendTicker.ticker === ticker
+                      const status = recommendStatus[ticker]
+
+                      return (
+                        <div key={ticker} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: 'rgba(255,255,255,0.02)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)', alignSelf: 'flex-start' }}>
+                            <strong style={{ fontSize: '11px', color: 'var(--accent-cyan)' }}>{ticker}</strong>
+                            
+                            {isWatchlisted ? (
+                              <span style={{ fontSize: '10px', color: 'var(--accent-emerald)', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: '700' }}>
+                                <CheckIcon style={{ fontSize: '11px' }} /> Watchlisted
+                              </span>
+                            ) : (
+                              <button 
+                                onClick={() => handleAddToWatchlist(ticker)}
+                                style={{ background: 'none', border: 'none', color: 'var(--accent-indigo)', fontSize: '10px', cursor: 'pointer', padding: 0, fontWeight: '700' }}
+                              >
+                                + Watchlist
+                              </button>
+                            )}
+                            
+                            <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
+
+                            {status ? (
+                              <span style={{ fontSize: '10px', color: 'var(--accent-emerald)', fontWeight: '700' }}>
+                                {status}
+                              </span>
+                            ) : (
+                              <button 
+                                onClick={() => handleRecommendClick(i, ticker)}
+                                style={{ background: 'none', border: 'none', color: 'var(--accent-emerald)', fontSize: '10px', cursor: 'pointer', padding: 0, fontWeight: '700' }}
+                              >
+                                Recommend
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Inline Recommendation Form */}
+                          {isRecommendingThis && (
+                            <div style={{ 
+                              background: 'rgba(0, 0, 0, 0.2)', 
+                              border: '1px solid rgba(99, 102, 241, 0.2)', 
+                              borderRadius: '8px', 
+                              padding: '10px', 
+                              marginTop: '4px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px'
+                            }}>
+                              <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                                Why do you recommend <strong>{ticker}</strong>?
+                              </div>
+                              <input 
+                                type="text" 
+                                placeholder="e.g. Solid dividend coverage, trading near DCF support" 
+                                value={activeRecommendNotes}
+                                onChange={(e) => setActiveRecommendNotes(e.target.value)}
+                                className="investa-input"
+                                style={{ fontSize: '11px', padding: '6px 8px' }}
+                                autoFocus
+                              />
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                <button 
+                                  style={{ background: 'transparent', border: '1px solid var(--border-glass)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '10px', padding: '3px 8px', cursor: 'pointer' }}
+                                  onClick={() => setActiveRecommendTicker(null)}
+                                >
+                                  Cancel
+                                </button>
+                                <button 
+                                  className="investa-button"
+                                  style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px' }}
+                                  onClick={() => handleRecommendSubmit(ticker)}
+                                >
+                                  Submit
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                  Would you like to execute the above {msg.rebalanceDetails.length} transactions now? Your available cash will be redeployed automatically.
+              )}
+
+              {/* Confidence Gauge if from Assistant */}
+              {msg.sender === 'assistant' && msg.confidence > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px' }}>
+                  <span className="confidence-badge">
+                    <VerifiedIcon fontSize="inherit" /> CONFIDENCE: {msg.confidence}%
+                  </span>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{msg.confidenceReason}</span>
                 </div>
-                
-                {tradeSuccessMsg ? (
-                  <div style={{ color: 'var(--accent-emerald)', fontSize: '12px', fontWeight: '700' }}>{tradeSuccessMsg}</div>
-                ) : (
-                  <button 
-                    className="investa-button" 
-                    style={{ 
-                      width: '100%', 
-                      fontSize: '12px', 
-                      padding: '8px',
-                      background: 'linear-gradient(135deg, var(--accent-emerald) 0%, #059669 100%)',
-                      boxShadow: 'none'
-                    }}
-                    onClick={() => handleDeployRebalance(msg.rebalanceDetails)}
-                    disabled={executingTrades}
-                  >
-                    {executingTrades ? (
-                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                        <LoopIcon className="rotate-icon" fontSize="small" /> EXECUTING TRADES...
-                      </span>
-                    ) : 'EXECUTE ALL DEPLOYMENTS'}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+
+              {/* Auto trade action triggers */}
+              {msg.sender === 'assistant' && msg.action === 'REBALANCE' && msg.rebalanceDetails && (
+                <div 
+                  style={{ 
+                    marginTop: '16px', 
+                    padding: '16px', 
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)', 
+                    border: '1px solid rgba(16, 185, 129, 0.2)', 
+                    borderRadius: '10px' 
+                  }}
+                >
+                  <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent-emerald)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <HandshakeIcon /> ACTIONS APPROVED BY POLICY ENGINE
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                    Would you like to execute the above {msg.rebalanceDetails.length} transactions now? Your available cash will be redeployed automatically.
+                  </div>
+                  
+                  {tradeSuccessMsg ? (
+                    <div style={{ color: 'var(--accent-emerald)', fontSize: '12px', fontWeight: '700' }}>{tradeSuccessMsg}</div>
+                  ) : (
+                    <button 
+                      className="investa-button" 
+                      style={{ 
+                        width: '100%', 
+                        fontSize: '12px', 
+                        padding: '8px',
+                        background: 'linear-gradient(135deg, var(--accent-emerald) 0%, #059669 100%)',
+                        boxShadow: 'none'
+                      }}
+                      onClick={() => handleDeployRebalance(msg.rebalanceDetails)}
+                      disabled={executingTrades}
+                    >
+                      {executingTrades ? (
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          <LoopIcon className="rotate-icon" fontSize="small" /> EXECUTING TRADES...
+                        </span>
+                      ) : 'EXECUTE ALL DEPLOYMENTS'}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
         {chatMutation.isPending && (
           <div className="chat-bubble assistant" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
             <LoopIcon className="rotate-icon" style={{ animation: 'spin 1.5s linear infinite' }} /> Performing fresh market research...

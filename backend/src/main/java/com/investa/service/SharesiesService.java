@@ -224,6 +224,56 @@ public class SharesiesService {
         log.info("Logged out customer {} from Sharesies session.", customerId);
     }
 
+    public Watchlist addToWatchlist(Long customerId, String code) {
+        if (code == null || code.trim().isEmpty()) return null;
+        String upperCode = code.trim().toUpperCase();
+        
+        List<Watchlist> existing = watchlistRepository.findByCustomerIdAndCode(customerId, upperCode);
+        if (!existing.isEmpty()) {
+            return existing.get(0);
+        }
+        
+        String shareName = upperCode;
+        String market = "NZX";
+        Integer riskVal = 3;
+        
+        try {
+            String fundId = getFundIdForSymbol(customerId, upperCode);
+            if (fundId != null) {
+                Map<String, Object> instInfo = getInstrumentDetails(customerId, fundId);
+                String nameVal = getFirstPresentKey(instInfo, "name", "share_name", "company_name");
+                if (nameVal != null && !nameVal.trim().isEmpty()) {
+                    shareName = nameVal;
+                }
+                String marketVal = getFirstPresentKey(instInfo, "exchange", "market", "exchange_code");
+                if (marketVal != null && !marketVal.trim().isEmpty()) {
+                    market = marketVal;
+                }
+                Integer risk = extractRisk(instInfo, 3);
+                if (risk != null) riskVal = risk;
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch details for adding stock to watchlist: " + upperCode, e);
+        }
+        
+        Watchlist wItem = Watchlist.builder()
+                .customerId(customerId)
+                .code(upperCode)
+                .shareName(shareName)
+                .market(market)
+                .risk(riskVal)
+                .growth(50)
+                .portfolioFit(75)
+                .overallScore(70.0)
+                .targetPrice(0.0)
+                .type("GROWTH")
+                .dividendYield(Watchlist.getDivYieldForCode(upperCode, "growth"))
+                .currentPrice(Watchlist.getCurrentPriceForCode(upperCode))
+                .build();
+                
+        return watchlistRepository.save(wItem);
+    }
+
 
     private String getSymbolForFundId(Long customerId, String fundId) {
         if (instrumentCache.containsKey(fundId)) {

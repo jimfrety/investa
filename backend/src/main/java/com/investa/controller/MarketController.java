@@ -3,18 +3,24 @@ package com.investa.controller;
 import com.investa.model.InvestmentPolicy;
 import com.investa.model.ResearchCache;
 import com.investa.model.Watchlist;
+import com.investa.model.ShareRecommendation;
 import com.investa.repository.InvestmentPolicyRepository;
 import com.investa.repository.WatchlistRepository;
+import com.investa.repository.ShareRecommendationRepository;
+import com.investa.repository.CustomerRepository;
 import com.investa.service.DividendService;
 import com.investa.service.PortfolioService;
 import com.investa.service.ResearchService;
 import com.investa.service.RiskEngine;
+import com.investa.service.SharesiesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/market")
@@ -28,6 +34,9 @@ public class MarketController {
     private final DividendService dividendService;
     private final RiskEngine riskEngine;
     private final InvestmentPolicyRepository policyRepository;
+    private final SharesiesService sharesiesService;
+    private final ShareRecommendationRepository shareRecommendationRepository;
+    private final CustomerRepository customerRepository;
 
     @GetMapping("/watchlist")
     public ResponseEntity<List<Watchlist>> getWatchlist(@RequestHeader("X-Customer-ID") Long customerId) {
@@ -109,5 +118,85 @@ public class MarketController {
     @GetMapping("/dividends/payments")
     public ResponseEntity<List<Map<String, Object>>> getDividendPayments(@RequestHeader("X-Customer-ID") Long customerId) {
         return ResponseEntity.ok(dividendService.getDividendPayments(customerId));
+    }
+
+    @PostMapping("/watchlist")
+    public ResponseEntity<?> addToWatchlist(
+            @RequestHeader("X-Customer-ID") Long customerId,
+            @RequestBody Map<String, String> payload) {
+        String code = payload.get("code");
+        if (code == null || code.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Stock code is required."));
+        }
+        Watchlist added = sharesiesService.addToWatchlist(customerId, code);
+        if (added == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to add stock to watchlist."));
+        }
+        return ResponseEntity.ok(added);
+    }
+
+    @DeleteMapping("/watchlist/{code}")
+    public ResponseEntity<?> removeFromWatchlist(
+            @RequestHeader("X-Customer-ID") Long customerId,
+            @PathVariable String code) {
+        List<Watchlist> items = watchlistRepository.findByCustomerIdAndCode(customerId, code.toUpperCase());
+        if (!items.isEmpty()) {
+            watchlistRepository.deleteAll(items);
+        }
+        return ResponseEntity.ok(Map.of("success", true, "message", "Stock removed from watchlist."));
+    }
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<List<ShareRecommendation>> getRecommendations() {
+        return ResponseEntity.ok(shareRecommendationRepository.findAllByOrderByTimestampDesc());
+    }
+
+    @PostMapping("/recommendations")
+    public ResponseEntity<?> recommendStock(
+            @RequestHeader("X-Customer-ID") Long customerId,
+            @RequestBody Map<String, String> payload) {
+        String code = payload.get("code");
+        String notes = payload.get("notes");
+        if (code == null || code.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Stock code is required."));
+        }
+        
+        String upperCode = code.trim().toUpperCase();
+        String shareName = upperCode;
+        
+        // Find company name from watchlist
+        Optional<Watchlist> watchOpt = watchlistRepository.findByCustomerIdAndCode(customerId, upperCode);
+        if (watchOpt.isPresent()) {
+            shareName = watchOpt.get().getShareName();
+        } else {
+            try {
+                String fundId = sharesiesService.getFundIdForSymbol(customerId, upperCode);
+                if (fundId != null) {
+                    Map<String, Object> instInfo = sharesiesService.getInstrumentDetails(customerId, fundId);
+                    String nameVal = (String) instInfo.get("name");
+                    if (nameVal != null) shareName = nameVal;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        String customerName = "Anonymous";
+        Optional<com.investa.model.Customer> customerOpt = customerRepository.findById(customerId);
+        if (customerOpt.isPresent()) {
+            customerName = customerOpt.get().getName();
+            if (customerName == null || customerName.trim().isEmpty()) {
+                customerName = customerOpt.get().getUsername();
+            }
+        }
+
+        ShareRecommendation rec = ShareRecommendation.builder()
+                .code(upperCode)
+                .shareName(shareName)
+                .customerId(customerId)
+                .customerName(customerName)
+                .notes(notes)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(shareRecommendationRepository.save(rec));
     }
 }
