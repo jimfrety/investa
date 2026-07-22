@@ -199,4 +199,18 @@ public class MarketController {
 
         return ResponseEntity.ok(shareRecommendationRepository.save(rec));
     }
+
+    @DeleteMapping("/recommendations/{code}")
+    public ResponseEntity<?> unrecommendStock(
+            @RequestHeader("X-Customer-ID") Long customerId,
+            @PathVariable String code) {
+        if (code == null || code.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Stock code is required."));
+        }
+        List<ShareRecommendation> recs = shareRecommendationRepository.findByCustomerIdAndCode(customerId, code.trim().toUpperCase());
+        if (!recs.isEmpty()) {
+            shareRecommendationRepository.deleteAll(recs);
+        }
+        return ResponseEntity.ok(Map.of("success", true, "message", "Stock un-recommended."));
+    }
 }

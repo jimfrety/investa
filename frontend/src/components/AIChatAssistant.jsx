@@ -10,9 +10,18 @@ import HandshakeIcon from '@mui/icons-material/Handshake'
 import CheckIcon from '@mui/icons-material/Check'
 
 // Helper function to extract potential stock tickers from response text
-const extractTickers = (text) => {
+const extractTickers = (text, watchlist = []) => {
   if (!text) return []
-  // Find all words that are 1 to 5 letters, all uppercase
+  
+  // 1. Find all fully qualified tickers first, e.g. ASX:SSG or NZX:MEL
+  const qualifiedRegex = /\b([A-Z]{2,6}):([A-Z]{1,5})\b/g
+  const qualifiedMatches = []
+  let qMatch
+  while ((qMatch = qualifiedRegex.exec(text)) !== null) {
+    qualifiedMatches.push(qMatch[0])
+  }
+  
+  // 2. Find standard unqualified tickers, e.g. SSG or MEL
   const regex = /\b[A-Z]{1,5}\b/g
   const matches = text.match(regex) || []
   
@@ -24,8 +33,24 @@ const extractTickers = (text) => {
     'RSI', 'DCF', 'NAV', 'P/E', 'EPS', 'CAGR', 'RSI', 'MACD', 'SMA'
   ])
   
-  return Array.from(new Set(matches))
-    .filter(word => !excludeWords.has(word))
+  const cleanMatches = matches.filter(word => !excludeWords.has(word))
+  
+  const result = [...qualifiedMatches]
+  cleanMatches.forEach(symbol => {
+    if (qualifiedMatches.some(q => q.endsWith(':' + symbol))) return
+    
+    // Qualify it!
+    const watchlistMatch = watchlist.find(item => {
+      const itemCode = item.code.toUpperCase()
+      const cleanItemCode = itemCode.includes(':') ? itemCode.substring(itemCode.indexOf(':') + 1) : itemCode
+      return cleanItemCode === symbol
+    })
+    
+    const market = watchlistMatch ? (watchlistMatch.market || 'NZX').toUpperCase() : 'NZX'
+    result.push(market + ':' + symbol)
+  })
+  
+  return Array.from(new Set(result))
 }
 
 export default function AIChatAssistant({ isOpen, onClose, preloadMessage, clearPreload, onRefetch }) {
@@ -209,7 +234,12 @@ Try asking:
   }
 
   const isAlreadyWatchlisted = (code) => {
-    return watchlist.some(item => item.code.toUpperCase() === code.toUpperCase())
+    const cleanCode = code.toUpperCase().includes(':') ? code.substring(code.indexOf(':') + 1) : code.toUpperCase()
+    return watchlist.some(item => {
+      const itemCode = item.code.toUpperCase()
+      const cleanItemCode = itemCode.includes(':') ? itemCode.substring(itemCode.indexOf(':') + 1) : itemCode
+      return cleanItemCode === cleanCode
+    })
   }
 
   if (!isOpen) return null
@@ -257,7 +287,7 @@ Try asking:
       {/* Messages Thread list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column' }}>
         {messages.map((msg, i) => {
-          const detectedTickers = msg.sender === 'assistant' ? extractTickers(msg.text) : []
+          const detectedTickers = msg.sender === 'assistant' ? extractTickers(msg.text, watchlist) : []
 
           return (
             <div 

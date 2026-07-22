@@ -217,3 +217,11 @@ export async function recommendStock(payload) {
   if (!res.ok) throw new Error('Failed to submit recommendation');
   return res.json();
 }
+
+export async function unrecommendStock(code) {
+  const res = await fetch(`${API_BASE}/market/recommendations/${code}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) throw new Error('Failed to withdraw recommendation');
+  return res.json();
+}

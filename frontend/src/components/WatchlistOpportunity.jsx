@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchWatchlist, fetchRecommendations, recommendStock, addToWatchlist, removeFromWatchlist } from '../api/client'
+import { fetchWatchlist, fetchRecommendations, recommendStock, addToWatchlist, removeFromWatchlist, unrecommendStock } from '../api/client'
 import AddIcon from '@mui/icons-material/Add'
 import AssistantIcon from '@mui/icons-material/Assistant'
 import ShareIcon from '@mui/icons-material/Share'
@@ -106,6 +106,27 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
   const handleRemoveWatchlist = (code) => {
     removeWatchlistMutation.mutate(code)
+  }
+
+  const unrecommendMutation = useMutation({
+    mutationFn: unrecommendStock,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recommendations'] })
+      refetchRecommendations()
+    }
+  })
+
+  const handleUnrecommend = (code) => {
+    unrecommendMutation.mutate(code)
+  }
+
+  const hasUserRecommended = (code) => {
+    const currentCustomerId = localStorage.getItem('customerId')
+    if (!currentCustomerId) return false
+    return recommendations.some(rec => 
+      rec.customerId.toString() === currentCustomerId.toString() &&
+      rec.code.toUpperCase() === code.toUpperCase()
+    );
   }
 
   const isAlreadyWatchlisted = (code) => {
@@ -229,13 +250,23 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
                 >
                   <AssistantIcon fontSize="inherit" /> AI Research
                 </button>
-                <button 
-                  className="investa-button-secondary" 
-                  style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 12px', fontSize: '12px', border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(16, 185, 129, 0.05)', color: 'var(--accent-emerald)' }}
-                  onClick={() => handleOpenRecommendModal(item.code, item.shareName)}
-                >
-                  <ShareIcon fontSize="inherit" /> Recommend
-                </button>
+                {hasUserRecommended(item.code) ? (
+                  <button 
+                    className="investa-button-secondary" 
+                    style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 12px', fontSize: '12px', border: '1px solid rgba(244, 63, 94, 0.3)', backgroundColor: 'rgba(244, 63, 94, 0.05)', color: 'var(--accent-rose)' }}
+                    onClick={() => handleUnrecommend(item.code)}
+                  >
+                    <CloseIcon fontSize="inherit" /> Un-recommend
+                  </button>
+                ) : (
+                  <button 
+                    className="investa-button-secondary" 
+                    style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 12px', fontSize: '12px', border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(16, 185, 129, 0.05)', color: 'var(--accent-emerald)' }}
+                    onClick={() => handleOpenRecommendModal(item.code, item.shareName)}
+                  >
+                    <ShareIcon fontSize="inherit" /> Recommend
+                  </button>
+                )}
                 <button 
                   style={{ 
                     padding: '6px 8px', 

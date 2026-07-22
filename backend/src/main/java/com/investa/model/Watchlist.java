@@ -39,7 +39,11 @@ public class Watchlist {
 
     public static double getCurrentPriceForCode(String code) {
         if (code == null) return 50.0;
-        switch (code.toUpperCase()) {
+        String clean = code.toUpperCase();
+        if (clean.contains(":")) {
+            clean = clean.substring(clean.indexOf(":") + 1);
+        }
+        switch (clean) {
             case "AAPL": return 175.50;
             case "MSFT": return 395.20;
             case "NVDA": return 120.40;
@@ -63,7 +67,11 @@ public class Watchlist {
 
     public static double getDivYieldForCode(String code, String type) {
         if (code == null) return 0.0;
-        switch (code.toUpperCase()) {
+        String clean = code.toUpperCase();
+        if (clean.contains(":")) {
+            clean = clean.substring(clean.indexOf(":") + 1);
+        }
+        switch (clean) {
             case "JEPI": return 7.50;
             case "O": return 5.85;
             case "KO": return 3.10;

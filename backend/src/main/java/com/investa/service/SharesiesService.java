@@ -1463,8 +1463,13 @@ public class SharesiesService {
     public String getFundIdForSymbol(Long customerId, String symbol) {
         if (symbol == null) return null;
         String upper = symbol.toUpperCase();
+        String searchSymbol = upper;
+        if (upper.contains(":")) {
+            searchSymbol = upper.substring(upper.indexOf(":") + 1);
+        }
         for (Map.Entry<String, String> entry : instrumentCache.entrySet()) {
-            if (upper.equals(entry.getValue())) {
+            String cachedVal = entry.getValue();
+            if (searchSymbol.equals(cachedVal) || upper.equals(cachedVal)) {
                 return entry.getKey();
             }
         }
@@ -1473,7 +1478,7 @@ public class SharesiesService {
             SharesiesSession session = getSession(customerId);
             HttpHeaders headers = createHeaders(customerId);
             HttpEntity<Void> entity = new HttpEntity<>(headers);
-            String url = session.getDataBaseUrl() + "/api/v1/instruments?Page=1&PerPage=10&Query=" + upper;
+            String url = session.getDataBaseUrl() + "/api/v1/instruments?Page=1&PerPage=10&Query=" + searchSymbol;
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Object instObj = response.getBody().get("instruments");
@@ -1486,7 +1491,7 @@ public class SharesiesService {
                             if (id != null && code != null) {
                                 String cleanCode = code.toUpperCase();
                                 instrumentCache.put(id, cleanCode);
-                                if (upper.equals(cleanCode)) {
+                                if (searchSymbol.equals(cleanCode) || upper.equals(cleanCode)) {
                                     return id;
                                 }
                             }

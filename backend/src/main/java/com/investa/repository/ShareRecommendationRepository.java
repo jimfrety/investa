@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface ShareRecommendationRepository extends JpaRepository<ShareRecommendation, Long> {
     List<ShareRecommendation> findAllByOrderByTimestampDesc();
+    List<ShareRecommendation> findByCustomerIdAndCode(Long customerId, String code);
 }
