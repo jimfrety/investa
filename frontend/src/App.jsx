@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchSummary, fetchRiskMetrics, API_BASE } from './api/client'
+import { fetchSummary, fetchRiskMetrics, fetchRecommendations, API_BASE } from './api/client'
 
 // Components
 import DashboardOverview from './components/DashboardOverview'
@@ -26,6 +26,7 @@ import ChatBubbleIcon from '@mui/icons-material/ChatBubble'
 import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
+import NotificationsIcon from '@mui/icons-material/Notifications'
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -42,6 +43,7 @@ export default function App() {
   })
 
   const [activeTab, setActiveTab] = useState('overview')
+  const [watchlistSubTab, setWatchlistSubTab] = useState('watchlist')
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [chatPreloadMessage, setChatPreloadMessage] = useState('')
   const [showSharesiesPrompt, setShowSharesiesPrompt] = useState(false)
@@ -139,9 +141,30 @@ export default function App() {
     enabled: !!user && !user.isAdmin
   })
 
+  const { data: recommendations = [], refetch: refetchRecommendations } = useQuery({
+    queryKey: ['recommendations', user?.customerId],
+    queryFn: fetchRecommendations,
+    enabled: !!user && !user.isAdmin,
+    refetchInterval: 15000
+  })
+
+  const newRecommendationsCount = React.useMemo(() => {
+    const lastSeenStr = localStorage.getItem('lastSeenRecommendations')
+    if (!lastSeenStr) return recommendations.length
+    const lastSeen = new Date(lastSeenStr).getTime()
+    return recommendations.filter(rec => new Date(rec.timestamp).getTime() > lastSeen).length
+  }, [recommendations])
+
+  const handleNotificationClick = () => {
+    localStorage.setItem('lastSeenRecommendations', new Date().toISOString())
+    setWatchlistSubTab('recommendations')
+    setActiveTab('watchlist')
+  }
+
   const handleRefetchAll = () => {
     refetchSummary()
     refetchRisk()
+    refetchRecommendations()
   }
 
   const handleLogout = () => {
@@ -175,7 +198,14 @@ export default function App() {
       case 'dividends':
         return <DividendPlanner onAskAI={handleAskAI} />
       case 'watchlist':
-        return <WatchlistOpportunity onAskAI={handleAskAI} onTradeExecuted={handleRefetchAll} />
+        return (
+          <WatchlistOpportunity 
+            onAskAI={handleAskAI} 
+            onTradeExecuted={handleRefetchAll} 
+            activeTab={watchlistSubTab}
+            setActiveTab={setWatchlistSubTab}
+          />
+        )
       case 'calculator':
         return <ReturnCalculator />
       case 'settings':
@@ -321,9 +351,60 @@ export default function App() {
               </span>
             </div>
 
-            <button className="investa-button header-ai-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 12px', flexShrink: 0 }} onClick={() => setIsChatOpen(!isChatOpen)}>
-              <ForumIcon /> Assistant
-            </button>
+            <div 
+              className="header-notification-btn" 
+              onClick={handleNotificationClick}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                width: '44px', 
+                height: '44px', 
+                borderRadius: '12px', 
+                background: 'rgba(255, 255, 255, 0.03)', 
+                border: '1px solid var(--border-glass)',
+                cursor: 'pointer', 
+                position: 'relative', 
+                flexShrink: 0,
+                transition: 'var(--transition-smooth)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)'
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+                e.currentTarget.style.borderColor = 'var(--border-glass)'
+              }}
+            >
+              <NotificationsIcon style={{ color: newRecommendationsCount > 0 ? 'var(--accent-amber)' : 'var(--text-secondary)' }} />
+              {newRecommendationsCount > 0 && (
+                <span 
+                  className="bobble-alert"
+                  style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    minWidth: '18px',
+                    height: '18px',
+                    borderRadius: '9px',
+                    background: 'linear-gradient(135deg, var(--accent-rose) 0%, #e11d48 100%)',
+                    color: 'white',
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 4px',
+                    border: '2px solid var(--bg-primary)',
+                    boxShadow: '0 0 10px rgba(251, 113, 133, 0.6)',
+                    animation: 'alertPulse 2s infinite ease-in-out'
+                  }}
+                >
+                  {newRecommendationsCount}
+                </span>
+              )}
+            </div>
           </div>
         </header>
 

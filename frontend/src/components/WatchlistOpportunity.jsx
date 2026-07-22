@@ -9,9 +9,11 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import PersonIcon from '@mui/icons-material/Person'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 
-export default function WatchlistOpportunity({ onAskAI, onTradeExecuted }) {
+export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeTab: propActiveTab, setActiveTab: propSetActiveTab }) {
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState('watchlist') // 'watchlist' or 'recommendations'
+  const [localActiveTab, setLocalActiveTab] = useState('watchlist')
+  const activeTab = propActiveTab || localActiveTab
+  const setActiveTab = propSetActiveTab || setLocalActiveTab
   
   // Modal states for recommending a stock
   const [isRecommendModalOpen, setIsRecommendModalOpen] = useState(false)
