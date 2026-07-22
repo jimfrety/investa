@@ -230,7 +230,7 @@ export default function AdminConsole({ onLogout }) {
                   {customers.map((cust) => (
                     <tr key={cust.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                       <td style={{ padding: '16px 8px', fontWeight: 600, color: '#fff' }}>
-                        {cust.name || 'Unnamed Client'} {cust.admin && <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'var(--accent-indigo)', marginLeft: '6px' }}>Admin</span>}
+                        {cust.name || 'Unnamed Client'} {cust.admin && <span style={{ fontSize: '12px', padding: '2px 6px', borderRadius: '4px', background: 'var(--accent-indigo)', marginLeft: '6px' }}>Admin</span>}
                       </td>
                       <td style={{ padding: '16px 8px', color: 'var(--text-secondary)' }}>{cust.username}</td>
                       <td style={{ padding: '16px 8px', color: 'var(--accent-cyan)', fontWeight: '700' }}>{cust.loginCount || 0}</td>

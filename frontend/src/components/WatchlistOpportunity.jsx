@@ -168,12 +168,12 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted }) {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                     <span style={{ fontSize: '24px', fontWeight: '800', color: 'var(--accent-indigo)' }}>{item.overallScore}</span>
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: '700' }}>FIT SCORE</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700' }}>FIT SCORE</span>
                   </div>
                 </div>
 
                 {/* Score breakdown metrics grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '11px', marginBottom: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '12px', marginBottom: '16px' }}>
                   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
                     <div style={{ color: 'var(--text-muted)' }}>Gross Yield</div>
                     <strong style={{ color: 'var(--accent-cyan)' }}>{item.dividendYield != null ? `${item.dividendYield.toFixed(2)}%` : '0.00%'}</strong>
@@ -204,14 +204,14 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted }) {
               <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--border-glass)', paddingTop: '12px' }}>
                 <button 
                   className="investa-button" 
-                  style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 12px', fontSize: '11px' }}
+                  style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 12px', fontSize: '12px' }}
                   onClick={() => onAskAI(`Generate a DCF valuation and policy fit analysis for watchlisted ticker ${item.code}`)}
                 >
                   <AssistantIcon fontSize="inherit" /> AI Research
                 </button>
                 <button 
                   className="investa-button-secondary" 
-                  style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 12px', fontSize: '11px', border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(16, 185, 129, 0.05)', color: 'var(--accent-emerald)' }}
+                  style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 12px', fontSize: '12px', border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(16, 185, 129, 0.05)', color: 'var(--accent-emerald)' }}
                   onClick={() => handleOpenRecommendModal(item.code, item.shareName)}
                 >
                   <ShareIcon fontSize="inherit" /> Recommend
@@ -269,7 +269,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted }) {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid var(--border-glass)', paddingTop: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <PersonIcon fontSize="inherit" /> By {rec.customerName || 'Anonymous'}
                   </span>

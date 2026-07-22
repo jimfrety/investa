@@ -421,13 +421,13 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
       cellRenderer: (p) => (
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '100%' }}>
           <button 
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
+            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
             onClick={() => setResearchCode(p.data.code)}
           >
             Research
           </button>
           <button 
-            style={{ background: 'rgba(99, 102, 241, 0.15)', color: 'var(--text-primary)', border: 'none', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
+            style={{ background: 'rgba(99, 102, 241, 0.15)', color: 'var(--text-primary)', border: 'none', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
             onClick={() => onAskAI(`Should I sell ${p.data.code} now?`)}
           >
             Ask AI
@@ -510,8 +510,8 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>{h.code}</span>
-                    <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>{h.market}</span>
-                    <span style={{ fontSize: '10px', fontWeight: '700', color: isPositive ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>{h.market}</span>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: isPositive ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
                       {isPositive ? '+' : ''}{simpleReturn.toFixed(1)}%
                     </span>
                   </div>
@@ -519,7 +519,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '16px', fontWeight: '800' }}>${investmentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{h.quantity?.toFixed(2)} shares @ ${h.currentPrice?.toFixed(2)}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{h.quantity?.toFixed(2)} shares @ ${h.currentPrice?.toFixed(2)}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -576,7 +576,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Available Balance:</span>
-              <span style={{ fontSize: '10px', fontWeight: '700', color: formattedBalances ? 'var(--accent-emerald)' : 'var(--text-muted)' }}>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: formattedBalances ? 'var(--accent-emerald)' : 'var(--text-muted)' }}>
                 {formattedBalances ? '● Connected' : 'Manual Portfolio'}
               </span>
             </div>
@@ -588,7 +588,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Ticker Symbol</label>
+            <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>Ticker Symbol</label>
             <select 
               value={tradeCode}
               onChange={(e) => handleCodeChange(e.target.value)}
@@ -601,7 +601,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+            <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>
               {tradeType === 'BUY' ? `Amount to Invest (${selectedCurrency})` : 'Quantity of Shares to Sell'}
             </label>
             <input 

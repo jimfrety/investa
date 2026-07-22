@@ -294,7 +294,7 @@ export default function ReturnCalculator() {
                 className="investa-input"
                 min="100"
               />
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                 This cash will be added directly on top of your existing position/portfolio value (${(selectedAsset?.quantity * selectedAsset?.currentPrice)?.toLocaleString(undefined, { minimumFractionDigits: 2 })}).
               </span>
             </div>
@@ -340,7 +340,7 @@ export default function ReturnCalculator() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                 <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>
-                  Annual Price Growth <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '400' }}>(Default: {defaults.growth}%)</span>
+                  Annual Price Growth <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '400' }}>(Default: {defaults.growth}%)</span>
                 </span>
                 <strong>{growthRate}%</strong>
               </div>
@@ -358,7 +358,7 @@ export default function ReturnCalculator() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                 <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>
-                  Annual Dividend Yield <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '400' }}>(Default: {defaults.yield}%)</span>
+                  Annual Dividend Yield <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '400' }}>(Default: {defaults.yield}%)</span>
                 </span>
                 <strong>{divYield}%</strong>
               </div>
@@ -390,7 +390,7 @@ export default function ReturnCalculator() {
             label={
               <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                 <strong>Reinvest Dividends (DRIP)</strong>
-                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Compounds returns by purchasing fractional shares.</p>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>Compounds returns by purchasing fractional shares.</p>
               </div>
             }
           />
@@ -404,41 +404,41 @@ export default function ReturnCalculator() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
             
             <div className="glass-panel" style={{ padding: '16px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Projected Net Value</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Projected Net Value</div>
               <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0', color: 'var(--text-primary)' }}>
                 ${results.endingVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--accent-emerald)', fontWeight: '600' }}>
+              <div style={{ fontSize: '12px', color: 'var(--accent-emerald)', fontWeight: '600' }}>
                 CAGR: {results.cagr?.toFixed(2)}%
               </div>
             </div>
 
             <div className="glass-panel" style={{ padding: '16px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Return (ROI)</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Return (ROI)</div>
               <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0', color: 'var(--accent-emerald)' }}>
                 +{results.totalReturnPct?.toFixed(1)}%
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                 Profit: +${results.totalProfit?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
             </div>
 
             <div className="glass-panel" style={{ padding: '16px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Dividends Earned</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Dividends Earned</div>
               <div style={{ fontSize: '20px', fontWeight: '800', margin: '4px 0', color: 'var(--accent-amber)' }}>
                 ${results.totalDividendsReceived?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                 Over {years} year horizon
               </div>
             </div>
 
             <div className="glass-panel" style={{ padding: '16px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Ending Shares</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Ending Shares</div>
               <div style={{ fontSize: '20px', fontWeight: '800', margin: '4px 0', color: 'var(--text-primary)' }}>
                 {results.endingShares?.toFixed(2)} Shares
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                 Initial: {results.initialCapital && selectedAsset ? (results.initialCapital / selectedAsset.currentPrice).toFixed(2) : 0} shares
               </div>
             </div>

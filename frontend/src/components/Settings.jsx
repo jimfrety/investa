@@ -355,7 +355,7 @@ export default function Settings({ user }) {
                 {testResult.success ? '● ' : '▲ '} {testResult.message}
               </div>
             )}
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
               Get an API key from <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-indigo)', textDecoration: 'underline' }}>Google AI Studio</a>. Keys are stored securely in your local SQLite/H2 database.
             </span>
           </div>
@@ -366,7 +366,7 @@ export default function Settings({ user }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Unrealised gains/losses ($)</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Unrealised gains/losses ($)</label>
               <input 
                 type="number"
                 step="0.01"
@@ -377,7 +377,7 @@ export default function Settings({ user }) {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Unrealised Currency gains/losses ($)</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Unrealised Currency gains/losses ($)</label>
               <input 
                 type="number"
                 step="0.01"
@@ -390,7 +390,7 @@ export default function Settings({ user }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Transaction Fees ($)</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Transaction Fees ($)</label>
               <input 
                 type="number"
                 step="0.01"
@@ -401,7 +401,7 @@ export default function Settings({ user }) {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Dividends Received ($)</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Dividends Received ($)</label>
               <input 
                 type="number"
                 step="0.01"
@@ -441,7 +441,7 @@ export default function Settings({ user }) {
             <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
               Investment Policy Boundaries
             </h4>
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '2px 0 0' }}>
               Configure safety and diversification rules. The AI wealth manager and suitability engine operate within these constraints.
             </p>
           </div>
@@ -450,7 +450,7 @@ export default function Settings({ user }) {
         <form onSubmit={handlePolicySave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Primary Objective</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Primary Objective</label>
               <input 
                 type="text"
                 value={primaryObj}
@@ -460,7 +460,7 @@ export default function Settings({ user }) {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Secondary Objective</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Secondary Objective</label>
               <input 
                 type="text"
                 value={secondaryObj}
@@ -470,7 +470,7 @@ export default function Settings({ user }) {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Cash Available ($ NZD)</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Cash Available ($ NZD)</label>
               <input 
                 type="number"
                 value={cashAvailable}
@@ -482,7 +482,7 @@ export default function Settings({ user }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Max Portfolio Risk Rating ({maxRisk})</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Max Portfolio Risk Rating ({maxRisk})</label>
               <input 
                 type="range"
                 min="1.0"
@@ -492,11 +492,11 @@ export default function Settings({ user }) {
                 onChange={(e) => setMaxRisk(Number(e.target.value))}
                 style={{ accentColor: 'var(--accent-indigo)' }}
               />
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Scale 1 (low) to 7 (high)</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Scale 1 (low) to 7 (high)</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Max Single Holding Allocation ({maxSingle}%)</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Max Single Holding Allocation ({maxSingle}%)</label>
               <input 
                 type="range"
                 min="1"
@@ -505,11 +505,11 @@ export default function Settings({ user }) {
                 onChange={(e) => setMaxSingle(Number(e.target.value))}
                 style={{ accentColor: 'var(--accent-indigo)' }}
               />
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Capital limit per asset</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Capital limit per asset</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Max Sector Exposure ({maxSector}%)</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>Max Sector Exposure ({maxSector}%)</label>
               <input 
                 type="range"
                 min="5"
@@ -518,13 +518,13 @@ export default function Settings({ user }) {
                 onChange={(e) => setMaxSector(Number(e.target.value))}
                 style={{ accentColor: 'var(--accent-indigo)' }}
               />
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Sector boundary limits</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Sector boundary limits</span>
             </div>
           </div>
 
           <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Growth Profit Sell Trigger ({growthTarget}%)</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Growth Profit Sell Trigger ({growthTarget}%)</label>
               <input 
                 type="number"
                 value={growthTarget}
@@ -534,7 +534,7 @@ export default function Settings({ user }) {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Min Dividend Coverage Ratio</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Min Dividend Coverage Ratio</label>
               <input 
                 type="number"
                 step="0.1"
@@ -545,7 +545,7 @@ export default function Settings({ user }) {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Min Market Capitalisation ($B)</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Min Market Capitalisation ($B)</label>
               <input 
                 type="number"
                 step="0.5"
@@ -599,7 +599,7 @@ export default function Settings({ user }) {
         <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Username</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Username</label>
               <input 
                 type="text" 
                 value={profileUsername} 
@@ -611,7 +611,7 @@ export default function Settings({ user }) {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Full Name</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Full Name</label>
               <input 
                 type="text" 
                 value={profileName} 
@@ -624,7 +624,7 @@ export default function Settings({ user }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxWidth: '300px' }}>
-            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>New Password</label>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>New Password</label>
             <input 
               type="password" 
               value={profilePassword} 
@@ -708,7 +708,7 @@ export default function Settings({ user }) {
               </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxWidth: '240px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>6-Digit Verification Code</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>6-Digit Verification Code</label>
               <input 
                 type="text"
                 maxLength="6"
@@ -745,7 +745,7 @@ export default function Settings({ user }) {
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Email</label>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Email</label>
                 <input 
                   type="email"
                   placeholder="name@example.com"
@@ -755,7 +755,7 @@ export default function Settings({ user }) {
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>Password</label>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Password</label>
                 <input 
                   type="password"
                   placeholder="••••••••"

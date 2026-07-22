@@ -221,7 +221,7 @@ Try asking:
         position: 'fixed',
         top: 0,
         right: 0,
-        height: '100vh',
+        height: '100dvh',
         backgroundColor: 'rgba(11, 15, 25, 0.95)',
         backdropFilter: 'blur(20px)',
         borderLeft: '1px solid var(--border-glass)',
@@ -248,7 +248,7 @@ Try asking:
           <ForumIcon style={{ color: 'var(--accent-indigo)' }} />
           <div>
             <h3 style={{ fontSize: '16px', fontWeight: '700' }}>Investa Wealth Assistant</h3>
-            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Real-time research enabled</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Real-time research enabled</span>
           </div>
         </div>
         <CloseIcon style={{ cursor: 'pointer', color: 'var(--text-secondary)' }} onClick={onClose} />
@@ -274,7 +274,7 @@ Try asking:
               {/* Detected Tickers Quick Action Strip */}
               {detectedTickers.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '14px', borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '10px' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '700', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700', letterSpacing: '0.05em' }}>
                     DETECTED STOCKS:
                   </span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -285,17 +285,17 @@ Try asking:
 
                       return (
                         <div key={ticker} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: 'rgba(255,255,255,0.02)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)', alignSelf: 'flex-start' }}>
-                            <strong style={{ fontSize: '11px', color: 'var(--accent-cyan)' }}>{ticker}</strong>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: 'rgba(255,255,255,0.02)', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)', alignSelf: 'flex-start' }}>
+                            <strong style={{ fontSize: '13px', color: 'var(--accent-cyan)' }}>{ticker}</strong>
                             
                             {isWatchlisted ? (
-                              <span style={{ fontSize: '10px', color: 'var(--accent-emerald)', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: '700' }}>
-                                <CheckIcon style={{ fontSize: '11px' }} /> Watchlisted
+                              <span style={{ fontSize: '12px', color: 'var(--accent-emerald)', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: '700' }}>
+                                <CheckIcon style={{ fontSize: '13px' }} /> Watchlisted
                               </span>
                             ) : (
                               <button 
                                 onClick={() => handleAddToWatchlist(ticker)}
-                                style={{ background: 'none', border: 'none', color: 'var(--accent-indigo)', fontSize: '10px', cursor: 'pointer', padding: 0, fontWeight: '700' }}
+                                style={{ background: 'none', border: 'none', color: 'var(--accent-indigo)', fontSize: '12px', cursor: 'pointer', padding: 0, fontWeight: '700' }}
                               >
                                 + Watchlist
                               </button>
@@ -304,13 +304,13 @@ Try asking:
                             <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
 
                             {status ? (
-                              <span style={{ fontSize: '10px', color: 'var(--accent-emerald)', fontWeight: '700' }}>
+                              <span style={{ fontSize: '12px', color: 'var(--accent-emerald)', fontWeight: '700' }}>
                                 {status}
                               </span>
                             ) : (
                               <button 
                                 onClick={() => handleRecommendClick(i, ticker)}
-                                style={{ background: 'none', border: 'none', color: 'var(--accent-emerald)', fontSize: '10px', cursor: 'pointer', padding: 0, fontWeight: '700' }}
+                                style={{ background: 'none', border: 'none', color: 'var(--accent-emerald)', fontSize: '12px', cursor: 'pointer', padding: 0, fontWeight: '700' }}
                               >
                                 Recommend
                               </button>
@@ -329,7 +329,7 @@ Try asking:
                               flexDirection: 'column',
                               gap: '8px'
                             }}>
-                              <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                                 Why do you recommend <strong>{ticker}</strong>?
                               </div>
                               <input 
@@ -338,19 +338,19 @@ Try asking:
                                 value={activeRecommendNotes}
                                 onChange={(e) => setActiveRecommendNotes(e.target.value)}
                                 className="investa-input"
-                                style={{ fontSize: '11px', padding: '6px 8px' }}
+                                style={{ fontSize: '12px', padding: '8px 10px' }}
                                 autoFocus
                               />
                               <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                                 <button 
-                                  style={{ background: 'transparent', border: '1px solid var(--border-glass)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '10px', padding: '3px 8px', cursor: 'pointer' }}
+                                  style={{ background: 'transparent', border: '1px solid var(--border-glass)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}
                                   onClick={() => setActiveRecommendTicker(null)}
                                 >
                                   Cancel
                                 </button>
                                 <button 
                                   className="investa-button"
-                                  style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px' }}
+                                  style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '4px' }}
                                   onClick={() => handleRecommendSubmit(ticker)}
                                 >
                                   Submit
@@ -371,7 +371,7 @@ Try asking:
                   <span className="confidence-badge">
                     <VerifiedIcon fontSize="inherit" /> CONFIDENCE: {msg.confidence}%
                   </span>
-                  <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{msg.confidenceReason}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{msg.confidenceReason}</span>
                 </div>
               )}
 
@@ -429,7 +429,14 @@ Try asking:
       </div>
 
       {/* Input panel */}
-      <div style={{ padding: '20px', borderTop: '1px solid var(--border-glass)', display: 'flex', gap: '10px' }}>
+      <div style={{ 
+        padding: '16px 20px calc(16px + env(safe-area-inset-bottom, 0px))', 
+        borderTop: '1px solid var(--border-glass)', 
+        display: 'flex', 
+        gap: '10px',
+        background: 'rgba(11, 15, 25, 0.98)',
+        zIndex: 10
+      }}>
         <input 
           type="text" 
           placeholder="Ask a question (e.g. 'Invest $4,000')" 

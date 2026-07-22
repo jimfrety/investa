@@ -173,7 +173,7 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
             </ResponsiveContainer>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px', marginTop: '12px', maxHeight: '70px', overflowY: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px', marginTop: '12px', maxHeight: '70px', overflowY: 'auto' }}>
             {sectorData.slice(0, 8).map((entry, index) => (
               <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: COLORS[index % COLORS.length], flexShrink: 0 }}></div>
@@ -200,7 +200,7 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
             }}>
               {(summary?.totalReturn ?? 0) >= 0 ? '▲ +' : '▼ -'}${Math.abs(summary?.totalReturn ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} NZD
             </span>
-            <div style={{ display: 'flex', gap: '10px', fontSize: '11px', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>
               <span>Base Currency: NZD</span>
               <span>•</span>
               <span>All assets converted at current exchange rates</span>
@@ -273,7 +273,7 @@ export default function DashboardOverview({ onAskAI, summary, risk }) {
                 <span style={{ fontSize: '28px', fontWeight: '800' }}>{item.score}</span>
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/100</span>
               </div>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', lineHeight: '1.4' }}>{item.desc}</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4' }}>{item.desc}</p>
             </div>
           ))}
         </div>

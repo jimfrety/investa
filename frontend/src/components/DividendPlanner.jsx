@@ -44,7 +44,7 @@ export default function DividendPlanner({ onAskAI }) {
             <MonetizationOnIcon style={{ color: 'var(--accent-emerald)' }} />
           </div>
           <span className="stat-val">${annualIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Portfolio yield of {yieldPct.toFixed(2)}%</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Portfolio yield of {yieldPct.toFixed(2)}%</p>
         </div>
         
         <div className="glass-panel stat-card">
@@ -53,7 +53,7 @@ export default function DividendPlanner({ onAskAI }) {
             <SavingsIcon style={{ color: 'var(--accent-cyan)' }} />
           </div>
           <span className="stat-val">${monthlyAverage.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Consistent monthly cashflows</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Consistent monthly cashflows</p>
         </div>
 
         <div className="glass-panel stat-card">
@@ -62,7 +62,7 @@ export default function DividendPlanner({ onAskAI }) {
             <AutorenewIcon style={{ color: 'var(--accent-indigo)' }} />
           </div>
           <span className="stat-val">{growthRate}%</span>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Aggregate dividend CAGR</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Aggregate dividend CAGR</p>
         </div>
 
         <div className="glass-panel stat-card">
@@ -71,7 +71,7 @@ export default function DividendPlanner({ onAskAI }) {
             <QueryStatsIcon style={{ color: 'var(--accent-amber)' }} />
           </div>
           <span className="stat-val">${projected2030.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Compounding reinvested payouts</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Compounding reinvested payouts</p>
         </div>
       </div>
 
@@ -133,7 +133,7 @@ export default function DividendPlanner({ onAskAI }) {
                     <span style={{
                       padding: '2px 8px',
                       borderRadius: '12px',
-                      fontSize: '10px',
+                      fontSize: '12px',
                       fontWeight: '700',
                       backgroundColor: p.status === 'PAID' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
                       color: p.status === 'PAID' ? 'var(--accent-emerald)' : 'var(--accent-amber)'
