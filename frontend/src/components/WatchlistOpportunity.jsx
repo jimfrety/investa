@@ -33,6 +33,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
     const updated = [...ignoredRecIds, id]
     setIgnoredRecIds(updated)
     localStorage.setItem('ignoredRecommendationIds', JSON.stringify(updated))
+    window.dispatchEvent(new Event('ignored-changed'))
   }
 
   // Queries

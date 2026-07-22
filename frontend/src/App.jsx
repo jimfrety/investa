@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchSummary, fetchRiskMetrics, fetchRecommendations, API_BASE } from './api/client'
+import { fetchSummary, fetchRiskMetrics, fetchRecommendations, fetchWatchlist, API_BASE } from './api/client'
 
 // Components
 import DashboardOverview from './components/DashboardOverview'
@@ -141,22 +141,47 @@ export default function App() {
     enabled: !!user && !user.isAdmin
   })
 
+  const { data: watchlist = [], refetch: refetchWatchlist } = useQuery({
+    queryKey: ['watchlist'],
+    queryFn: fetchWatchlist,
+    enabled: !!user && !user.isAdmin,
+    refetchInterval: 15000
+  })
+
   const { data: recommendations = [], refetch: refetchRecommendations } = useQuery({
-    queryKey: ['recommendations', user?.customerId],
+    queryKey: ['recommendations'],
     queryFn: fetchRecommendations,
     enabled: !!user && !user.isAdmin,
     refetchInterval: 15000
   })
 
+  const [ignoredIds, setIgnoredIds] = useState(() => {
+    const saved = localStorage.getItem('ignoredRecommendationIds')
+    return saved ? JSON.parse(saved) : []
+  })
+
+  useEffect(() => {
+    const handleIgnoredChange = () => {
+      const saved = localStorage.getItem('ignoredRecommendationIds')
+      setIgnoredIds(saved ? JSON.parse(saved) : [])
+    }
+    window.addEventListener('ignored-changed', handleIgnoredChange)
+    window.addEventListener('storage', handleIgnoredChange)
+    return () => {
+      window.removeEventListener('ignored-changed', handleIgnoredChange)
+      window.removeEventListener('storage', handleIgnoredChange)
+    }
+  }, [])
+
   const newRecommendationsCount = React.useMemo(() => {
-    const lastSeenStr = localStorage.getItem('lastSeenRecommendations')
-    if (!lastSeenStr) return recommendations.length
-    const lastSeen = new Date(lastSeenStr).getTime()
-    return recommendations.filter(rec => new Date(rec.timestamp).getTime() > lastSeen).length
-  }, [recommendations])
+    return recommendations.filter(rec => {
+      const inWatchlist = watchlist.some(w => w.code.toUpperCase() === rec.code.toUpperCase())
+      const isIgnored = ignoredIds.includes(rec.id)
+      return !inWatchlist && !isIgnored
+    }).length
+  }, [recommendations, watchlist, ignoredIds])
 
   const handleNotificationClick = () => {
-    localStorage.setItem('lastSeenRecommendations', new Date().toISOString())
     setWatchlistSubTab('recommendations')
     setActiveTab('watchlist')
   }
@@ -164,6 +189,7 @@ export default function App() {
   const handleRefetchAll = () => {
     refetchSummary()
     refetchRisk()
+    refetchWatchlist()
     refetchRecommendations()
   }
 
