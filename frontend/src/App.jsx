@@ -284,35 +284,87 @@ export default function App() {
       <main className="main-content">
         {/* Header Section */}
         <header className="app-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <div className="app-header-title">
-            <h1 className="gradient-text" style={{ fontSize: '28px', fontWeight: '800' }}>
-              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-            </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
-                Logged in as {user.name || user.username}
-              </p>
-              <button 
-                className="mobile-only" 
-                onClick={handleLogout}
+          <div className="mobile-header-row">
+            <div className="app-header-title">
+              <h1 className="gradient-text" style={{ fontSize: '28px', fontWeight: '800' }}>
+                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
+                  Logged in as {user.name || user.username}
+                </p>
+                <button 
+                  className="mobile-only" 
+                  onClick={handleLogout}
+                  style={{ 
+                    background: 'none', 
+                    color: 'var(--accent-rose)', 
+                    fontSize: '11px', 
+                    fontWeight: '700', 
+                    cursor: 'pointer', 
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                    border: '1px solid rgba(244, 63, 94, 0.2)',
+                    alignItems: 'center',
+                    gap: '4px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}
+                >
+                  <LogoutIcon style={{ fontSize: '11px' }} /> Sign Out
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Notification Bell */}
+            <div className="mobile-only" style={{ marginLeft: '12px' }}>
+              <div 
+                className="header-notification-btn" 
+                onClick={handleNotificationClick}
                 style={{ 
-                  background: 'none', 
-                  color: 'var(--accent-rose)', 
-                  fontSize: '11px', 
-                  fontWeight: '700', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  width: '44px', 
+                  height: '44px', 
+                  borderRadius: '12px', 
+                  background: 'rgba(255, 255, 255, 0.03)', 
+                  border: '1px solid var(--border-glass)',
                   cursor: 'pointer', 
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                  border: '1px solid rgba(244, 63, 94, 0.2)',
-                  alignItems: 'center',
-                  gap: '4px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
+                  position: 'relative',
+                  flexShrink: 0,
+                  transition: 'var(--transition-smooth)'
                 }}
               >
-                <LogoutIcon style={{ fontSize: '11px' }} /> Sign Out
-              </button>
+                <NotificationsIcon style={{ color: newRecommendationsCount > 0 ? 'var(--accent-amber)' : 'var(--text-secondary)' }} />
+                {newRecommendationsCount > 0 && (
+                  <span 
+                    className="bobble-alert"
+                    style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      minWidth: '18px',
+                      height: '18px',
+                      borderRadius: '9px',
+                      background: 'linear-gradient(135deg, var(--accent-rose) 0%, #e11d48 100%)',
+                      color: 'white',
+                      fontSize: '10px',
+                      fontWeight: '800',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 4px',
+                      border: '2px solid var(--bg-primary)',
+                      boxShadow: '0 0 10px rgba(251, 113, 133, 0.6)',
+                      animation: 'alertPulse 2s infinite ease-in-out'
+                    }}
+                  >
+                    {newRecommendationsCount}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           
@@ -352,7 +404,7 @@ export default function App() {
             </div>
 
             <div 
-              className="header-notification-btn" 
+              className="header-notification-btn desktop-only" 
               onClick={handleNotificationClick}
               style={{ 
                 display: 'flex', 

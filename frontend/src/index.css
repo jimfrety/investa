@@ -631,3 +631,22 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+.mobile-header-row {
+  display: contents;
+}
+.desktop-only {
+  display: flex !important;
+}
+
+@media (max-width: 767px) {
+  .mobile-header-row {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  .desktop-only {
+    display: none !important;
+  }
+}
+
