@@ -144,8 +144,20 @@ public class PortfolioService {
     @Transactional
     public Transaction executeTrade(Long customerId, String code, String type, Double quantity, Double price, Double brokerage) {
         log.info("Executing trade for customer {}: {} {} shares/amount of {} at ${}", customerId, type, quantity, code, price);
-        
-        Optional<Holding> holdingOpt = holdingRepository.findByCustomerIdAndCode(customerId, code);
+
+        // ── Normalise qualified code (e.g. "ASX:SSG" → market="ASX", bareCode="SSG") ──
+        String bareCode;
+        String qualifiedMarket;
+        if (code != null && code.contains(":")) {
+            String[] parts = code.split(":", 2);
+            qualifiedMarket = parts[0].toUpperCase();
+            bareCode = parts[1].toUpperCase();
+        } else {
+            qualifiedMarket = null;
+            bareCode = code != null ? code.toUpperCase() : code;
+        }
+
+        Optional<Holding> holdingOpt = holdingRepository.findByCustomerIdAndCode(customerId, bareCode);
         InvestmentPolicy policy = policyRepository.findByCustomerId(customerId)
                 .orElseGet(() -> {
                     InvestmentPolicy p = InvestmentPolicy.builder()
@@ -164,12 +176,14 @@ public class PortfolioService {
                     return policyRepository.save(p);
                 });
 
-        // Resolve asset currency based on holding or watchlist market
+        // Resolve asset currency — prefer holding, then qualified market prefix, then watchlist
         String currency = "NZD";
         if (holdingOpt.isPresent()) {
             currency = holdingOpt.get().getCurrency();
+        } else if (qualifiedMarket != null) {
+            currency = "NZX".equals(qualifiedMarket) ? "NZD" : "ASX".equals(qualifiedMarket) ? "AUD" : "USD";
         } else {
-            Optional<Watchlist> wlOpt = watchlistRepository.findByCustomerIdAndCode(customerId, code);
+            Optional<Watchlist> wlOpt = watchlistRepository.findByCustomerIdAndCode(customerId, bareCode);
             if (wlOpt.isPresent()) {
                 String market = wlOpt.get().getMarket();
                 currency = "NZX".equals(market) ? "NZD" : "ASX".equals(market) ? "AUD" : "USD";
@@ -189,7 +203,7 @@ public class PortfolioService {
 
             // Call Sharesies if authenticated
             if (sharesiesService.isAuthenticated(customerId)) {
-                boolean ok = sharesiesService.buy(customerId, code, amountToBuy);
+                boolean ok = sharesiesService.buy(customerId, bareCode, amountToBuy);
                 if (!ok) {
                     throw new IllegalStateException("Sharesies BUY order failed. Please check connection/balance.");
                 }
@@ -215,15 +229,17 @@ public class PortfolioService {
                 holding.setAvgPurchasePrice(newAvg);
                 holding.setBrokerage((holding.getBrokerage() != null ? holding.getBrokerage() : 0.0) + brokerage);
             } else {
-                Optional<Watchlist> wlOpt = watchlistRepository.findByCustomerIdAndCode(customerId, code);
-                String name = wlOpt.isPresent() ? wlOpt.get().getShareName() : code;
-                String market = wlOpt.isPresent() ? wlOpt.get().getMarket() : "NASDAQ";
+                Optional<Watchlist> wlOpt = watchlistRepository.findByCustomerIdAndCode(customerId, bareCode);
+                String name = wlOpt.isPresent() ? wlOpt.get().getShareName() : bareCode;
+                // Derive market: prefer watchlist record, then qualified prefix, then default
+                String market = wlOpt.isPresent() ? wlOpt.get().getMarket()
+                        : (qualifiedMarket != null ? qualifiedMarket : "NASDAQ");
                 String assetType = wlOpt.isPresent() ? wlOpt.get().getType() : "growth";
                 int riskVal = wlOpt.isPresent() ? wlOpt.get().getRisk() : 5;
 
                 holding = Holding.builder()
                         .customerId(customerId)
-                        .code(code)
+                        .code(bareCode)
                         .shareName(name)
                         .market(market)
                         .type(assetType)
@@ -254,7 +270,7 @@ public class PortfolioService {
             // For SELL, the quantity parameter represents the number of shares (according to Sharesies API sell(company, shares))
             double sharesToSell = quantity;
             if (holdingOpt.isEmpty()) {
-                throw new IllegalArgumentException("No holding found for " + code);
+                throw new IllegalArgumentException("No holding found for " + bareCode + " (requested: " + code + ")");
             }
             Holding holding = holdingOpt.get();
             double oldQty = holding.getQuantity();
@@ -264,7 +280,7 @@ public class PortfolioService {
             
             // Call Sharesies if authenticated
             if (sharesiesService.isAuthenticated(customerId)) {
-                boolean ok = sharesiesService.sell(customerId, code, sharesToSell);
+                boolean ok = sharesiesService.sell(customerId, bareCode, sharesToSell);
                 if (!ok) {
                     throw new IllegalStateException("Sharesies SELL order failed. Please check connection/holdings.");
                 }
