@@ -9,6 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import PersonIcon from '@mui/icons-material/Person'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CloseIcon from '@mui/icons-material/Close'
+import TradeModal from './TradeModal'
 
 export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeTab: propActiveTab, setActiveTab: propSetActiveTab }) {
   const [searchInput, setSearchInput] = useState('')
@@ -17,17 +18,16 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
   const activeTab = propActiveTab || localActiveTab
   const setActiveTab = propSetActiveTab || setLocalActiveTab
   
-  // Modal states for recommending a stock
+  // Modal states
   const [isRecommendModalOpen, setIsRecommendModalOpen] = useState(false)
+  const [isTradeOpen, setIsTradeOpen] = useState(false)
+  const [tradeCode, setTradeCode] = useState('')
+  
   const [recommendCode, setRecommendCode] = useState('')
   const [recommendName, setRecommendName] = useState('')
   const [recommendNotes, setRecommendNotes] = useState('')
   const [recommendError, setRecommendError] = useState('')
   const [recommendSuccess, setRecommendSuccess] = useState('')
-
-  const handleIgnoreRecommendation = (code) => {
-    actionRecMutation.mutate(code)
-  }
 
   // Queries
   const { data: watchlist = [], refetch: refetchWatchlist } = useQuery({
@@ -46,7 +46,6 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
     mutationFn: addToWatchlist,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watchlist'] })
-      refetchWatchlist()
     }
   })
 
@@ -54,7 +53,6 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
     mutationFn: removeFromWatchlist,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watchlist'] })
-      refetchWatchlist()
     }
   })
 
@@ -84,6 +82,11 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
     setIsRecommendModalOpen(true)
   }
 
+  const handleOpenTrade = (code) => {
+    setTradeCode(code)
+    setIsTradeOpen(true)
+  }
+
   const handleSubmitRecommendation = (e) => {
     e.preventDefault()
     setRecommendError('')
@@ -96,7 +99,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
   const handleAddWatchlist = (code, name) => {
     addWatchlistMutation.mutate({ code, name })
-    actionRecMutation.mutate(code)
+    actionRecommendationMutation.mutate({ code, action: 'IGNORE' })
   }
 
   const handleRemoveWatchlist = (code) => {
@@ -116,21 +119,35 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
     mutationFn: unrecommendStock,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recommendations'] })
-      refetchRecommendations()
     }
   })
 
-  const actionRecMutation = useMutation({
+  const actionRecommendationMutation = useMutation({
     mutationFn: actionRecommendation,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recommendations'] })
-      refetchRecommendations()
     }
   })
 
   const handleUnrecommend = (code) => {
     unrecommendMutation.mutate(code)
   }
+
+  const handleIgnoreRecommendation = (code) => {
+    actionRecommendationMutation.mutate({ code, action: 'IGNORE' })
+  }
+
+  const trimmedSearch = searchInput.trim().toUpperCase()
+  const filteredWatchlist = watchlist.filter(item => {
+    if (!trimmedSearch) return true
+    return item.code.toUpperCase().includes(trimmedSearch) || 
+           (item.shareName && item.shareName.toUpperCase().includes(trimmedSearch))
+  })
+  
+  const exactMatchFound = trimmedSearch && watchlist.some(item => 
+    item.code.toUpperCase() === trimmedSearch || 
+    (item.code.toUpperCase() === trimmedSearch.split(':').pop())
+  )
 
   const hasUserRecommended = (code) => {
     const currentCustomerId = localStorage.getItem('customerId')
@@ -152,14 +169,12 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Title Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h3 style={{ fontSize: '18px', fontWeight: '700' }} className="gradient-text">WATCHLIST & RECOMMENDATIONS</h3>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Evaluate top stock options or share recommendations with the community</p>
         </div>
 
-        {/* Tab Controls */}
         <div style={{ 
           display: 'flex', 
           background: 'rgba(255, 255, 255, 0.03)', 
@@ -202,10 +217,8 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
         </div>
       </div>
 
-      {/* Main Tab Views */}
       {activeTab === 'watchlist' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Watchlist Search Bar */}
           <form 
             onSubmit={handleSearchSubmit} 
             style={{ 
@@ -222,7 +235,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
               type="text" 
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Add stock to watchlist (e.g. ASX:WMI)" 
+              placeholder="Search watchlist or type ticker to add..." 
               style={{
                 flex: 1,
                 background: 'rgba(0, 0, 0, 0.2)',
@@ -234,25 +247,27 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
                 outline: 'none'
               }}
             />
-            <button 
-              type="submit"
-              disabled={addWatchlistMutation.isPending || !searchInput.trim()}
-              className="investa-button"
-              style={{
-                padding: '10px 20px',
-                fontWeight: '700',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              {addWatchlistMutation.isPending ? 'Adding...' : '+ Add'}
-            </button>
+            {trimmedSearch && !exactMatchFound && (
+              <button 
+                type="submit"
+                disabled={addWatchlistMutation.isPending}
+                className="investa-button"
+                style={{
+                  padding: '10px 20px',
+                  fontWeight: '700',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                {addWatchlistMutation.isPending ? 'Adding...' : `+ Add "${searchInput.trim()}"`}
+              </button>
+            )}
           </form>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-            {watchlist.map((item) => (
+            {filteredWatchlist.map((item) => (
             <div key={item.code} className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '230px' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
@@ -303,6 +318,13 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
               <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--border-glass)', paddingTop: '12px' }}>
                 <button 
                   className="investa-button" 
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 12px', fontSize: '12px', background: 'rgba(99,102,241,0.15)', color: 'var(--accent-indigo)', border: '1px solid rgba(99,102,241,0.2)' }}
+                  onClick={() => handleOpenTrade(item.code)}
+                >
+                  Buy
+                </button>
+                <button 
+                  className="investa-button" 
                   style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px 12px', fontSize: '12px' }}
                   onClick={() => onAskAI(`Generate a DCF valuation and policy fit analysis for watchlisted ticker ${item.code}`)}
                 >
@@ -344,9 +366,14 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
               </div>
             </div>
           ))}
-          {watchlist.length === 0 && (
+          {filteredWatchlist.length === 0 && searchInput.trim() === '' && (
             <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', gridColumn: '1 / -1' }}>
               <p style={{ color: 'var(--text-muted)' }}>Your watchlist is empty. Ask the AI Assistant for recommendations and add them here!</p>
+            </div>
+          )}
+          {filteredWatchlist.length === 0 && searchInput.trim() !== '' && (
+            <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', gridColumn: '1 / -1' }}>
+              <p style={{ color: 'var(--text-muted)' }}>No items match "{searchInput}". Click Add to track it!</p>
             </div>
           )}
         </div>
@@ -425,6 +452,20 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
             </div>
           )}
         </div>
+      )}
+
+      {/* Trade execution modal */}
+      {isTradeOpen && (
+        <TradeModal 
+          isOpen={isTradeOpen}
+          onClose={() => setIsTradeOpen(false)}
+          initialType="BUY"
+          initialCode={tradeCode}
+          onTradeExecuted={() => {
+            queryClient.invalidateQueries({ queryKey: ['watchlist'] })
+            if (onTradeExecuted) onTradeExecuted()
+          }}
+        />
       )}
 
       {/* Recommendation Form Modal Overlay */}

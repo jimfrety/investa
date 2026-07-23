@@ -23,21 +23,21 @@ const extractTickers = (text, watchlist = [], messages = []) => {
     qualifiedMatches.push(`${qMatch[1]}:${qMatch[2]}`)
   }
   
-  // 2. Find standard unqualified tickers, e.g. SSG or MEL
-  // We look for 2 to 5 letter uppercase words.
-  const regex = /\b[A-Z]{2,5}\b/g
-  const matches = text.match(regex) || []
+  // 2. Find explicit unqualified tickers enclosed in parentheses or prefixed with $ (e.g. $AAPL or (AAPL))
+  const explicitRegex = /(?:\$|\()([A-Z]{2,5})(?:\)|\b)/g
+  const matches = []
+  let eMatch
+  while ((eMatch = explicitRegex.exec(text)) !== null) {
+    matches.push(eMatch[1])
+  }
   
-  // Filter out common non-ticker uppercase words, helper words, currencies, acronyms
+  // Filter out common non-ticker uppercase words
   const excludeWords = new Set([
     'I', 'A', 'AN', 'THE', 'AND', 'BUT', 'OR', 'IF', 'OF', 'FOR', 'TO', 'BY', 'ON', 'AT', 'IN', 'NO', 'YES',
     'AI', 'US', 'USA', 'USD', 'NZD', 'AUD', 'RSI', 'DCF', 'ETF',
     'HOLD', 'BUY', 'SELL', 'PAID', 'EX', 'FAQ', 'NZ', 'AU', 'UK', 'PE',
     'NAV', 'EPS', 'CAGR', 'MACD', 'SMA', 'YTD', 'IPO', 'CEO', 'CFO', 'CTO',
-    'ASX', 'NZX', 'NYSE', 'NASDAQ', 'AMEX', 'LSE', 'TSX', 'SGX', 'HKEX', 'TSE',
-    'IT', 'IS', 'AS', 'BE', 'DO', 'WE', 'HE', 'SO', 'UP', 'OUT', 'ARE', 'WAS', 'NOT',
-    'ALL', 'ANY', 'CAN', 'HAS', 'HOW', 'NOW', 'WHY', 'WHO', 'YOU', 'OUR', 'THIS', 'THAT',
-    'GOOD', 'BAD', 'HIGH', 'LOW', 'NEW', 'OLD', 'BIG', 'SMALL', 'TRUE', 'FALSE', 'NONE'
+    'ASX', 'NZX', 'NYSE', 'NASDAQ', 'AMEX', 'LSE', 'TSX', 'SGX', 'HKEX', 'TSE'
   ])
   
   const cleanMatches = matches.filter(word => !excludeWords.has(word))
@@ -177,7 +177,6 @@ Try asking:
     try {
       await addToWatchlist(ticker)
       queryClient.invalidateQueries({ queryKey: ['watchlist'] })
-      refetchWatchlist()
       if (onRefetch) onRefetch()
     } catch (err) {
       console.error('Failed to add to watchlist', err)
