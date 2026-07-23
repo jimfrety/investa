@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  *     (validateAndCorrect) — all symbols are requested in a single API call.
  *
  * MarketStack exchange suffixes:
- *   NZX  → .NZ     ASX → .AX     US exchanges → no suffix
+ *   NZX  → .XNZE   ASX → .AX     US exchanges → no suffix
  */
 @Service
 @RequiredArgsConstructor
@@ -206,9 +206,11 @@ public class MarketStackPriceService {
 
                 if (price <= 0) continue;
 
-                // Strip exchange suffix (.NZ / .AX) to get bare code
+                // Strip exchange suffix (.XNZE / .AX) to get bare code
                 String bareCode = symbol;
-                if (symbol.endsWith(".NZ") || symbol.endsWith(".AX")) {
+                if (symbol.endsWith(".XNZE")) {
+                    bareCode = symbol.substring(0, symbol.length() - 5);
+                } else if (symbol.endsWith(".AX")) {
                     bareCode = symbol.substring(0, symbol.length() - 3);
                 }
                 result.put(bareCode.toUpperCase(), price);
@@ -221,7 +223,7 @@ public class MarketStackPriceService {
 
     /** Appends the correct exchange suffix for MarketStack. */
     private String toMarketStackSymbol(String code, String market) {
-        if ("NZX".equalsIgnoreCase(market))  return code + ".NZ";
+        if ("NZX".equalsIgnoreCase(market))  return code + ".XNZE";
         if ("ASX".equalsIgnoreCase(market))  return code + ".AX";
         return code; // US / other exchanges need no suffix
     }
