@@ -209,9 +209,10 @@ public class PortfolioService {
 
             // Place live order if authenticated
             if (sharesiesConnected) {
-                boolean ok = sharesiesService.buy(customerId, bareCode, totalCost);
-                if (!ok) {
-                    throw new IllegalStateException("Sharesies BUY order failed. Please check connection/balance.");
+                try {
+                    sharesiesService.buy(customerId, bareCode, totalCost);
+                } catch (RuntimeException e) {
+                    throw new IllegalStateException(e.getMessage());
                 }
                 policy.setCashAvailable(cash - totalCostInBase);
             }
@@ -281,11 +282,12 @@ public class PortfolioService {
                 throw new IllegalArgumentException("Cannot sell more shares than held. Held: " + oldQty + ", Sell: " + sharesToSell);
             }
             
-            // Call Sharesies if authenticated
+            // Place live order if authenticated
             if (sharesiesService.isAuthenticated(customerId)) {
-                boolean ok = sharesiesService.sell(customerId, bareCode, sharesToSell);
-                if (!ok) {
-                    throw new IllegalStateException("Sharesies SELL order failed. Please check connection/holdings.");
+                try {
+                    sharesiesService.sell(customerId, bareCode, sharesToSell);
+                } catch (RuntimeException e) {
+                    throw new IllegalStateException(e.getMessage());
                 }
             }
 

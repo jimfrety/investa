@@ -1649,12 +1649,16 @@ public class SharesiesService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Sharesies BUY order placed successfully for customer {}: Symbol={}, Amount={}", customerId, symbol, amount);
                 return true;
+            } else {
+                throw new RuntimeException("Sharesies API returned " + response.getStatusCode() + ": " + response.getBody());
             }
-            log.warn("Sharesies BUY order returned non-success status: {}", response.getStatusCode());
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("Sharesies API Error: " + e.getResponseBodyAsString());
+            throw new RuntimeException("Sharesies API rejected buy order: " + e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error("Error executing Sharesies BUY order for customer {}: {}", customerId, e.getMessage(), e);
+            throw new RuntimeException("Failed to connect to Sharesies API: " + e.getMessage());
         }
-        return false;
     }
 
     public boolean sell(Long customerId, String symbol, Double shares) {
@@ -1681,12 +1685,16 @@ public class SharesiesService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Sharesies SELL order placed successfully for customer {}: Symbol={}, Shares={}", customerId, symbol, shares);
                 return true;
+            } else {
+                throw new RuntimeException("Sharesies API returned " + response.getStatusCode() + ": " + response.getBody());
             }
-            log.warn("Sharesies SELL order returned non-success status: {}", response.getStatusCode());
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("Sharesies API Error: " + e.getResponseBodyAsString());
+            throw new RuntimeException("Sharesies API rejected sell order: " + e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error("Error executing Sharesies SELL order for customer {}: {}", customerId, e.getMessage(), e);
+            throw new RuntimeException("Failed to connect to Sharesies API: " + e.getMessage());
         }
-        return false;
     }
 
     public List<Map<String, Object>> searchInstruments(Long customerId, String pattern) {
