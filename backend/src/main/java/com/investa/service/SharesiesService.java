@@ -1544,7 +1544,7 @@ public class SharesiesService {
         }
         for (Map.Entry<String, String> entry : instrumentCache.entrySet()) {
             String cachedVal = entry.getValue();
-            if (searchSymbol.equals(cachedVal) || upper.equals(cachedVal)) {
+            if (searchSymbol.equals(cachedVal) || upper.equals(cachedVal) || cachedVal.startsWith(searchSymbol + ".") || cachedVal.startsWith(searchSymbol + ":")) {
                 return entry.getKey();
             }
         }
@@ -1566,7 +1566,7 @@ public class SharesiesService {
                             if (id != null && code != null) {
                                 String cleanCode = code.toUpperCase();
                                 instrumentCache.put(id, cleanCode);
-                                if (searchSymbol.equals(cleanCode) || upper.equals(cleanCode)) {
+                                if (searchSymbol.equals(cleanCode) || upper.equals(cleanCode) || cleanCode.startsWith(searchSymbol + ".") || cleanCode.startsWith(searchSymbol + ":")) {
                                     return id;
                                 }
                             }
@@ -1595,9 +1595,14 @@ public class SharesiesService {
             HttpHeaders headers = createHeaders(customerId);
             Map<String, Object> body = new HashMap<>();
             body.put("action", "place");
-            body.put("amount", amount);
+            
+            // Format amounts exactly to 2 decimal places as Strings to prevent API rejection for e.g. 100.49999994
+            String formattedAmount = String.format(Locale.US, "%.2f", amount);
+            String formattedFee = String.format(Locale.US, "%.2f", amount * 0.005);
+            
+            body.put("amount", formattedAmount);
             body.put("fund_id", fundId);
-            body.put("expected_fee", amount * 0.005);
+            body.put("expected_fee", formattedFee);
             body.put("acting_as_id", session.getUserId());
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
