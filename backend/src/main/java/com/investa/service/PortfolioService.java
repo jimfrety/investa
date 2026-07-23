@@ -210,7 +210,10 @@ public class PortfolioService {
             // Place live order if authenticated
             if (sharesiesConnected) {
                 try {
-                    sharesiesService.buy(customerId, bareCode, totalCost, currency);
+                    boolean success = sharesiesService.buy(customerId, bareCode, totalCost, currency);
+                    if (!success) {
+                        throw new IllegalStateException("Failed to place the buy order in Sharesies. The fund may not have been found or the session is invalid.");
+                    }
                 } catch (RuntimeException e) {
                     throw new IllegalStateException(e.getMessage());
                 }
