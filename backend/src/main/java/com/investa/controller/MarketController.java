@@ -125,6 +125,51 @@ public class MarketController {
         return ResponseEntity.ok(dividendService.getDividendPayments(customerId));
     }
 
+    @PostMapping("/validate-tickers")
+    public ResponseEntity<List<String>> validateTickers(
+            @RequestHeader("X-Customer-ID") Long customerId,
+            @RequestBody List<String> tickers) {
+        
+        List<String> validated = new java.util.ArrayList<>();
+        for (String ticker : tickers) {
+            String upperCode = ticker.trim().toUpperCase();
+            String market = null;
+            String bareCode = upperCode;
+            
+            if (upperCode.contains(":")) {
+                String[] parts = upperCode.split(":", 2);
+                market = parts[0].trim();
+                bareCode = parts[1].trim();
+            } else if (upperCode.contains(".")) {
+                String[] parts = upperCode.split("\\.", 2);
+                market = parts[0].trim();
+                bareCode = parts[1].trim();
+            }
+            
+            String fundId = sharesiesService.getFundIdForSymbol(customerId, bareCode, market);
+            if (fundId != null) {
+                // Fetch details to get the authoritative market
+                Map<String, Object> instInfo = sharesiesService.getInstrumentDetails(customerId, fundId);
+                String resolvedMarket = market;
+                if (instInfo != null) {
+                    String marketVal = com.investa.service.SharesiesService.getFirstPresentKey(instInfo, "exchange", "market", "exchange_code");
+                    if (marketVal != null && !marketVal.trim().isEmpty()) {
+                        resolvedMarket = marketVal.toUpperCase();
+                        if (resolvedMarket.equals("XASX")) resolvedMarket = "ASX";
+                        if (resolvedMarket.equals("XNZE")) resolvedMarket = "NZX";
+                    }
+                }
+                
+                if (resolvedMarket != null) {
+                    validated.add(resolvedMarket + ":" + bareCode);
+                } else {
+                    validated.add(bareCode);
+                }
+            }
+        }
+        return ResponseEntity.ok(validated.stream().distinct().collect(Collectors.toList()));
+    }
+
     @PostMapping("/watchlist")
     public ResponseEntity<?> addToWatchlist(
             @RequestHeader("X-Customer-ID") Long customerId,

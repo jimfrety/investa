@@ -319,6 +319,27 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(1px);
 }
 
+.investa-button-secondary {
+  background: var(--bg-secondary);
+  color: #ffffff;
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-family: var(--font-title);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.investa-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.investa-button-secondary:active {
+  transform: translateY(1px);
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }

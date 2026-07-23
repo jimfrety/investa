@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { postChatMessage, executeTrade, addToWatchlist, recommendStock, fetchWatchlist } from '../api/client'
+import { postChatMessage, executeTrade, addToWatchlist, recommendStock, fetchWatchlist, validateTickers } from '../api/client'
 import CloseIcon from '@mui/icons-material/Close'
 import SendIcon from '@mui/icons-material/Send'
 import ForumIcon from '@mui/icons-material/Forum'
@@ -23,8 +23,8 @@ const extractTickers = (text, watchlist = [], messages = []) => {
     qualifiedMatches.push(`${qMatch[1]}:${qMatch[2]}`)
   }
   
-  // 2. Find explicit unqualified tickers enclosed in parentheses or prefixed with $ (e.g. $AAPL or (AAPL))
-  const explicitRegex = /(?:\$|\()([A-Z]{2,5})(?:\)|\b)/g
+  // 2. Find explicit unqualified tickers prefixed with $ (e.g. $AAPL)
+  const explicitRegex = /(?:\$)([A-Z]{2,5})\b/g
   const matches = []
   let eMatch
   while ((eMatch = explicitRegex.exec(text)) !== null) {
@@ -136,18 +136,31 @@ Try asking:
 
   const chatMutation = useMutation({
     mutationFn: postChatMessage,
-    onSuccess: (data) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'assistant',
-          text: data.answer,
-          confidence: data.confidence,
-          confidenceReason: data.confidenceReason,
-          action: data.action,
-          rebalanceDetails: data.rebalanceDetails
+    onSuccess: async (data) => {
+      // Create message payload
+      const newMsg = {
+        sender: 'assistant',
+        text: data.answer,
+        confidence: data.confidence,
+        confidenceReason: data.confidenceReason,
+        action: data.action,
+        rebalanceDetails: data.rebalanceDetails,
+        validatedTickers: []
+      }
+      
+      // 1. Extract potential tickers
+      const rawTickers = extractTickers(data.answer, watchlist, messages)
+      
+      // 2. Validate with backend (if any)
+      if (rawTickers.length > 0) {
+        try {
+          newMsg.validatedTickers = await validateTickers(rawTickers)
+        } catch (err) {
+          console.error("Failed to validate tickers:", err)
         }
-      ])
+      }
+
+      setMessages((prev) => [...prev, newMsg])
     },
     onError: (err) => {
       setMessages((prev) => [
@@ -315,7 +328,7 @@ Try asking:
       {/* Messages Thread list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column' }}>
         {messages.map((msg, i) => {
-          const detectedTickers = msg.sender === 'assistant' ? extractTickers(msg.text, watchlist, messages.slice(0, i)) : []
+          const detectedTickers = msg.validatedTickers || []
 
           return (
             <div 

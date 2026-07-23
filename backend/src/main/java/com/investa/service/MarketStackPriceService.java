@@ -222,8 +222,11 @@ public class MarketStackPriceService {
 
     /** Appends the correct exchange suffix for MarketStack. */
     private String toMarketStackSymbol(String code, String market) {
-        if ("NZX".equalsIgnoreCase(market))  return code + ".XNZE";
-        if ("ASX".equalsIgnoreCase(market))  return code + ".AX";
+        if (market != null) {
+            String upperMarket = market.toUpperCase();
+            if (upperMarket.contains("NZX") || upperMarket.contains("XNZE"))  return code + ".XNZE";
+            if (upperMarket.contains("ASX") || upperMarket.contains("XASX"))  return code + ".AX";
+        }
         return code; // US / other exchanges need no suffix
     }
 

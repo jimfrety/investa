@@ -305,6 +305,11 @@ public class SharesiesService {
                 .currentPrice(priceVal)
                 .build();
                 
+        // Correct the random placeholder price with actual Marketstack EOD price before saving
+        java.util.List<Watchlist> tempList = new java.util.ArrayList<>();
+        tempList.add(wItem);
+        marketStackPriceService.validateAndCorrect(java.util.Collections.emptyList(), tempList);
+                
         return watchlistRepository.save(wItem);
     }
 

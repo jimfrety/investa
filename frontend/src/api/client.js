@@ -99,6 +99,16 @@ export async function postChatMessage(message) {
   return res.json();
 }
 
+export async function validateTickers(tickers) {
+  const res = await fetch(`${API_BASE}/market/validate-tickers`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(tickers)
+  });
+  if (!res.ok) throw new Error('Failed to validate tickers');
+  return res.json();
+}
+
 export async function fetchResearch(code) {
   const res = await fetch(`${API_BASE}/market/research/${code}`);
   if (!res.ok) throw new Error('Failed to fetch research data');
