@@ -210,7 +210,7 @@ public class PortfolioService {
             // Place live order if authenticated
             if (sharesiesConnected) {
                 try {
-                    sharesiesService.buy(customerId, bareCode, totalCost);
+                    sharesiesService.buy(customerId, bareCode, totalCost, currency);
                 } catch (RuntimeException e) {
                     throw new IllegalStateException(e.getMessage());
                 }

@@ -1618,7 +1618,7 @@ public class SharesiesService {
         return bestMatchId;
     }
 
-    public boolean buy(Long customerId, String symbol, Double amount) {
+    public boolean buy(Long customerId, String symbol, Double amount, String currency) {
         if (!isAuthenticated(customerId)) {
             log.warn("Cannot execute Sharesies buy: Customer {} is not authenticated.", customerId);
             return false;
@@ -1631,20 +1631,36 @@ public class SharesiesService {
         SharesiesSession session = getSession(customerId);
         try {
             HttpHeaders headers = createHeaders(customerId);
+            
+            String formattedAmount = String.format(java.util.Locale.US, "%.2f", amount);
+            String formattedFee = String.format(java.util.Locale.US, "%.8f", amount * 0.005);
+
+            Map<String, Object> order = new HashMap<>();
+            order.put("type", "dollar_market");
+            order.put("currency_amount", formattedAmount);
+            order.put("is_extended_hours", false);
+            order.put("is_auto_exercise", false);
+
+            Map<String, Object> payment = new HashMap<>();
+            payment.put("currency", currency != null ? currency.toLowerCase() : "nzd");
+            payment.put("target_amount", formattedAmount);
+            payment.put("type", "direct");
+
             Map<String, Object> body = new HashMap<>();
-            body.put("action", "place");
-            
-            // Format amounts exactly to 2 decimal places to prevent API rejection for e.g. 100.49999994
-            double roundedAmount = Math.round(amount * 100.0) / 100.0;
-            double roundedFee = Math.round((amount * 0.005) * 100.0) / 100.0;
-            
-            body.put("amount", roundedAmount);
             body.put("fund_id", fundId);
-            body.put("expected_fee", roundedFee);
-            body.put("acting_as_id", session.getUserId());
+            body.put("expected_fee", formattedFee);
+            body.put("idempotency_key", java.util.UUID.randomUUID().toString());
+            body.put("order", order);
+            body.put("payment_breakdown", java.util.List.of(payment));
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-            String url = session.getAppBaseUrl() + "/api/fund/buy";
+            
+            String portfolioId = session.getPortfolioId();
+            if (portfolioId == null) {
+                throw new RuntimeException("Could not determine portfolio ID for Sharesies account. Please sync your portfolio first.");
+            }
+            String url = session.getAppBaseUrl() + "/api/portfolio-order/" + portfolioId + "/create-buy";
+            
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Sharesies BUY order placed successfully for customer {}: Symbol={}, Amount={}", customerId, symbol, amount);
