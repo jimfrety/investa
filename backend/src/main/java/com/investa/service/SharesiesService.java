@@ -1565,14 +1565,18 @@ public class SharesiesService {
             String cachedVal = entry.getValue();
             boolean matches = searchSymbol.equals(cachedVal) || upper.equals(cachedVal) || cachedVal.startsWith(searchSymbol + ".") || cachedVal.startsWith(searchSymbol + ":");
             if (matches) {
-                if (expectedMarket != null && (cachedVal.endsWith("." + expectedMarket.toUpperCase()) || cachedVal.endsWith(":" + expectedMarket.toUpperCase()))) {
-                    return entry.getKey();
+                if (expectedMarket != null) {
+                    if (cachedVal.endsWith("." + expectedMarket.toUpperCase()) || cachedVal.endsWith(":" + expectedMarket.toUpperCase())) {
+                        return entry.getKey();
+                    }
+                    // Keep looking for exact market match
+                } else {
+                    if (bestMatchId == null) bestMatchId = entry.getKey();
                 }
-                if (bestMatchId == null) bestMatchId = entry.getKey();
             }
         }
         
-        if (bestMatchId != null && expectedMarket == null) {
+        if (bestMatchId != null) {
             return bestMatchId;
         }
 
@@ -1599,8 +1603,8 @@ public class SharesiesService {
                                 boolean matches = searchSymbol.equals(cleanCode) || upper.equals(cleanCode) || cleanCode.startsWith(searchSymbol + ".") || cleanCode.startsWith(searchSymbol + ":");
                                 
                                 if (matches) {
-                                    if (expectedMarket != null && instMarket != null) {
-                                        if (instMarket.equalsIgnoreCase(expectedMarket)) {
+                                    if (expectedMarket != null) {
+                                        if (instMarket != null && instMarket.equalsIgnoreCase(expectedMarket)) {
                                             return id;
                                         }
                                     } else {

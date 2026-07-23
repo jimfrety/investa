@@ -68,14 +68,16 @@ public class MarketStackPriceService {
 
         long now = System.currentTimeMillis();
         boolean allCached = holdings.stream().allMatch(h -> {
-            CachedPrice cp = priceCache.get(h.getCode().toUpperCase());
+            String msKey = toMarketStackSymbol(h.getCode(), h.getMarket()).toUpperCase();
+            CachedPrice cp = priceCache.get(msKey);
             return cp != null && (now - cp.timestamp) < CACHE_DURATION_MS;
         });
 
         if (allCached) {
             log.info("All holding prices are within the 15-minute cache — updating from cache.");
             for (Holding h : holdings) {
-                CachedPrice cp = priceCache.get(h.getCode().toUpperCase());
+                String msKey = toMarketStackSymbol(h.getCode(), h.getMarket()).toUpperCase();
+                CachedPrice cp = priceCache.get(msKey);
                 if (cp != null && cp.price > 0) {
                     applyPriceToHolding(h, cp.price);
                     holdingRepository.save(h);
@@ -90,9 +92,10 @@ public class MarketStackPriceService {
 
         int successCount = 0;
         for (Holding h : holdings) {
-            Double price = prices.get(h.getCode().toUpperCase());
+            String msKey = toMarketStackSymbol(h.getCode(), h.getMarket()).toUpperCase();
+            Double price = prices.get(msKey);
             if (price != null && price > 0) {
-                priceCache.put(h.getCode().toUpperCase(), new CachedPrice(price, now));
+                priceCache.put(msKey, new CachedPrice(price, now));
                 applyPriceToHolding(h, price);
                 holdingRepository.save(h);
                 successCount++;
@@ -144,7 +147,8 @@ public class MarketStackPriceService {
         int watchlistCorrections = 0;
 
         for (Holding h : holdings) {
-            Double msPrice = prices.get(h.getCode().toUpperCase());
+            String msKey = toMarketStackSymbol(h.getCode(), h.getMarket()).toUpperCase();
+            Double msPrice = prices.get(msKey);
             if (msPrice == null || msPrice <= 0) continue;
             double current = h.getCurrentPrice() != null ? h.getCurrentPrice() : 0.0;
             if (current <= 0 || priceDiffers(current, msPrice)) {
@@ -157,7 +161,8 @@ public class MarketStackPriceService {
         }
 
         for (Watchlist w : watchlist) {
-            Double msPrice = prices.get(w.getCode().toUpperCase());
+            String msKey = toMarketStackSymbol(w.getCode(), w.getMarket()).toUpperCase();
+            Double msPrice = prices.get(msKey);
             if (msPrice == null || msPrice <= 0) continue;
             double current = w.getCurrentPrice() != null ? w.getCurrentPrice() : 0.0;
             if (current <= 0 || priceDiffers(current, msPrice)) {
@@ -206,14 +211,8 @@ public class MarketStackPriceService {
 
                 if (price <= 0) continue;
 
-                // Strip exchange suffix (.XNZE / .AX) to get bare code
-                String bareCode = symbol;
-                if (symbol.endsWith(".XNZE")) {
-                    bareCode = symbol.substring(0, symbol.length() - 5);
-                } else if (symbol.endsWith(".AX")) {
-                    bareCode = symbol.substring(0, symbol.length() - 3);
-                }
-                result.put(bareCode.toUpperCase(), price);
+                // Map by the exact returned symbol (e.g. WMI.AX)
+                result.put(symbol.toUpperCase(), price);
             }
         } catch (Exception e) {
             log.error("MarketStack API call failed: {}", e.getMessage(), e);
