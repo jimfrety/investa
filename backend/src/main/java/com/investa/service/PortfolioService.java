@@ -193,28 +193,31 @@ public class PortfolioService {
         double cash = policy.getCashAvailable() != null ? policy.getCashAvailable() : 0.0;
 
         if (type.equalsIgnoreCase("BUY")) {
-            // For BUY, the quantity parameter represents the cash amount to invest (according to Sharesies API buy(company, amount))
-            double amountToBuy = quantity;
-            double totalCostInBase = currencyService.convertToBase(amountToBuy, currency);
+            // quantity = number of shares to buy; totalCost = shares * price + brokerage
+            double sharesToBuy = quantity;
+            double totalCost = (sharesToBuy * price) + brokerage;
+            double totalCostInBase = currencyService.convertToBase(totalCost, currency);
 
-            if (cash < totalCostInBase) {
-                throw new IllegalArgumentException("Insufficient cash available. Required: $" + String.format("%.2f", totalCostInBase) + " NZD, Available: $" + String.format("%.2f", cash) + " NZD");
+            boolean sharesiesConnected = sharesiesService.isAuthenticated(customerId);
+
+            // Only enforce cash check when connected to Sharesies (live account)
+            if (sharesiesConnected && cash < totalCostInBase) {
+                throw new IllegalArgumentException("Insufficient cash available. Required: $"
+                        + String.format("%.2f", totalCostInBase) + " NZD, Available: $"
+                        + String.format("%.2f", cash) + " NZD");
             }
 
-            // Call Sharesies if authenticated
-            if (sharesiesService.isAuthenticated(customerId)) {
-                boolean ok = sharesiesService.buy(customerId, bareCode, amountToBuy);
+            // Place live order if authenticated
+            if (sharesiesConnected) {
+                boolean ok = sharesiesService.buy(customerId, bareCode, totalCost);
                 if (!ok) {
                     throw new IllegalStateException("Sharesies BUY order failed. Please check connection/balance.");
                 }
+                policy.setCashAvailable(cash - totalCostInBase);
             }
 
-            policy.setCashAvailable(cash - totalCostInBase);
-            
-            // Calculate actual shares bought based on amount and price
-            double actualShares = (amountToBuy - brokerage) / price;
-            if (actualShares <= 0) {
-                throw new IllegalArgumentException("Buy amount must be greater than brokerage fee.");
+            if (sharesToBuy <= 0) {
+                throw new IllegalArgumentException("Quantity must be greater than zero.");
             }
 
             Holding holding;
@@ -222,8 +225,8 @@ public class PortfolioService {
                 holding = holdingOpt.get();
                 double oldQty = holding.getQuantity();
                 double oldAvg = holding.getAvgPurchasePrice();
-                double newQty = oldQty + actualShares;
-                double newAvg = ((oldQty * oldAvg) + amountToBuy) / newQty;
+                double newQty = oldQty + sharesToBuy;
+                double newAvg = ((oldQty * oldAvg) + (sharesToBuy * price)) / newQty;
                 
                 holding.setQuantity(newQty);
                 holding.setAvgPurchasePrice(newAvg);
@@ -244,7 +247,7 @@ public class PortfolioService {
                         .market(market)
                         .type(assetType)
                         .risk(riskVal)
-                        .quantity(actualShares)
+                        .quantity(sharesToBuy)
                         .avgPurchasePrice(price)
                         .currentPrice(price)
                         .brokerage(brokerage)

@@ -113,18 +113,26 @@ public class PortfolioController {
     }
 
     @PostMapping("/trade")
-    public ResponseEntity<Transaction> executeTrade(
+    public ResponseEntity<?> executeTrade(
             @RequestHeader("X-Customer-ID") Long customerId,
             @RequestBody TradeRequest request) {
-        Transaction tx = portfolioService.executeTrade(
-                customerId,
-                request.getCode(),
-                request.getType(),
-                request.getQuantity(),
-                request.getPrice(),
-                request.getBrokerage()
-        );
-        return ResponseEntity.ok(tx);
+        try {
+            Transaction tx = portfolioService.executeTrade(
+                    customerId,
+                    request.getCode(),
+                    request.getType(),
+                    request.getQuantity(),
+                    request.getPrice(),
+                    request.getBrokerage()
+            );
+            return ResponseEntity.ok(tx);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(422).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(502).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Unexpected error: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/sync-prices")
