@@ -234,12 +234,12 @@ public class SharesiesService {
         
         if (upperCode.contains(":")) {
             String[] parts = upperCode.split(":", 2);
-            market = parts[0];
-            bareCode = parts[1];
+            market = parts[0].trim();
+            bareCode = parts[1].trim();
         } else if (upperCode.contains(".")) {
             String[] parts = upperCode.split("\\.", 2);
-            market = parts[0];
-            bareCode = parts[1];
+            market = parts[0].trim();
+            bareCode = parts[1].trim();
         }
         
         Optional<Watchlist> existing = watchlistRepository.findByCustomerIdAndCode(customerId, bareCode);
