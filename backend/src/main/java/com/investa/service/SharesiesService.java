@@ -1644,7 +1644,7 @@ public class SharesiesService {
             body.put("acting_as_id", session.getUserId());
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-            String url = session.getAppBaseUrl() + "/api/cart/immediate-buy-v2";
+            String url = session.getAppBaseUrl() + "/api/fund/buy";
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Sharesies BUY order placed successfully for customer {}: Symbol={}, Amount={}", customerId, symbol, amount);
