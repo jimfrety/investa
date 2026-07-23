@@ -14,36 +14,43 @@ const extractTickers = (text, watchlist = [], messages = []) => {
   if (!text) return []
   
   // 1. Find all fully qualified tickers first, e.g. ASX:SSG or NZX:MEL
-  const qualifiedRegex = /\b([A-Z]{2,6}):([A-Z]{1,5})\b/g
+  // Also match cases like NASDAQ: AAPL (with space)
+  const qualifiedRegex = /\b([A-Z]{2,6}):\s?([A-Z]{1,5})\b/g
   const qualifiedMatches = []
   let qMatch
   while ((qMatch = qualifiedRegex.exec(text)) !== null) {
-    qualifiedMatches.push(qMatch[0])
+    // Reconstruct without space
+    qualifiedMatches.push(`${qMatch[1]}:${qMatch[2]}`)
   }
   
   // 2. Find standard unqualified tickers, e.g. SSG or MEL
-  const regex = /\b[A-Z]{1,5}\b/g
+  // We look for 2 to 5 letter uppercase words.
+  const regex = /\b[A-Z]{2,5}\b/g
   const matches = text.match(regex) || []
   
-  // Filter out common non-ticker uppercase words, helper words, and currencies
+  // Filter out common non-ticker uppercase words, helper words, currencies, acronyms
   const excludeWords = new Set([
     'I', 'A', 'AN', 'THE', 'AND', 'BUT', 'OR', 'IF', 'OF', 'FOR', 'TO', 'BY', 'ON', 'AT', 'IN', 'NO', 'YES',
-    'AI', 'US', 'USA', 'USD', 'NZD', 'AUD', 'RSI', 'DCF', 'ETF', 'RSI', 
+    'AI', 'US', 'USA', 'USD', 'NZD', 'AUD', 'RSI', 'DCF', 'ETF',
     'HOLD', 'BUY', 'SELL', 'PAID', 'EX', 'FAQ', 'NZ', 'AU', 'UK', 'PE',
-    'RSI', 'DCF', 'NAV', 'P/E', 'EPS', 'CAGR', 'RSI', 'MACD', 'SMA',
-    'ASX', 'NZX', 'NYSE', 'NASDAQ'
+    'NAV', 'EPS', 'CAGR', 'MACD', 'SMA', 'YTD', 'IPO', 'CEO', 'CFO', 'CTO',
+    'ASX', 'NZX', 'NYSE', 'NASDAQ', 'AMEX', 'LSE', 'TSX', 'SGX', 'HKEX', 'TSE',
+    'IT', 'IS', 'AS', 'BE', 'DO', 'WE', 'HE', 'SO', 'UP', 'OUT', 'ARE', 'WAS', 'NOT',
+    'ALL', 'ANY', 'CAN', 'HAS', 'HOW', 'NOW', 'WHY', 'WHO', 'YOU', 'OUR', 'THIS', 'THAT',
+    'GOOD', 'BAD', 'HIGH', 'LOW', 'NEW', 'OLD', 'BIG', 'SMALL', 'TRUE', 'FALSE', 'NONE'
   ])
   
   const cleanMatches = matches.filter(word => !excludeWords.has(word))
   
   const result = [...qualifiedMatches]
   cleanMatches.forEach(symbol => {
+    // If we already have a qualified version of this symbol, skip it
     if (qualifiedMatches.some(q => q.endsWith(':' + symbol))) return
     
-    // Qualify it!
+    // Attempt to qualify it!
     // 1. Search conversation history for this symbol with a market prefix
     let foundMarket = null
-    const historyRegex = new RegExp('\\b([A-Z]{2,6}):' + symbol + '\\b', 'i')
+    const historyRegex = new RegExp('\\b([A-Z]{2,6}):\\s?' + symbol + '\\b', 'i')
     for (let idx = messages.length - 1; idx >= 0; idx--) {
       const histMatch = messages[idx].text.match(historyRegex)
       if (histMatch) {
@@ -60,12 +67,16 @@ const extractTickers = (text, watchlist = [], messages = []) => {
         return cleanItemCode === symbol
       })
       if (watchlistMatch) {
-        foundMarket = (watchlistMatch.market || 'NZX').toUpperCase()
+        foundMarket = (watchlistMatch.market || '').toUpperCase()
       }
     }
     
-    const market = foundMarket || 'NZX'
-    result.push(market + ':' + symbol)
+    if (foundMarket) {
+      result.push(foundMarket + ':' + symbol)
+    } else {
+      // Don't arbitrarily guess NZX. Just return the bare symbol so the user/backend can handle it.
+      result.push(symbol)
+    }
   })
   
   return Array.from(new Set(result))
