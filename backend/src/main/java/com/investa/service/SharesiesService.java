@@ -248,7 +248,7 @@ public class SharesiesService {
         double yieldVal = Watchlist.getDivYieldForCode(bareCode, "growth");
         
         try {
-            String fundId = getFundIdForSymbol(customerId, bareCode);
+            String fundId = getFundIdForSymbol(customerId, bareCode, market);
             if (fundId != null) {
                 Map<String, Object> instInfo = getInstrumentDetails(customerId, fundId);
                 String nameVal = getFirstPresentKey(instInfo, "name", "share_name", "company_name");
@@ -1543,18 +1543,34 @@ public class SharesiesService {
     }
 
     public String getFundIdForSymbol(Long customerId, String symbol) {
+        return getFundIdForSymbol(customerId, symbol, null);
+    }
+
+    public String getFundIdForSymbol(Long customerId, String symbol, String expectedMarket) {
         if (symbol == null) return null;
         String upper = symbol.toUpperCase();
         String searchSymbol = upper;
         if (upper.contains(":")) {
             searchSymbol = upper.substring(upper.indexOf(":") + 1);
         }
+        
+        String bestMatchId = null;
+        
         for (Map.Entry<String, String> entry : instrumentCache.entrySet()) {
             String cachedVal = entry.getValue();
-            if (searchSymbol.equals(cachedVal) || upper.equals(cachedVal) || cachedVal.startsWith(searchSymbol + ".") || cachedVal.startsWith(searchSymbol + ":")) {
-                return entry.getKey();
+            boolean matches = searchSymbol.equals(cachedVal) || upper.equals(cachedVal) || cachedVal.startsWith(searchSymbol + ".") || cachedVal.startsWith(searchSymbol + ":");
+            if (matches) {
+                if (expectedMarket != null && (cachedVal.endsWith("." + expectedMarket.toUpperCase()) || cachedVal.endsWith(":" + expectedMarket.toUpperCase()))) {
+                    return entry.getKey();
+                }
+                if (bestMatchId == null) bestMatchId = entry.getKey();
             }
         }
+        
+        if (bestMatchId != null && expectedMarket == null) {
+            return bestMatchId;
+        }
+
         // Fallback: search the API directly for this symbol
         try {
             SharesiesSession session = getSession(customerId);
@@ -1573,8 +1589,18 @@ public class SharesiesService {
                             if (id != null && code != null) {
                                 String cleanCode = code.toUpperCase();
                                 instrumentCache.put(id, cleanCode);
-                                if (searchSymbol.equals(cleanCode) || upper.equals(cleanCode) || cleanCode.startsWith(searchSymbol + ".") || cleanCode.startsWith(searchSymbol + ":")) {
-                                    return id;
+                                
+                                String instMarket = getFirstPresentKey(inst, "exchange", "market", "exchange_code");
+                                boolean matches = searchSymbol.equals(cleanCode) || upper.equals(cleanCode) || cleanCode.startsWith(searchSymbol + ".") || cleanCode.startsWith(searchSymbol + ":");
+                                
+                                if (matches) {
+                                    if (expectedMarket != null && instMarket != null) {
+                                        if (instMarket.equalsIgnoreCase(expectedMarket)) {
+                                            return id;
+                                        }
+                                    } else {
+                                        if (bestMatchId == null) bestMatchId = id;
+                                    }
                                 }
                             }
                         }
@@ -1584,7 +1610,7 @@ public class SharesiesService {
         } catch (Exception e) {
             log.error("Failed to query fund ID for symbol: {}", symbol, e);
         }
-        return null;
+        return bestMatchId;
     }
 
     public boolean buy(Long customerId, String symbol, Double amount) {
