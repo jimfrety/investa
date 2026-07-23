@@ -229,19 +229,26 @@ public class SharesiesService {
         if (code == null || code.trim().isEmpty()) return null;
         String upperCode = code.trim().toUpperCase();
         
-        Optional<Watchlist> existing = watchlistRepository.findByCustomerIdAndCode(customerId, upperCode);
+        String market = "NZX";
+        String bareCode = upperCode;
+        if (upperCode.contains(":")) {
+            String[] parts = upperCode.split(":", 2);
+            market = parts[0];
+            bareCode = parts[1];
+        }
+        
+        Optional<Watchlist> existing = watchlistRepository.findByCustomerIdAndCode(customerId, bareCode);
         if (existing.isPresent()) {
             return existing.get();
         }
         
-        String shareName = upperCode;
-        String market = "NZX";
+        String shareName = bareCode;
         Integer riskVal = 3;
-        double priceVal = Watchlist.getCurrentPriceForCode(upperCode);
-        double yieldVal = Watchlist.getDivYieldForCode(upperCode, "growth");
+        double priceVal = Watchlist.getCurrentPriceForCode(bareCode);
+        double yieldVal = Watchlist.getDivYieldForCode(bareCode, "growth");
         
         try {
-            String fundId = getFundIdForSymbol(customerId, upperCode);
+            String fundId = getFundIdForSymbol(customerId, bareCode);
             if (fundId != null) {
                 Map<String, Object> instInfo = getInstrumentDetails(customerId, fundId);
                 String nameVal = getFirstPresentKey(instInfo, "name", "share_name", "company_name");
@@ -280,7 +287,7 @@ public class SharesiesService {
         
         Watchlist wItem = Watchlist.builder()
                 .customerId(customerId)
-                .code(upperCode)
+                .code(bareCode)
                 .shareName(shareName)
                 .market(market)
                 .risk(riskVal)
