@@ -225,14 +225,19 @@ public class SharesiesService {
         log.info("Logged out customer {} from Sharesies session.", customerId);
     }
 
-    public Watchlist addToWatchlist(Long customerId, String code) {
-        if (code == null || code.trim().isEmpty()) return null;
-        String upperCode = code.trim().toUpperCase();
+    public Watchlist addToWatchlist(Long customerId, String code, String fallbackName) {
+        if (code == null) return null;
         
-        String market = "NZX";
+        String upperCode = code.trim().toUpperCase();
+        String market = "NZX"; // default
         String bareCode = upperCode;
+        
         if (upperCode.contains(":")) {
             String[] parts = upperCode.split(":", 2);
+            market = parts[0];
+            bareCode = parts[1];
+        } else if (upperCode.contains(".")) {
+            String[] parts = upperCode.split("\\.", 2);
             market = parts[0];
             bareCode = parts[1];
         }
@@ -242,7 +247,7 @@ public class SharesiesService {
             return existing.get();
         }
         
-        String shareName = bareCode;
+        String shareName = (fallbackName != null && !fallbackName.trim().isEmpty()) ? fallbackName : bareCode;
         Integer riskVal = 3;
         double priceVal = Watchlist.getCurrentPriceForCode(bareCode);
         double yieldVal = Watchlist.getDivYieldForCode(bareCode, "growth");
@@ -251,7 +256,7 @@ public class SharesiesService {
             String fundId = getFundIdForSymbol(customerId, bareCode, market);
             if (fundId != null) {
                 Map<String, Object> instInfo = getInstrumentDetails(customerId, fundId);
-                String nameVal = getFirstPresentKey(instInfo, "name", "share_name", "company_name");
+                String nameVal = getFirstPresentKey(instInfo, "name", "company_name", "share_name", "title", "description");
                 if (nameVal != null && !nameVal.trim().isEmpty()) {
                     shareName = nameVal;
                 }

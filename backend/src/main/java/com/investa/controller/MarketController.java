@@ -130,10 +130,11 @@ public class MarketController {
             @RequestHeader("X-Customer-ID") Long customerId,
             @RequestBody Map<String, String> payload) {
         String code = payload.get("code");
+        String name = payload.get("name");
         if (code == null || code.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Stock code is required."));
         }
-        Watchlist added = sharesiesService.addToWatchlist(customerId, code);
+        Watchlist added = sharesiesService.addToWatchlist(customerId, code, name);
         if (added == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Failed to add stock to watchlist."));
         }

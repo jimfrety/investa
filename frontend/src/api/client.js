@@ -184,11 +184,12 @@ export async function updateProfile(profile) {
   return res.json();
 }
 
-export async function addToWatchlist(code) {
+export async function addToWatchlist(data) {
+  const payload = typeof data === 'string' ? { code: data } : data;
   const res = await fetch(`${API_BASE}/market/watchlist`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code })
+    body: JSON.stringify(payload)
   });
   if (!res.ok) throw new Error('Failed to add stock to watchlist');
   return res.json();

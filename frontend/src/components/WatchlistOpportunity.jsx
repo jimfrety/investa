@@ -93,8 +93,8 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
     })
   }
 
-  const handleAddWatchlist = (code) => {
-    addWatchlistMutation.mutate(code)
+  const handleAddWatchlist = (code, name) => {
+    addWatchlistMutation.mutate({ code, name })
     actionRecMutation.mutate(code)
   }
 
@@ -333,10 +333,10 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button 
                     className="investa-button" 
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '12px', padding: '8px 12px' }}
-                    onClick={() => handleAddWatchlist(rec.code)}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '8px 12px' }}
+                    onClick={() => handleAddWatchlist(rec.code, rec.shareName)}
                   >
-                    <AddIcon fontSize="small" /> Add
+                    <AddIcon fontSize="small" /> Add to Watchlist
                   </button>
                   <button 
                     className="investa-button-secondary" 
