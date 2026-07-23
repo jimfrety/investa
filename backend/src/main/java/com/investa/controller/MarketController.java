@@ -4,9 +4,11 @@ import com.investa.model.InvestmentPolicy;
 import com.investa.model.ResearchCache;
 import com.investa.model.Watchlist;
 import com.investa.model.ShareRecommendation;
+import com.investa.model.ActionedRecommendation;
 import com.investa.repository.InvestmentPolicyRepository;
 import com.investa.repository.WatchlistRepository;
 import com.investa.repository.ShareRecommendationRepository;
+import com.investa.repository.ActionedRecommendationRepository;
 import com.investa.repository.CustomerRepository;
 import com.investa.service.DividendService;
 import com.investa.service.PortfolioService;
@@ -21,6 +23,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/market")
@@ -36,6 +40,7 @@ public class MarketController {
     private final InvestmentPolicyRepository policyRepository;
     private final SharesiesService sharesiesService;
     private final ShareRecommendationRepository shareRecommendationRepository;
+    private final ActionedRecommendationRepository actionedRecommendationRepository;
     private final CustomerRepository customerRepository;
 
     @GetMapping("/watchlist")
@@ -147,8 +152,14 @@ public class MarketController {
     }
 
     @GetMapping("/recommendations")
-    public ResponseEntity<List<ShareRecommendation>> getRecommendations() {
-        return ResponseEntity.ok(shareRecommendationRepository.findAllByOrderByTimestampDesc());
+    public ResponseEntity<List<ShareRecommendation>> getRecommendations(@RequestHeader("X-Customer-ID") Long customerId) {
+        List<ShareRecommendation> all = shareRecommendationRepository.findAllByOrderByTimestampDesc();
+        List<ActionedRecommendation> actioned = actionedRecommendationRepository.findByCustomerId(customerId);
+        Set<String> actionedCodes = actioned.stream().map(a -> a.getCode().toUpperCase()).collect(Collectors.toSet());
+        List<ShareRecommendation> filtered = all.stream()
+                .filter(r -> !actionedCodes.contains(r.getCode().toUpperCase()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(filtered);
     }
 
     @PostMapping("/recommendations")
@@ -212,5 +223,22 @@ public class MarketController {
             shareRecommendationRepository.deleteAll(recs);
         }
         return ResponseEntity.ok(Map.of("success", true, "message", "Stock un-recommended."));
+    }
+
+    @PostMapping("/recommendations/action")
+    public ResponseEntity<?> actionRecommendation(
+            @RequestHeader("X-Customer-ID") Long customerId,
+            @RequestBody Map<String, String> payload) {
+        String code = payload.get("code");
+        if (code != null && !code.trim().isEmpty()) {
+            String upper = code.trim().toUpperCase();
+            if (!actionedRecommendationRepository.existsByCustomerIdAndCode(customerId, upper)) {
+                actionedRecommendationRepository.save(ActionedRecommendation.builder()
+                        .customerId(customerId)
+                        .code(upper)
+                        .build());
+            }
+        }
+        return ResponseEntity.ok(Map.of("success", true));
     }
 }

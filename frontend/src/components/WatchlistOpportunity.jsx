@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchWatchlist, fetchRecommendations, recommendStock, addToWatchlist, removeFromWatchlist, unrecommendStock } from '../api/client'
+import { fetchWatchlist, fetchRecommendations, recommendStock, addToWatchlist, removeFromWatchlist, unrecommendStock, actionRecommendation } from '../api/client'
 import AddIcon from '@mui/icons-material/Add'
 import AssistantIcon from '@mui/icons-material/Assistant'
 import ShareIcon from '@mui/icons-material/Share'
@@ -24,16 +24,8 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
   const [recommendError, setRecommendError] = useState('')
   const [recommendSuccess, setRecommendSuccess] = useState('')
 
-  const [ignoredRecIds, setIgnoredRecIds] = useState(() => {
-    const saved = localStorage.getItem('ignoredRecommendationIds')
-    return saved ? JSON.parse(saved) : []
-  })
-
-  const handleIgnoreRecommendation = (id) => {
-    const updated = [...ignoredRecIds, id]
-    setIgnoredRecIds(updated)
-    localStorage.setItem('ignoredRecommendationIds', JSON.stringify(updated))
-    window.dispatchEvent(new Event('ignored-changed'))
+  const handleIgnoreRecommendation = (code) => {
+    actionRecMutation.mutate(code)
   }
 
   // Queries
@@ -103,6 +95,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
   const handleAddWatchlist = (code) => {
     addWatchlistMutation.mutate(code)
+    actionRecMutation.mutate(code)
   }
 
   const handleRemoveWatchlist = (code) => {
@@ -111,6 +104,14 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
   const unrecommendMutation = useMutation({
     mutationFn: unrecommendStock,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recommendations'] })
+      refetchRecommendations()
+    }
+  })
+
+  const actionRecMutation = useMutation({
+    mutationFn: actionRecommendation,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recommendations'] })
       refetchRecommendations()
@@ -136,8 +137,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
   const visibleRecommendations = recommendations.filter(rec => {
     const inWatchlist = isAlreadyWatchlisted(rec.code)
-    const isIgnored = ignoredRecIds.includes(rec.id)
-    return !inWatchlist && !isIgnored
+    return !inWatchlist
   })
 
   return (
@@ -353,7 +353,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
                       color: 'var(--accent-rose)',
                       cursor: 'pointer'
                     }}
-                    onClick={() => handleIgnoreRecommendation(rec.id)}
+                    onClick={() => handleIgnoreRecommendation(rec.code)}
                   >
                     <CloseIcon fontSize="small" /> Ignore
                   </button>

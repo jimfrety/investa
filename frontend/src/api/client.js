@@ -225,3 +225,13 @@ export async function unrecommendStock(code) {
   if (!res.ok) throw new Error('Failed to withdraw recommendation');
   return res.json();
 }
+
+export async function actionRecommendation(code) {
+  const res = await fetch(`${API_BASE}/market/recommendations/action`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code })
+  });
+  if (!res.ok) throw new Error('Failed to action recommendation');
+  return res.json();
+}
