@@ -33,6 +33,7 @@ public class SharesiesService {
     private final WatchlistRepository watchlistRepository;
     private final TransactionRepository transactionRepository;
     private final DividendRepository dividendRepository;
+    private final ITickValidationService iTickValidationService;
     private final CurrencyService currencyService;
     
     private final RestTemplate restTemplate = createRestTemplate();
@@ -1067,6 +1068,18 @@ public class SharesiesService {
                 }
                 syncTransactionsAndApplyOverrides(customerId);
                 calculateAndSaveDerivedSeeds(customerId, portfolioSummaryMap);
+                // ── iTick validation: correct any prices that differ from iTick data ──
+                try {
+                    List<Holding> allHoldings = holdingRepository.findByCustomerId(customerId);
+                    List<Watchlist> allWatchlist = watchlistRepository.findByCustomerId(customerId);
+                    iTickValidationService.validateAndCorrect(allHoldings, allWatchlist);
+                    // Persist corrected prices
+                    holdingRepository.saveAll(allHoldings);
+                    holdingRepository.flush();
+                    watchlistRepository.saveAll(allWatchlist);
+                } catch (Exception e) {
+                    log.warn("iTick validation pass failed (Sharesies data retained): {}", e.getMessage());
+                }
                 return true;
             }
         } catch (Exception e) {
