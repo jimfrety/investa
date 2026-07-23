@@ -663,9 +663,6 @@ public class SharesiesService {
                 if (watchObj == null) watchObj = body.get("favourite_instruments");
 
                 if (watchObj instanceof List watchlistCodes) {
-                    // Delete existing watchlist for customer first (clean sync)
-                    watchlistRepository.deleteAll(watchlistRepository.findByCustomerId(customerId));
-                    
                     for (Object wObj : watchlistCodes) {
                         if (wObj != null) {
                             String watchId = null;

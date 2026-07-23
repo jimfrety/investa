@@ -11,6 +11,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CloseIcon from '@mui/icons-material/Close'
 
 export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeTab: propActiveTab, setActiveTab: propSetActiveTab }) {
+  const [searchInput, setSearchInput] = useState('')
   const queryClient = useQueryClient()
   const [localActiveTab, setLocalActiveTab] = useState('watchlist')
   const activeTab = propActiveTab || localActiveTab
@@ -100,6 +101,15 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
   const handleRemoveWatchlist = (code) => {
     removeWatchlistMutation.mutate(code)
+  }
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault()
+    const trimmed = searchInput.trim()
+    if (trimmed) {
+      handleAddWatchlist(trimmed, '')
+      setSearchInput('')
+    }
   }
 
   const unrecommendMutation = useMutation({
@@ -194,8 +204,55 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
       {/* Main Tab Views */}
       {activeTab === 'watchlist' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-          {watchlist.map((item) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Watchlist Search Bar */}
+          <form 
+            onSubmit={handleSearchSubmit} 
+            style={{ 
+              display: 'flex', 
+              gap: '12px',
+              padding: '16px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid var(--border-glass)',
+              borderRadius: '12px',
+              alignItems: 'center'
+            }}
+          >
+            <input 
+              type="text" 
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Add stock to watchlist (e.g. ASX:WMI)" 
+              style={{
+                flex: 1,
+                background: 'rgba(0, 0, 0, 0.2)',
+                border: '1px solid var(--border-glass)',
+                borderRadius: '8px',
+                padding: '10px 16px',
+                color: 'var(--text-primary)',
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            />
+            <button 
+              type="submit"
+              disabled={addWatchlistMutation.isPending || !searchInput.trim()}
+              className="investa-button"
+              style={{
+                padding: '10px 20px',
+                fontWeight: '700',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              {addWatchlistMutation.isPending ? 'Adding...' : '+ Add'}
+            </button>
+          </form>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+            {watchlist.map((item) => (
             <div key={item.code} className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '230px' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
@@ -293,6 +350,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
             </div>
           )}
         </div>
+      </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
           {visibleRecommendations.map((rec) => (
