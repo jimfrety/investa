@@ -1634,13 +1634,13 @@ public class SharesiesService {
             Map<String, Object> body = new HashMap<>();
             body.put("action", "place");
             
-            // Format amounts exactly to 2 decimal places as Strings to prevent API rejection for e.g. 100.49999994
-            String formattedAmount = String.format(Locale.US, "%.2f", amount);
-            String formattedFee = String.format(Locale.US, "%.2f", amount * 0.005);
+            // Format amounts exactly to 2 decimal places to prevent API rejection for e.g. 100.49999994
+            double roundedAmount = Math.round(amount * 100.0) / 100.0;
+            double roundedFee = Math.round((amount * 0.005) * 100.0) / 100.0;
             
-            body.put("amount", formattedAmount);
+            body.put("amount", roundedAmount);
             body.put("fund_id", fundId);
-            body.put("expected_fee", formattedFee);
+            body.put("expected_fee", roundedFee);
             body.put("acting_as_id", session.getUserId());
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);

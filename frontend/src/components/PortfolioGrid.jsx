@@ -233,7 +233,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
       : (tradeQty * tradePrice * 0.005)
 
     const actualQuantity = tradeType === 'BUY'
-      ? Number((tradeQty / tradePrice).toFixed(6))
+      ? Number(((tradeQty - calculatedBrokerage) / tradePrice).toFixed(6))
       : Number(tradeQty)
 
     tradeMutation.mutate({
