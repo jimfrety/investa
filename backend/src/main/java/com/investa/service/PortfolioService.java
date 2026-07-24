@@ -191,14 +191,13 @@ public class PortfolioService {
         }
 
         double cash = policy.getCashAvailable() != null ? policy.getCashAvailable() : 0.0;
+        boolean sharesiesConnected = sharesiesService.isAuthenticated(customerId);
 
         if (type.equalsIgnoreCase("BUY")) {
             // quantity = number of shares to buy; totalCost = shares * price + brokerage
             double sharesToBuy = quantity;
             double totalCost = (sharesToBuy * price) + brokerage;
             double totalCostInBase = currencyService.convertToBase(totalCost, currency);
-
-            boolean sharesiesConnected = sharesiesService.isAuthenticated(customerId);
 
             // Only enforce cash check when connected to Sharesies (live account)
             if (sharesiesConnected && cash < totalCostInBase) {
