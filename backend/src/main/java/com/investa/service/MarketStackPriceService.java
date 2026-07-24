@@ -187,20 +187,35 @@ public class MarketStackPriceService {
         Map<String, Double> result = new LinkedHashMap<>();
         try {
             String url = API_URL + symbolsParam;
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            ResponseEntity<Object> response = restTemplate.getForEntity(url, Object.class);
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 log.error("MarketStack API returned status {}", response.getStatusCode());
                 return result;
             }
 
-            Object dataObj = response.getBody().get("data");
-            if (!(dataObj instanceof List)) {
-                log.warn("MarketStack response missing 'data' array.");
+            Object body = response.getBody();
+            List<?> dataList;
+
+            if (body instanceof List) {
+                dataList = (List<?>) body;
+            } else if (body instanceof Map) {
+                Object dataObj = ((Map<?, ?>) body).get("data");
+                if (dataObj instanceof List) {
+                    dataList = (List<?>) dataObj;
+                } else {
+                    log.warn("MarketStack response missing 'data' array.");
+                    return result;
+                }
+            } else {
+                log.warn("MarketStack response is unknown type: {}", body.getClass());
                 return result;
             }
 
-            for (Map<String, Object> item : (List<Map<String, Object>>) dataObj) {
+            for (Object itemObj : dataList) {
+                if (!(itemObj instanceof Map)) continue;
+                @SuppressWarnings("unchecked")
+                Map<String, Object> item = (Map<String, Object>) itemObj;
                 String symbol = (String) item.get("symbol");
                 Object closeObj = item.get("close");
                 if (symbol == null || closeObj == null) continue;
