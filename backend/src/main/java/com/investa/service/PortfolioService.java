@@ -218,6 +218,8 @@ public class PortfolioService {
                     throw new IllegalStateException(e.getMessage());
                 }
                 policy.setCashAvailable(cash - totalCostInBase);
+            } else {
+                throw new IllegalStateException("Sharesies session expired or not connected. Please connect to Sharesies to execute trades.");
             }
 
             if (sharesToBuy <= 0) {
@@ -286,12 +288,17 @@ public class PortfolioService {
             }
             
             // Place live order if authenticated
-            if (sharesiesService.isAuthenticated(customerId)) {
+            if (sharesiesConnected) {
                 try {
-                    sharesiesService.sell(customerId, bareCode, sharesToSell);
+                    boolean success = sharesiesService.sell(customerId, bareCode, sharesToSell);
+                    if (!success) {
+                        throw new IllegalStateException("Failed to place the sell order in Sharesies. The fund may not have been found or the session is invalid.");
+                    }
                 } catch (RuntimeException e) {
                     throw new IllegalStateException(e.getMessage());
                 }
+            } else {
+                throw new IllegalStateException("Sharesies session expired or not connected. Please connect to Sharesies to execute trades.");
             }
 
             double saleProceeds = (sharesToSell * price) - brokerage;
