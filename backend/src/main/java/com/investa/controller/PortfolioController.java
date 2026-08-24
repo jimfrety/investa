@@ -3,6 +3,8 @@ package com.investa.controller;
 import com.investa.model.Holding;
 import com.investa.model.PortfolioSnapshot;
 import com.investa.model.Transaction;
+import com.investa.model.SymbolCategory;
+import com.investa.repository.SymbolCategoryRepository;
 import com.investa.repository.HoldingRepository;
 import com.investa.repository.PortfolioSnapshotRepository;
 import com.investa.repository.TransactionRepository;
@@ -31,6 +33,7 @@ public class PortfolioController {
     private final ExcelImportService excelImportService;
     private final com.investa.service.MarketStackPriceService priceService;
     private final PortfolioSnapshotRepository snapshotRepository;
+    private final SymbolCategoryRepository symbolCategoryRepository;
 
     @PostMapping("/import")
     public ResponseEntity<Map<String, Object>> importPortfolio(
@@ -168,6 +171,10 @@ public class PortfolioController {
             h.setShareName(details.getShareName());
             h.setMarket(details.getMarket());
             h.setSector(details.getSector());
+            h.setType(details.getType());
+            if (details.getType() != null && h.getCode() != null) {
+                symbolCategoryRepository.save(new SymbolCategory(h.getCode(), details.getType()));
+            }
             h.setRisk(details.getRisk() != null ? details.getRisk() : h.getRisk());
             h.setQuantity(details.getQuantity());
             h.setAvgPurchasePrice(details.getAvgPurchasePrice());

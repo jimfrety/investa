@@ -3,6 +3,8 @@ package com.investa.service;
 import com.investa.model.Holding;
 import com.investa.model.InvestmentPolicy;
 import com.investa.model.Transaction;
+import com.investa.model.SymbolCategory;
+import com.investa.repository.SymbolCategoryRepository;
 import com.investa.model.Watchlist;
 import com.investa.model.Dividend;
 import com.investa.repository.HoldingRepository;
@@ -35,6 +37,7 @@ public class SharesiesService {
     private final DividendRepository dividendRepository;
     private final MarketStackPriceService marketStackPriceService;
     private final CurrencyService currencyService;
+    private final SymbolCategoryRepository symbolCategoryRepository;
     
     private final RestTemplate restTemplate = createRestTemplate();
 
@@ -1019,8 +1022,8 @@ public class SharesiesService {
                                                     .build();
                                             
                                             Holding existing = existingMap.get(code);
+                                            symbolCategoryRepository.findById(code).ifPresent(sc -> holding.setType(sc.getCategory()));
                                             if (existing != null) {
-                                                if (existing.getType() != null) holding.setType(existing.getType());
                                                 if (existing.getRisk() != null && existing.getRisk() > 0) holding.setRisk(existing.getRisk());
                                                 if (existing.getSector() != null && !existing.getSector().isEmpty() && !existing.getSector().equals("Other")) holding.setSector(existing.getSector());
                                             }
