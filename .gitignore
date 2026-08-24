@@ -19,3 +19,4 @@ frontend/.env.local
 
 # Local Maven Binaries
 apache-maven-3.9.6/
+backend/jdk-21*

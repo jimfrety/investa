@@ -1361,8 +1361,9 @@ public class SharesiesService {
         return totalFeesForFund;
     }
 
-    private double fetchDividendsFromInstrument(Long customerId, SharesiesSession session, String fundId, String instrumentCurrency, double currentQuantity) {
-        double totalDividendsNzd = 0.0;
+    private double fetchDividendsFromInstrument(Long customerId, SharesiesSession session, String fundId, String instrumentCurrency, Holding h) {
+        double userDividendsLocal = 0.0;
+        double stockDividendsAnnualLocal = 0.0;
         String[] urls = new String[]{
             session.getDataBaseUrl() + "/api/v1/instruments/" + fundId + "/dividends",
             session.getAppBaseUrl() + "/api/v1/instruments/" + fundId + "/dividends"
@@ -1381,10 +1382,13 @@ public class SharesiesService {
                             txs = transactionRepository.findByCustomerIdAndCodeOrderByTimestampDesc(customerId, symbol);
                         }
                         
-                        double fundDividendsNzd = 0.0;
+                        double fundDividendsLocal = 0.0;
+                        double fundDividendsAnnualLocal = 0.0;
+                        LocalDate oneYearAgo = LocalDate.now().minusYears(1);
+
                         for (Object o : list) {
                             if (o instanceof Map div) {
-                                Object amtVal = getFirstPresentKey(div, "amount", "rate", "value", "net_amount");
+                                Object amtVal = getFirstPresentKey(div, "gross_amount", "gross_dividend", "gross", "amount", "rate", "value", "net_amount");
                                 Object payObj = getFirstPresentKey(div, "payment_date", "pay_date", "paymentDate");
                                 Object exObj = getFirstPresentKey(div, "ex_date", "ex_dividend_date", "exDividendDate");
                                 
@@ -1396,15 +1400,19 @@ public class SharesiesService {
                                         if (payStr.length() >= 10) payStr = payStr.substring(0, 10);
                                         LocalDate paymentDate = LocalDate.parse(payStr);
                                         
+                                        LocalDate exDate = paymentDate;
+                                        if (exObj != null) {
+                                            String exStr = exObj.toString();
+                                            if (exStr.length() >= 10) exStr = exStr.substring(0, 10);
+                                            exDate = LocalDate.parse(exStr);
+                                        }
+
+                                        if (exDate.isAfter(oneYearAgo) && exDate.isBefore(LocalDate.now().plusDays(1))) {
+                                            fundDividendsAnnualLocal += rate;
+                                        }
+                                        
                                         if (paymentDate.isBefore(LocalDate.now())) {
-                                            LocalDate exDate = paymentDate;
-                                            if (exObj != null) {
-                                                String exStr = exObj.toString();
-                                                if (exStr.length() >= 10) exStr = exStr.substring(0, 10);
-                                                exDate = LocalDate.parse(exStr);
-                                            }
-                                            
-                                            double sharesOnExDate = currentQuantity;
+                                            double sharesOnExDate = h.getQuantity();
                                             for (Transaction tx : txs) {
                                                 if (tx.getTimestamp() != null && tx.getTimestamp().toLocalDate().isAfter(exDate)) {
                                                     if ("BUY".equalsIgnoreCase(tx.getType())) {
@@ -1416,23 +1424,16 @@ public class SharesiesService {
                                             }
                                             
                                             if (sharesOnExDate > 0.0) {
-                                                double divLocalAmount = sharesOnExDate * rate;
-                                                
-                                                String divCurrency = (String) getFirstPresentKey(div, "currency", "currency_code");
-                                                if (divCurrency == null || divCurrency.trim().isEmpty()) {
-                                                    divCurrency = instrumentCurrency;
-                                                }
-                                                divCurrency = divCurrency.toUpperCase();
-                                                
-                                                fundDividendsNzd += currencyService.convertToBase(divLocalAmount, divCurrency);
+                                                fundDividendsLocal += (sharesOnExDate * rate);
                                             }
                                         }
                                     } catch (Exception ignored) {}
                                 }
                             }
                         }
-                        if (fundDividendsNzd > 0.0) {
-                            totalDividendsNzd = fundDividendsNzd;
+                        if (fundDividendsLocal > 0.0 || fundDividendsAnnualLocal > 0.0) {
+                            userDividendsLocal = fundDividendsLocal;
+                            stockDividendsAnnualLocal = fundDividendsAnnualLocal;
                             break;
                         }
                     }
@@ -1441,7 +1442,22 @@ public class SharesiesService {
                 log.warn("Failed to fetch dividends for fund {} from {}: {}", fundId, url, e.getMessage());
             }
         }
-        return totalDividendsNzd;
+
+        if (stockDividendsAnnualLocal > 0.0 && h.getCurrentPrice() != null && h.getCurrentPrice() > 0.0) {
+            double yield = (stockDividendsAnnualLocal / h.getCurrentPrice()) * 100.0;
+            h.setDividendYield(Math.round(yield * 100.0) / 100.0);
+        } else {
+            h.setDividendYield(Watchlist.getDivYieldForCode(h.getCode(), h.getType()));
+        }
+        
+        if (userDividendsLocal > 0.0) {
+            h.setDividendIncome(Math.round(userDividendsLocal * 100.0) / 100.0);
+            h.setDividendIncomeHome(currencyService.convertToBase(userDividendsLocal, h.getCurrency()));
+        }
+        
+        holdingRepository.save(h);
+        
+        return userDividendsLocal;
     }
 
     private void calculateAndSaveDerivedSeeds(Long customerId, Map<String, Object> sMap) {
@@ -1495,7 +1511,7 @@ public class SharesiesService {
                 
                 double divsLocal = 0.0;
                 if (fundId != null) {
-                    divsLocal = fetchDividendsFromInstrument(customerId, session, fundId, cur, h.getQuantity());
+                    divsLocal = fetchDividendsFromInstrument(customerId, session, fundId, cur, h);
                 }
                 
                 // Fallbacks to active holding value if sync endpoint returns 0
