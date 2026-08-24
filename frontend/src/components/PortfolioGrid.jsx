@@ -230,6 +230,14 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
       valueFormatter: p => p.value != null ? `$${p.value.toFixed(2)}` : '$0.00'
     },
     { 
+      headerName: 'GDY', 
+      field: 'dividendYield', 
+      flex: 0.8, 
+      type: 'numericColumn', 
+      editable: false,
+      valueFormatter: p => p.value != null ? `${p.value.toFixed(2)}%` : '0.00%'
+    },
+    { 
       headerName: 'Risk', 
       field: 'risk', 
       flex: 0.6,
