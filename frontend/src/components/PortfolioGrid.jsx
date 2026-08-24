@@ -269,18 +269,6 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
       valueFormatter: p => p.value?.toFixed(2) 
     },
     { 
-      headerName: 'Avg Cost', 
-      field: 'avgPurchasePrice', 
-      flex: 0.9, 
-      type: 'numericColumn', 
-      editable: true,
-      valueParser: p => {
-        const num = parseFloat(p.newValue);
-        return isNaN(num) ? p.oldValue : num;
-      },
-      valueFormatter: p => `$${p.value?.toFixed(2)}` 
-    },
-    { 
       headerName: 'Current Price', 
       field: 'currentPrice', 
       flex: 0.9, 

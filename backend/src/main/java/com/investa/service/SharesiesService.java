@@ -887,12 +887,23 @@ public class SharesiesService {
                                             String sector = extractSector(instInfo, true);
 
                                             double invValue = 0.0;
-                                            String ivStr = getFirstPresentKey(portItem, "investment_value", "market_value", "value", "current_value");
-                                            if (ivStr != null) {
-                                                try {
-                                                    double parsedIv = Double.parseDouble(ivStr);
-                                                    if (parsedIv > 0.0) invValue = parsedIv;
-                                                } catch (NumberFormatException ignored) {}
+                                            try {
+                                                String rhUrl = session.getPortfolioBaseUrl() + "/api/v1/portfolios/" + portfolioId + "/returns-history/" + fundId;
+                                                HttpHeaders rhHeaders = createHeaders(customerId);
+                                                if (session.getRakaiaToken() != null) {
+                                                    rhHeaders.set("Authorization", "Bearer " + session.getRakaiaToken());
+                                                }
+                                                HttpEntity<Void> rhEntity = new HttpEntity<>(rhHeaders);
+                                                ResponseEntity<Map> rhResp = restTemplate.exchange(rhUrl, HttpMethod.GET, rhEntity, Map.class);
+                                                if (rhResp.getStatusCode().is2xxSuccessful() && rhResp.getBody() != null) {
+                                                    Map<String, Object> rhBody = rhResp.getBody();
+                                                    Object ivObj = rhBody.get("investment_value");
+                                                    if (ivObj != null) {
+                                                        invValue = Double.parseDouble(ivObj.toString());
+                                                    }
+                                                }
+                                            } catch (Exception e) {
+                                                log.warn("Failed to fetch returns history for {}", fundId);
                                             }
 
                                             double invValueLocal = invValue;
