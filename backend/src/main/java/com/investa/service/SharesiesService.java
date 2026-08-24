@@ -834,8 +834,12 @@ public class SharesiesService {
                             }
 
                             if (!holdingsList.isEmpty()) {
+                                List<Holding> existingHoldings = holdingRepository.findByCustomerId(customerId);
+                                java.util.Map<String, Holding> existingMap = existingHoldings.stream()
+                                    .collect(java.util.stream.Collectors.toMap(Holding::getCode, h -> h, (a, b) -> a));
+                                
                                 // Delete customer holdings before inserting synced ones
-                                holdingRepository.deleteAll(holdingRepository.findByCustomerId(customerId));
+                                holdingRepository.deleteAll(existingHoldings);
 
                                 for (Map portItem : holdingsList) {
                                     log.info("Sharesies sync raw holding portItem: {}", portItem);
@@ -999,6 +1003,14 @@ public class SharesiesService {
                                                     .lastUpdated(java.time.LocalDateTime.now())
                                                     .notes("Synced from Sharesies API with live instrument data")
                                                     .build();
+                                            
+                                            Holding existing = existingMap.get(code);
+                                            if (existing != null) {
+                                                if (existing.getType() != null) holding.setType(existing.getType());
+                                                if (existing.getRisk() != null && existing.getRisk() > 0) holding.setRisk(existing.getRisk());
+                                                if (existing.getSector() != null && !existing.getSector().isEmpty() && !existing.getSector().equals("Other")) holding.setSector(existing.getSector());
+                                            }
+                                            
                                             holdingRepository.save(holding);
 
                                             // Sync Dividend History
