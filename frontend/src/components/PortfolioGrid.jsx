@@ -212,6 +212,24 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
     { headerName: 'Exchange', field: 'market', flex: 0.8, editable: true },
     { headerName: 'Sector', field: 'sector', flex: 1.2, editable: true },
     { 
+      headerName: 'Category', 
+      field: 'type', 
+      flex: 1.2, 
+      editable: true,
+      cellEditor: 'agSelectCellEditor',
+      cellEditorParams: {
+        values: ['Dividend', 'Dividend + Growth', 'Growth']
+      }
+    },
+    { 
+      headerName: 'Dividend', 
+      field: 'dividendYield', 
+      flex: 0.8, 
+      type: 'numericColumn', 
+      editable: false,
+      valueFormatter: p => p.value != null ? `${p.value.toFixed(2)}%` : '0.00%'
+    },
+    { 
       headerName: 'Risk', 
       field: 'risk', 
       flex: 0.6,

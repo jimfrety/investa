@@ -91,10 +91,10 @@ public class Watchlist {
             case "PFE": return 5.80;
             case "SSG": return 7.35;
             default:
-                if ("dividend".equalsIgnoreCase(type)) {
-                    return 5.5;
-                } else if ("both".equalsIgnoreCase(type)) {
+                if (type != null && type.toLowerCase().contains("dividend") && type.toLowerCase().contains("growth")) {
                     return 2.5;
+                } else if (type != null && type.toLowerCase().contains("dividend")) {
+                    return 5.5;
                 } else {
                     return 0.0;
                 }

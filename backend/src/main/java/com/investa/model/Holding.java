@@ -64,4 +64,9 @@ public class Holding {
         if (investmentValue != null && investmentValue != 0.0) return investmentValue;
         return getQuantity() * getCurrentPrice();
     }
+
+    @Transient
+    public Double getDividendYield() {
+        return Watchlist.getDivYieldForCode(this.code, this.type);
+    }
 }
