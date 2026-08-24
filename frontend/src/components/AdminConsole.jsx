@@ -320,8 +320,8 @@ export default function AdminConsole({ onLogout }) {
                   style={{
                     padding: '10px 20px',
                     borderRadius: '8px',
-                    background: 'linear-gradient(135deg, var(--accent-indigo) 0%, #4f46e5 100%)',
-                    color: 'var(--text-primary)',
+                    background: '#8068ff',
+                    color: '#ffffff',
                     border: 'none',
                     fontWeight: 600,
                     fontSize: '13px',
@@ -417,8 +417,8 @@ export default function AdminConsole({ onLogout }) {
                   style={{
                     padding: '10px 20px',
                     borderRadius: '8px',
-                    background: 'linear-gradient(135deg, var(--accent-indigo) 0%, #4f46e5 100%)',
-                    color: 'var(--text-primary)',
+                    background: '#8068ff',
+                    color: '#ffffff',
                     border: 'none',
                     fontWeight: 600,
                     fontSize: '13px',
@@ -514,8 +514,8 @@ export default function AdminConsole({ onLogout }) {
                   flex: 1,
                   padding: '12px',
                   borderRadius: '8px',
-                  background: 'linear-gradient(135deg, var(--accent-indigo) 0%, #4f46e5 100%)',
-                  color: 'var(--text-primary)',
+                  background: '#8068ff',
+                  color: '#ffffff',
                   border: 'none',
                   fontWeight: 600,
                   cursor: 'pointer'

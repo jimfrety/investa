@@ -519,7 +519,7 @@ export default function App() {
             width: '60px',
             height: '60px',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--accent-indigo) 0%, #4f46e5 100%)',
+            background: '#8068ff',
             boxShadow: '0 8px 30px rgba(99, 102, 241, 0.5)',
             display: 'flex',
             alignItems: 'center',
