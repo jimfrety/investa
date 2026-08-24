@@ -387,7 +387,7 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
           <button className="investa-button" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => handleOpenTrade('BUY')}>
             <AddIcon fontSize="small" /> BUY STOCK
           </button>
-          <button className="investa-button" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, var(--bg-glass-hover) 0%, var(--bg-primary) 100%)', border: '1px solid var(--border-glass)' }} onClick={() => handleOpenTrade('SELL')}>
+          <button className="investa-button" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, var(--bg-glass-hover) 0%, var(--bg-primary) 100%)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }} onClick={() => handleOpenTrade('SELL')}>
             <RemoveIcon fontSize="small" /> SELL STOCK
           </button>
           <input 
@@ -399,14 +399,14 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
           />
           <button 
             className="investa-button" 
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, var(--bg-primary) 100%)', border: '1px solid var(--border-glass)' }} 
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, var(--bg-primary) 100%)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }} 
             onClick={() => document.getElementById('excel-upload').click()}
           >
             📂 IMPORT EXCEL
           </button>
           <button 
             className="investa-button" 
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, var(--bg-primary) 100%)', border: '1px solid var(--border-glass)' }} 
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, var(--bg-primary) 100%)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }} 
             onClick={handleSyncPrices}
             disabled={isSyncing}
           >
