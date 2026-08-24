@@ -7,7 +7,7 @@
   --bg-glass: rgba(19, 28, 46, 0.65);
   --bg-glass-hover: rgba(25, 37, 61, 0.8);
   --border-glass: rgba(255, 255, 255, 0.08);
-  --border-glass-hover: rgba(255, 255, 255, 0.15);
+  --border-glass-hover: var(--border-glass-hover);
   
   --text-primary: #ffffff;
   --text-secondary: #cbd5e1;
@@ -126,7 +126,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Typography styles */
 .gradient-text {
-  background: linear-gradient(135deg, #ffffff 30%, var(--text-secondary) 100%);
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -175,7 +175,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .sidebar {
   border-right: 1px solid var(--border-glass);
-  background: rgba(11, 15, 25, 0.85);
+  background: var(--bg-secondary);
   backdrop-filter: blur(20px);
   padding: 24px;
   display: flex;
@@ -306,7 +306,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Input Fields */
 .investa-input {
-  background: rgba(11, 15, 25, 0.5);
+  background: var(--bg-glass);
   border: 1px solid var(--border-glass);
   border-radius: 8px;
   color: var(--text-primary);
@@ -345,7 +345,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .investa-button-secondary {
   background: var(--bg-secondary);
-  color: #ffffff;
+  color: var(--text-primary);
   border: 1px solid var(--border-glass);
   border-radius: 8px;
   padding: 10px 20px;
@@ -356,8 +356,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .investa-button-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--bg-glass-hover);
+  border-color: var(--border-glass-hover);
 }
 
 .investa-button-secondary:active {
@@ -434,7 +434,7 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     right: 0;
     height: 62px;
-    background: rgba(9, 12, 22, 0.97);
+    background: var(--bg-secondary);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-top: 1px solid var(--border-glass);

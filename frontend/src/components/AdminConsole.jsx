@@ -228,7 +228,7 @@ export default function AdminConsole({ onLogout }) {
                 </thead>
                 <tbody>
                   {customers.map((cust) => (
-                    <tr key={cust.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                    <tr key={cust.id} style={{ borderBottom: '1px solid var(--border-glass)' }}>
                       <td style={{ padding: '16px 8px', fontWeight: 600, color: 'var(--text-primary)' }}>
                         {cust.name || 'Unnamed Client'} {cust.admin && <span style={{ fontSize: '12px', padding: '2px 6px', borderRadius: '4px', background: 'var(--accent-indigo)', marginLeft: '6px' }}>Admin</span>}
                       </td>
@@ -535,7 +535,7 @@ export default function AdminConsole({ onLogout }) {
                   style={{
                     padding: '12px 16px',
                     borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.05)',
+                    background: 'var(--border-glass)',
                     border: '1px solid var(--border-glass)',
                     color: 'var(--text-secondary)',
                     cursor: 'pointer'

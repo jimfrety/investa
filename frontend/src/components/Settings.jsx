@@ -329,7 +329,7 @@ export default function Settings({ user, theme, setTheme }) {
               <button 
                 type="button" 
                 className="investa-button"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)', boxShadow: 'none' }}
+                style={{ background: 'var(--bg-glass-hover)', border: '1px solid var(--border-glass)', boxShadow: 'none' }}
                 onClick={() => setShowKey(!showKey)}
               >
                 {showKey ? "Hide" : "Show"}

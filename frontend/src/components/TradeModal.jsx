@@ -206,7 +206,7 @@ export default function TradeModal({ isOpen, onClose, initialType = 'BUY', initi
       
       <form onSubmit={handleTradeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{
-          background: 'rgba(255, 255, 255, 0.03)',
+          background: 'var(--border-glass)',
           border: '1px solid var(--border-glass)',
           padding: '12px',
           borderRadius: '10px',
@@ -288,7 +288,7 @@ export default function TradeModal({ isOpen, onClose, initialType = 'BUY', initi
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '12px',
-          background: 'rgba(255, 255, 255, 0.02)',
+          background: 'var(--border-glass)',
           border: '1px solid var(--border-glass)',
           padding: '12px',
           borderRadius: '10px',

@@ -72,7 +72,7 @@ export default function Login({ onLoginSuccess }) {
         padding: '40px',
         position: 'relative',
         zIndex: 1,
-        border: '1px solid rgba(255, 255, 255, 0.08)'
+        border: '1px solid var(--border-glass)'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{

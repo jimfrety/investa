@@ -293,7 +293,7 @@ Try asking:
         top: 0,
         right: 0,
         height: '100dvh',
-        backgroundColor: 'rgba(11, 15, 25, 0.95)',
+        backgroundColor: 'var(--bg-secondary)',
         backdropFilter: 'blur(20px)',
         borderLeft: '1px solid var(--border-glass)',
         boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.5)',
@@ -336,7 +336,7 @@ Try asking:
               className={`chat-bubble ${msg.sender}`}
               style={{
                 alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                backgroundColor: msg.sender === 'user' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(99, 102, 241, 0.08)',
+                backgroundColor: msg.sender === 'user' ? 'var(--border-glass)' : 'rgba(99, 102, 241, 0.08)',
                 border: msg.sender === 'user' ? '1px solid var(--border-glass)' : '1px solid rgba(99, 102, 241, 0.15)'
               }}
             >
@@ -344,7 +344,7 @@ Try asking:
 
               {/* Detected Tickers Quick Action Strip */}
               {detectedTickers.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '14px', borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '14px', borderTop: '1px dashed var(--border-glass)', paddingTop: '10px' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700', letterSpacing: '0.05em' }}>
                     DETECTED STOCKS:
                   </span>
@@ -356,7 +356,7 @@ Try asking:
 
                       return (
                         <div key={ticker} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: 'rgba(255,255,255,0.02)', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)', alignSelf: 'flex-start' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: 'var(--border-glass)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-glass)', alignSelf: 'flex-start' }}>
                             <strong style={{ fontSize: '13px', color: 'var(--accent-cyan)' }}>{ticker}</strong>
                             
                             {isWatchlisted ? (
@@ -372,7 +372,7 @@ Try asking:
                               </button>
                             )}
                             
-                            <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
+                            <span style={{ color: 'var(--border-glass)' }}>|</span>
 
                             {status ? (
                               <span style={{ fontSize: '12px', color: 'var(--accent-emerald)', fontWeight: '700' }}>
@@ -391,7 +391,7 @@ Try asking:
                           {/* Inline Recommendation Form */}
                           {isRecommendingThis && (
                             <div style={{ 
-                              background: 'rgba(0, 0, 0, 0.2)', 
+                              background: 'var(--border-glass)', 
                               border: '1px solid rgba(99, 102, 241, 0.2)', 
                               borderRadius: '8px', 
                               padding: '10px', 
@@ -438,7 +438,7 @@ Try asking:
 
               {/* Confidence Gauge if from Assistant */}
               {msg.sender === 'assistant' && msg.confidence > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-glass)', paddingTop: '10px', marginTop: '10px' }}>
                   <span className="confidence-badge">
                     <VerifiedIcon fontSize="inherit" /> CONFIDENCE: {msg.confidence}%
                   </span>
@@ -505,7 +505,7 @@ Try asking:
         borderTop: '1px solid var(--border-glass)', 
         display: 'flex', 
         gap: '10px',
-        background: 'rgba(11, 15, 25, 0.98)',
+        background: 'var(--bg-secondary)',
         zIndex: 10
       }}>
         <input 

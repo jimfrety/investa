@@ -247,7 +247,7 @@ export default function ReturnCalculator() {
           {/* Investment Mode tabs */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>Simulation Type</label>
-            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
+            <div style={{ display: 'flex', background: 'var(--border-glass)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
               <button 
                 onClick={() => setMode('new')}
                 style={{
@@ -301,7 +301,7 @@ export default function ReturnCalculator() {
           )}
 
           {mode === 'existing' && selectedAsset && (
-            <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)', fontSize: '12px' }}>
+            <div style={{ padding: '12px', borderRadius: '8px', background: 'var(--border-glass)', border: '1px solid var(--border-glass)', fontSize: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span style={{ color: 'var(--text-muted)' }}>
                   {selectedCode === 'ALL' ? 'Portfolio Status:' : 'Current Position size:'}
@@ -382,7 +382,7 @@ export default function ReturnCalculator() {
                 checked={drip} 
                 onChange={(e) => setDrip(e.target.checked)} 
                 sx={{
-                  color: 'rgba(255,255,255,0.3)',
+                  color: 'var(--text-muted)',
                   '&.Mui-checked': { color: 'var(--accent-indigo)' }
                 }}
               />
@@ -465,7 +465,7 @@ export default function ReturnCalculator() {
                       <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-glass)" />
                   <XAxis dataKey="year" stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                   <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
                   <Tooltip 

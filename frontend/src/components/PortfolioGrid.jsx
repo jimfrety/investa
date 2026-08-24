@@ -358,7 +358,7 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
       cellRenderer: (p) => (
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '100%' }}>
           <button 
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+            style={{ background: 'var(--border-glass-hover)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
             onClick={() => setResearchCode(p.data.code)}
           >
             Research
@@ -387,7 +387,7 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
           <button className="investa-button" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => handleOpenTrade('BUY')}>
             <AddIcon fontSize="small" /> BUY STOCK
           </button>
-          <button className="investa-button" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, var(--bg-glass-hover) 0%, rgba(0,0,0,0.5) 100%)', border: '1px solid var(--border-glass)' }} onClick={() => handleOpenTrade('SELL')}>
+          <button className="investa-button" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, var(--bg-glass-hover) 0%, var(--bg-primary) 100%)', border: '1px solid var(--border-glass)' }} onClick={() => handleOpenTrade('SELL')}>
             <RemoveIcon fontSize="small" /> SELL STOCK
           </button>
           <input 
@@ -399,14 +399,14 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
           />
           <button 
             className="investa-button" 
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(0,0,0,0.5) 100%)', border: '1px solid var(--border-glass)' }} 
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, var(--bg-primary) 100%)', border: '1px solid var(--border-glass)' }} 
             onClick={() => document.getElementById('excel-upload').click()}
           >
             📂 IMPORT EXCEL
           </button>
           <button 
             className="investa-button" 
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(0,0,0,0.5) 100%)', border: '1px solid var(--border-glass)' }} 
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, var(--bg-primary) 100%)', border: '1px solid var(--border-glass)' }} 
             onClick={handleSyncPrices}
             disabled={isSyncing}
           >
@@ -447,7 +447,7 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>{h.code}</span>
-                    <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>{h.market}</span>
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', background: 'var(--border-glass-hover)', padding: '2px 6px', borderRadius: '4px' }}>{h.market}</span>
                     <span style={{ fontSize: '12px', fontWeight: '700', color: isPositive ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
                       {isPositive ? '+' : ''}{simpleReturn.toFixed(1)}%
                     </span>
@@ -469,7 +469,7 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
                   onClick={() => handleOpenTrade('SELL', h.code)}
                 >Sell</button>
                 <button
-                  style={{ flex: 1, padding: '8px', fontSize: '12px', fontWeight: '600', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)', borderRadius: '8px', cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '8px', fontSize: '12px', fontWeight: '600', background: 'var(--border-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)', borderRadius: '8px', cursor: 'pointer' }}
                   onClick={() => onAskAI(`Should I sell ${h.code} now?`)}
                 >Ask AI</button>
               </div>
@@ -538,7 +538,7 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
               </div>
             </div>
 
-            <div style={{ marginTop: '20px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)', fontSize: '12px' }}>
+            <div style={{ marginTop: '20px', padding: '12px', background: 'var(--border-glass)', borderRadius: '8px', border: '1px solid var(--border-glass)', fontSize: '12px' }}>
               <strong style={{ color: 'var(--accent-amber)' }}>Latest Market Sentiment:</strong> {researchData.sentimentSummary} — {researchData.newsHighlights}
             </div>
 

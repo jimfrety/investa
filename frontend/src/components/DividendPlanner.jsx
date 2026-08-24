@@ -83,7 +83,7 @@ export default function DividendPlanner({ onAskAI }) {
         <div style={{ width: '100%', height: '230px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={calendar}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-glass)" vertical={false} />
               <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
               <Tooltip 
@@ -118,7 +118,7 @@ export default function DividendPlanner({ onAskAI }) {
             </thead>
             <tbody>
               {payments.map((p, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: 'var(--text-primary)' }}>
+                <tr key={idx} style={{ borderBottom: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
                   <td style={{ padding: '12px 8px', fontWeight: '700', color: 'var(--accent-indigo)' }}>{p.code}</td>
                   <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>{p.shareName}</td>
                   <td style={{ padding: '12px 8px', textAlign: 'right' }}>{p.exDividendDate}</td>

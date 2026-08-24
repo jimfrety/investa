@@ -275,7 +275,7 @@ export default function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0' }}>
             <span style={{ fontSize: '28px' }}>🛡️</span>
             <div>
-              <h2 style={{ fontSize: '22px', fontWeight: '800', margin: 0, background: 'linear-gradient(135deg, #fff 0%, #a5b4fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>INVESTA</h2>
+              <h2 style={{ fontSize: '22px', fontWeight: '800', margin: 0, background: 'linear-gradient(135deg, var(--text-primary) 0%, #a5b4fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>INVESTA</h2>
               <p style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', letterSpacing: '0.1em' }}>AI WEALTH MANAGER</p>
             </div>
           </div>
@@ -306,7 +306,7 @@ export default function App() {
         </div>
         
         {/* Sidebar Footer Card */}
-        <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <HealthAndSafetyIcon style={{ color: 'var(--accent-emerald)' }} />
             <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)' }}>PORTFOLIO HEALTH</span>
@@ -597,7 +597,7 @@ export default function App() {
             maxWidth: '440px',
             width: '90%',
             textAlign: 'center',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--border-glass)',
             boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
             display: 'flex',
             flexDirection: 'column',
@@ -622,7 +622,7 @@ export default function App() {
                   </button>
                   <button 
                     className="investa-button-secondary" 
-                    style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)', color: '#ffffff' }}
+                    style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                     onClick={() => setShowSharesiesPrompt(false)}
                   >
                     DISMISS & USE OFFLINE MODE
@@ -676,7 +676,7 @@ export default function App() {
                   <button 
                     type="button"
                     className="investa-button-secondary" 
-                    style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)', color: '#ffffff' }}
+                    style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                     onClick={() => setModalMode('prompt')}
                     disabled={sharesiesLoading}
                   >
@@ -733,7 +733,7 @@ export default function App() {
                   <button 
                     type="button"
                     className="investa-button-secondary" 
-                    style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)', color: '#ffffff' }}
+                    style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                     onClick={() => setModalMode('login')}
                     disabled={sharesiesLoading}
                   >

@@ -177,7 +177,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
         <div style={{ 
           display: 'flex', 
-          background: 'rgba(255, 255, 255, 0.03)', 
+          background: 'var(--border-glass)', 
           border: '1px solid var(--border-glass)', 
           borderRadius: '10px', 
           padding: '4px' 
@@ -225,7 +225,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
               display: 'flex', 
               gap: '12px',
               padding: '16px',
-              background: 'rgba(255, 255, 255, 0.02)',
+              background: 'var(--border-glass)',
               border: '1px solid var(--border-glass)',
               borderRadius: '12px',
               alignItems: 'center'
@@ -238,7 +238,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
               placeholder="Search watchlist or type ticker to add..." 
               style={{
                 flex: 1,
-                background: 'rgba(0, 0, 0, 0.2)',
+                background: 'var(--border-glass)',
                 border: '1px solid var(--border-glass)',
                 borderRadius: '8px',
                 padding: '10px 16px',
@@ -288,27 +288,27 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
 
                 {/* Score breakdown metrics grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '12px', marginBottom: '16px' }}>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ background: 'var(--border-glass)', padding: '6px', borderRadius: '6px', border: '1px solid var(--border-glass)' }}>
                     <div style={{ color: 'var(--text-muted)' }}>Gross Yield</div>
                     <strong style={{ color: 'var(--accent-cyan)' }}>{item.dividendYield != null ? `${item.dividendYield.toFixed(2)}%` : '0.00%'}</strong>
                   </div>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ background: 'var(--border-glass)', padding: '6px', borderRadius: '6px', border: '1px solid var(--border-glass)' }}>
                     <div style={{ color: 'var(--text-muted)' }}>Div Quality</div>
                     <strong style={{ color: 'var(--accent-emerald)' }}>{item.dividendQuality || 60}</strong>
                   </div>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ background: 'var(--border-glass)', padding: '6px', borderRadius: '6px', border: '1px solid var(--border-glass)' }}>
                     <div style={{ color: 'var(--text-muted)' }}>Growth</div>
                     <strong>{item.growth || 50}</strong>
                   </div>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ background: 'var(--border-glass)', padding: '6px', borderRadius: '6px', border: '1px solid var(--border-glass)' }}>
                     <div style={{ color: 'var(--text-muted)' }}>Value</div>
                     <strong>{item.valueScore || 60}</strong>
                   </div>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ background: 'var(--border-glass)', padding: '6px', borderRadius: '6px', border: '1px solid var(--border-glass)' }}>
                     <div style={{ color: 'var(--text-muted)' }}>Risk</div>
                     <strong style={{ color: item.risk >= 7 ? 'var(--accent-rose)' : 'var(--text-primary)' }}>{item.risk}/7</strong>
                   </div>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ background: 'var(--border-glass)', padding: '6px', borderRadius: '6px', border: '1px solid var(--border-glass)' }}>
                     <div style={{ color: 'var(--text-muted)' }}>Port. Fit</div>
                     <strong style={{ color: 'var(--accent-indigo)' }}>{item.portfolioFit || 75}</strong>
                   </div>
@@ -391,7 +391,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
                 </div>
 
                 <div style={{ 
-                  background: 'rgba(255, 255, 255, 0.02)', 
+                  background: 'var(--border-glass)', 
                   borderLeft: '3px solid var(--accent-indigo)', 
                   padding: '10px 14px', 
                   borderRadius: '0 8px 8px 0', 
@@ -488,7 +488,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
             borderRadius: '16px',
             maxWidth: '480px',
             width: '90%',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: '1px solid var(--border-glass-hover)',
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)'
           }}>
             <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '6px' }} className="gradient-text">
