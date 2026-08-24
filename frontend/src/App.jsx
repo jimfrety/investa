@@ -233,7 +233,7 @@ export default function App() {
             onTradeExecuted={handleRefetchAll} 
             activeTab={watchlistSubTab}
             setActiveTab={setWatchlistSubTab}
-            theme={theme}
+            theme={theme} onAskAI={handleAskAI}
           />
         )
       case 'dividends':
@@ -250,7 +250,7 @@ export default function App() {
       case 'calculator':
         return <ReturnCalculator />
       case 'settings':
-        return <Settings user={user} theme={theme} setTheme={setTheme} />
+        return <Settings user={user} theme={theme} onAskAI={handleAskAI} setTheme={setTheme} />
       default:
         return <DashboardOverview onAskAI={handleAskAI} summary={summary} risk={risk} />
     }

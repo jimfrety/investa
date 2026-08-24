@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchHoldings, executeTrade, fetchResearch, fetchSummary, fetchWatchlist, fetchWallet, API_BASE } from '../api/client'
 import { AgGridReact } from 'ag-grid-react'
 import Dialog from '@mui/material/Dialog'
@@ -9,7 +9,7 @@ import RemoveIcon from '@mui/icons-material/Remove'
 import SyncIcon from '@mui/icons-material/Sync'
 import TradeModal from './TradeModal'
 
-export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, setActiveTab, theme }) {
+export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, setActiveTab, theme, onAskAI }) {
   const queryClient = useQueryClient()
   const [isSyncing, setIsSyncing] = useState(false)
   const [isTradeOpen, setIsTradeOpen] = useState(false)
