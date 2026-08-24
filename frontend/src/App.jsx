@@ -29,6 +29,13 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import NotificationsIcon from '@mui/icons-material/Notifications'
 
 export default function App() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
+  
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
   const [user, setUser] = useState(() => {
     const customerId = localStorage.getItem('customerId')
     if (customerId) {
@@ -220,7 +227,15 @@ export default function App() {
       case 'overview':
         return <DashboardOverview onAskAI={handleAskAI} summary={summary} risk={risk} />
       case 'portfolio':
-        return <PortfolioGrid onTradeExecuted={handleRefetchAll} onAskAI={handleAskAI} />
+        return (
+          <PortfolioGrid 
+            customerId={user.customerId} 
+            onTradeExecuted={handleRefetchAll} 
+            activeTab={watchlistSubTab}
+            setActiveTab={setWatchlistSubTab}
+            theme={theme}
+          />
+        )
       case 'dividends':
         return <DividendPlanner onAskAI={handleAskAI} />
       case 'watchlist':
@@ -235,7 +250,7 @@ export default function App() {
       case 'calculator':
         return <ReturnCalculator />
       case 'settings':
-        return <Settings user={user} />
+        return <Settings user={user} theme={theme} setTheme={setTheme} />
       default:
         return <DashboardOverview onAskAI={handleAskAI} summary={summary} risk={risk} />
     }

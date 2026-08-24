@@ -191,7 +191,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
               borderRadius: '8px',
               cursor: 'pointer',
               background: activeTab === 'watchlist' ? 'var(--accent-indigo)' : 'transparent',
-              color: activeTab === 'watchlist' ? '#white' : 'var(--text-secondary)',
+              color: activeTab === 'watchlist' ? 'var(--text-primary)' : 'var(--text-secondary)',
               transition: 'all 0.2s'
             }}
             onClick={() => setActiveTab('watchlist')}
@@ -207,7 +207,7 @@ export default function WatchlistOpportunity({ onAskAI, onTradeExecuted, activeT
               borderRadius: '8px',
               cursor: 'pointer',
               background: activeTab === 'recommendations' ? 'var(--accent-indigo)' : 'transparent',
-              color: activeTab === 'recommendations' ? '#white' : 'var(--text-secondary)',
+              color: activeTab === 'recommendations' ? 'var(--text-primary)' : 'var(--text-secondary)',
               transition: 'all 0.2s'
             }}
             onClick={() => setActiveTab('recommendations')}

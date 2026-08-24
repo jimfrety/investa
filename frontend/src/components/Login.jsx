@@ -40,7 +40,6 @@ export default function Login({ onLoginSuccess }) {
       justifyContent: 'center',
       minHeight: '100vh',
       width: '100vw',
-      background: 'radial-gradient(circle at center, #111827 0%, #030712 100%)',
       padding: '24px'
     }}>
       {/* Decorative Blur Orbs */}
@@ -86,7 +85,7 @@ export default function Login({ onLoginSuccess }) {
             background: 'linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-cyan) 100%)',
             boxShadow: 'var(--shadow-glow)',
             marginBottom: '16px',
-            color: '#fff',
+            color: 'var(--text-primary)',
             fontSize: '32px',
             fontWeight: 'bold',
             fontFamily: 'var(--font-title)'
@@ -138,7 +137,7 @@ export default function Login({ onLoginSuccess }) {
                 borderRadius: '10px',
                 background: 'rgba(15, 23, 42, 0.6)',
                 border: '1px solid var(--border-glass)',
-                color: '#fff',
+                color: 'var(--text-primary)',
                 fontSize: '15px',
                 outline: 'none',
                 transition: 'var(--transition-smooth)'
@@ -171,7 +170,7 @@ export default function Login({ onLoginSuccess }) {
                 borderRadius: '10px',
                 background: 'rgba(15, 23, 42, 0.6)',
                 border: '1px solid var(--border-glass)',
-                color: '#fff',
+                color: 'var(--text-primary)',
                 fontSize: '15px',
                 outline: 'none',
                 transition: 'var(--transition-smooth)'
@@ -189,7 +188,7 @@ export default function Login({ onLoginSuccess }) {
               padding: '14px',
               borderRadius: '12px',
               background: 'linear-gradient(135deg, var(--accent-indigo) 0%, #4f46e5 100%)',
-              color: '#fff',
+              color: 'var(--text-primary)',
               fontSize: '15px',
               fontWeight: '600',
               border: 'none',

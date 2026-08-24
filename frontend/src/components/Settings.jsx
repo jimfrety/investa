@@ -7,8 +7,9 @@ import KeyIcon from '@mui/icons-material/Key'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import LockIcon from '@mui/icons-material/Lock'
 import ShieldIcon from '@mui/icons-material/Shield'
+import Brightness4Icon from '@mui/icons-material/Brightness4'
 
-export default function Settings({ user }) {
+export default function Settings({ user, theme, setTheme }) {
   const queryClient = useQueryClient()
   const { data: policy } = useQuery({
     queryKey: ['policy'],
@@ -431,6 +432,46 @@ export default function Settings({ user }) {
           </div>
 
         </form>
+      </div>
+
+      {/* Appearance Settings Card */}
+      <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+          <Brightness4Icon style={{ color: 'var(--accent-indigo)', fontSize: '24px' }} />
+          <div>
+            <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
+              Appearance
+            </h4>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+              Select a light or dark theme for the application.
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+            <input 
+              type="radio" 
+              name="theme" 
+              value="dark" 
+              checked={theme === 'dark'} 
+              onChange={(e) => setTheme(e.target.value)} 
+              style={{ accentColor: 'var(--accent-indigo)' }}
+            />
+            Dark Mode
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+            <input 
+              type="radio" 
+              name="theme" 
+              value="light" 
+              checked={theme === 'light'} 
+              onChange={(e) => setTheme(e.target.value)} 
+              style={{ accentColor: 'var(--accent-indigo)' }}
+            />
+            Light Mode
+          </label>
+        </div>
       </div>
 
       {/* Investment Policy Boundaries Card */}

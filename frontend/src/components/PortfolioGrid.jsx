@@ -9,7 +9,8 @@ import RemoveIcon from '@mui/icons-material/Remove'
 import SyncIcon from '@mui/icons-material/Sync'
 import TradeModal from './TradeModal'
 
-export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
+export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, setActiveTab, theme }) {
+  const queryClient = useQueryClient()
   const [isSyncing, setIsSyncing] = useState(false)
   const [isTradeOpen, setIsTradeOpen] = useState(false)
   const [tradeType, setTradeType] = useState('BUY')
@@ -416,7 +417,7 @@ export default function PortfolioGrid({ onTradeExecuted, onAskAI }) {
       </div>
 
       {/* Desktop AG Grid */}
-      <div className="portfolio-desktop-grid ag-theme-quartz-dark" style={{ height: '480px', width: '100%' }}>
+      <div className={`portfolio-desktop-grid ${theme === 'light' ? 'ag-theme-quartz' : 'ag-theme-quartz-dark'}`} style={{ height: '480px', width: '100%' }}>
         <AgGridReact
           rowData={holdings}
           columnDefs={columnDefs}

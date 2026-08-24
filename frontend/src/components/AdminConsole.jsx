@@ -208,7 +208,7 @@ export default function AdminConsole({ onLogout }) {
         {/* Left Column: Customers List & Global settings */}
         <div>
           <div className="glass-panel" style={{ padding: '24px', marginBottom: '32px' }}>
-            <h3 style={{ fontSize: '20px', marginBottom: '20px', color: '#fff' }}>Customer Directory</h3>
+            <h3 style={{ fontSize: '20px', marginBottom: '20px', color: 'var(--text-primary)' }}>Customer Directory</h3>
             
             {loading ? (
               <div style={{ color: 'var(--text-secondary)', padding: '20px 0' }}>Loading directory details...</div>
@@ -229,7 +229,7 @@ export default function AdminConsole({ onLogout }) {
                 <tbody>
                   {customers.map((cust) => (
                     <tr key={cust.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                      <td style={{ padding: '16px 8px', fontWeight: 600, color: '#fff' }}>
+                      <td style={{ padding: '16px 8px', fontWeight: 600, color: 'var(--text-primary)' }}>
                         {cust.name || 'Unnamed Client'} {cust.admin && <span style={{ fontSize: '12px', padding: '2px 6px', borderRadius: '4px', background: 'var(--accent-indigo)', marginLeft: '6px' }}>Admin</span>}
                       </td>
                       <td style={{ padding: '16px 8px', color: 'var(--text-secondary)' }}>{cust.username}</td>
@@ -286,7 +286,7 @@ export default function AdminConsole({ onLogout }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             {/* Settings Section */}
             <div className="glass-panel" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#fff' }}>Global AI Orchestrator</h3>
+              <h3 style={{ fontSize: '18px', marginBottom: '12px', color: 'var(--text-primary)' }}>Global AI Orchestrator</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '20px', lineHeight: '1.4' }}>
                 Define the default fallback Gemini API Key. Shared across all clients unless overridden by their profile.
               </p>
@@ -308,7 +308,7 @@ export default function AdminConsole({ onLogout }) {
                       borderRadius: '8px',
                       background: 'rgba(15, 23, 42, 0.6)',
                       border: '1px solid var(--border-glass)',
-                      color: '#fff',
+                      color: 'var(--text-primary)',
                       fontSize: '14px',
                       outline: 'none'
                     }}
@@ -321,7 +321,7 @@ export default function AdminConsole({ onLogout }) {
                     padding: '10px 20px',
                     borderRadius: '8px',
                     background: 'linear-gradient(135deg, var(--accent-indigo) 0%, #4f46e5 100%)',
-                    color: '#fff',
+                    color: 'var(--text-primary)',
                     border: 'none',
                     fontWeight: 600,
                     fontSize: '13px',
@@ -336,7 +336,7 @@ export default function AdminConsole({ onLogout }) {
 
             {/* Admin Profile Section */}
             <div className="glass-panel" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#fff' }}>Admin Profile Settings</h3>
+              <h3 style={{ fontSize: '18px', marginBottom: '12px', color: 'var(--text-primary)' }}>Admin Profile Settings</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '20px', lineHeight: '1.4' }}>
                 Update your administrative login username credentials and dashboard passwords below.
               </p>
@@ -358,7 +358,7 @@ export default function AdminConsole({ onLogout }) {
                       borderRadius: '8px',
                       background: 'rgba(15, 23, 42, 0.6)',
                       border: '1px solid var(--border-glass)',
-                      color: '#fff',
+                      color: 'var(--text-primary)',
                       fontSize: '13px',
                       outline: 'none'
                     }}
@@ -381,7 +381,7 @@ export default function AdminConsole({ onLogout }) {
                       borderRadius: '8px',
                       background: 'rgba(15, 23, 42, 0.6)',
                       border: '1px solid var(--border-glass)',
-                      color: '#fff',
+                      color: 'var(--text-primary)',
                       fontSize: '13px',
                       outline: 'none'
                     }}
@@ -404,7 +404,7 @@ export default function AdminConsole({ onLogout }) {
                       borderRadius: '8px',
                       background: 'rgba(15, 23, 42, 0.6)',
                       border: '1px solid var(--border-glass)',
-                      color: '#fff',
+                      color: 'var(--text-primary)',
                       fontSize: '13px',
                       outline: 'none'
                     }}
@@ -418,7 +418,7 @@ export default function AdminConsole({ onLogout }) {
                     padding: '10px 20px',
                     borderRadius: '8px',
                     background: 'linear-gradient(135deg, var(--accent-indigo) 0%, #4f46e5 100%)',
-                    color: '#fff',
+                    color: 'var(--text-primary)',
                     border: 'none',
                     fontWeight: 600,
                     fontSize: '13px',
@@ -435,7 +435,7 @@ export default function AdminConsole({ onLogout }) {
 
         {/* Right Column: Customer Form */}
         <div className="glass-panel" style={{ padding: '24px' }}>
-          <h3 style={{ fontSize: '20px', marginBottom: '20px', color: '#fff' }}>
+          <h3 style={{ fontSize: '20px', marginBottom: '20px', color: 'var(--text-primary)' }}>
             {editId ? 'Modify Customer Profile' : 'Register New Customer'}
           </h3>
           
@@ -456,7 +456,7 @@ export default function AdminConsole({ onLogout }) {
                   borderRadius: '8px',
                   background: 'rgba(15, 23, 42, 0.6)',
                   border: '1px solid var(--border-glass)',
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   outline: 'none'
                 }}
               />
@@ -478,7 +478,7 @@ export default function AdminConsole({ onLogout }) {
                   borderRadius: '8px',
                   background: 'rgba(15, 23, 42, 0.6)',
                   border: '1px solid var(--border-glass)',
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   outline: 'none'
                 }}
               />
@@ -500,7 +500,7 @@ export default function AdminConsole({ onLogout }) {
                   borderRadius: '8px',
                   background: 'rgba(15, 23, 42, 0.6)',
                   border: '1px solid var(--border-glass)',
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   outline: 'none'
                 }}
               />
@@ -515,7 +515,7 @@ export default function AdminConsole({ onLogout }) {
                   padding: '12px',
                   borderRadius: '8px',
                   background: 'linear-gradient(135deg, var(--accent-indigo) 0%, #4f46e5 100%)',
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   border: 'none',
                   fontWeight: 600,
                   cursor: 'pointer'
