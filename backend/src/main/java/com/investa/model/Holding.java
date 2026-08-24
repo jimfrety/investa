@@ -60,13 +60,10 @@ public class Holding {
         return quantity != null ? quantity : 0.0;
     }
 
+    private Double dividendYield;
+
     public Double getInvestmentValue() {
         if (investmentValue != null && investmentValue != 0.0) return investmentValue;
         return getQuantity() * getCurrentPrice();
-    }
-
-    @Transient
-    public Double getDividendYield() {
-        return Watchlist.getDivYieldForCode(this.code, this.type);
     }
 }

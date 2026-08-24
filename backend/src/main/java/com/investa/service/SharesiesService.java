@@ -981,6 +981,19 @@ public class SharesiesService {
                                                 purchaseExchangeRate = currencyService.getRateToBase(currency);
                                             }
 
+                                            Double dividendYield = null;
+                                            Object yieldObj = getFirstPresentKey(instInfo, "dividend_yield", "dividendYield", "yield");
+                                            if (yieldObj != null) {
+                                                try { dividendYield = Double.valueOf(yieldObj.toString()); } catch (Exception ignored) {}
+                                            }
+                                            
+                                            // Fallback to our hardcoded knowledge if Sharesies doesn't provide it
+                                            if (dividendYield == null || dividendYield == 0.0) {
+                                                Holding existingTypeHolding = existingMap.get(code);
+                                                String resolveType = existingTypeHolding != null && existingTypeHolding.getType() != null ? existingTypeHolding.getType() : null;
+                                                dividendYield = Watchlist.getDivYieldForCode(code, resolveType);
+                                            }
+
                                             Holding holding = Holding.builder()
                                                     .customerId(customerId)
                                                     .code(code)
@@ -1000,6 +1013,7 @@ public class SharesiesService {
                                                     .brokerage(feesLocal)
                                                     .dividendIncome(divLocal)
                                                     .dividendIncomeHome(divHome)
+                                                    .dividendYield(dividendYield)
                                                     .lastUpdated(java.time.LocalDateTime.now())
                                                     .notes("Synced from Sharesies API with live instrument data")
                                                     .build();

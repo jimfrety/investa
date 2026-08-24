@@ -284,6 +284,7 @@ public class ExcelImportService {
                         .unrealisedGain(unrealised)
                         .realisedGain(0.0)
                         .dividendIncome(0.0)
+                        .dividendYield(Watchlist.getDivYieldForCode(rs.code, rs.type))
                         .simpleReturn(retPct)
                         .currency(cur)
                         .country(country)

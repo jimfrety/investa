@@ -259,6 +259,7 @@ public class PortfolioService {
                         .unrealisedGain(0.0)
                         .realisedGain(0.0)
                         .dividendIncome(0.0)
+                        .dividendYield(Watchlist.getDivYieldForCode(bareCode, assetType))
                         .currency(currency)
                         .country(market.equals("NZX") ? "New Zealand" : market.equals("ASX") ? "Australia" : "United States")
                         .sector("Other")
