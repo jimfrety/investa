@@ -1074,11 +1074,11 @@ public class SharesiesService {
 
                                                                 if (divAmt != null && payDate != null) {
                                                                     final LocalDate finalPayDate = payDate;
-                                                                    Optional<Dividend> existing = dividendRepository.findByCode(code).stream()
+                                                                    Optional<Dividend> existingDiv = dividendRepository.findByCode(code).stream()
                                                                         .filter(x -> finalPayDate.equals(x.getPaymentDate()))
                                                                         .findFirst();
                                                                     
-                                                                    if (existing.isEmpty()) {
+                                                                    if (existingDiv.isEmpty()) {
                                                                         Dividend newDiv = Dividend.builder()
                                                                             .code(code)
                                                                             .amount(divAmt)
