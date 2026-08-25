@@ -965,10 +965,6 @@ public class SharesiesService {
                                             }
 
                                             double ivHome = invValue;
-                                            String ivhStr = getFirstPresentKey(portItem, "investment_value_home", "market_value_home", "value_home", "current_value_home");
-                                            if (ivhStr != null) {
-                                                try { ivHome = Double.parseDouble(ivhStr); } catch (Exception ignored) {}
-                                            }
 
                                             double costBasisLocal = quantity * costPrice;
                                             if (costBasisLocal > 0.0 && !"NZD".equalsIgnoreCase(currency)) {
