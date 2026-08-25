@@ -65,7 +65,8 @@ public class PortfolioService {
             double currentRate = currencyService.getRateToBase(currency);
             double purchaseRate = h.getPurchaseExchangeRate() != null ? h.getPurchaseExchangeRate() : currentRate;
 
-            double invVal = h.getInvestmentValue() != null ? h.getInvestmentValue() : currencyService.convertToBase(currentVal, currency);
+            double rawInvVal = h.getInvestmentValue() != null ? h.getInvestmentValue() : currentVal;
+            double invVal = currencyService.convertToBase(rawInvVal, currency);
             totalHoldingsValue += invVal;
             totalCostBasis += cost * purchaseRate;
             
