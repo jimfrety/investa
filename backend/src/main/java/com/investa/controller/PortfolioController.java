@@ -119,6 +119,11 @@ public class PortfolioController {
                 .currency(useBase ? "NZD" : dbH.getCurrency())
                 .country(dbH.getCountry())
                 .dividendYield(dbH.getDividendYield())
+                .brokerage(dbH.getBrokerage())
+                .realisedGain(dbH.getRealisedGain())
+                .dividendIncome(dbH.getDividendIncome())
+                .dividendIncomeHome(dbH.getDividendIncomeHome())
+                .purchaseExchangeRate(dbH.getPurchaseExchangeRate())
                 .lastUpdated(dbH.getLastUpdated())
                 .build();
 
