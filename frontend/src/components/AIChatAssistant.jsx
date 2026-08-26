@@ -244,28 +244,89 @@ Try asking:
     if (!text) return ''
     
     return text.split('\n').map((line, idx) => {
+      if (!line.trim()) {
+        return <div key={idx} style={{ height: '6px' }} />
+      }
+
       let content = line
       
       // Headers
       if (content.startsWith('### ')) {
-        return <h4 key={idx} style={{ color: 'var(--text-primary)', marginTop: '14px', marginBottom: '8px', fontSize: '15px' }}>{content.replace('### ', '')}</h4>
+        return <h4 key={idx} style={{ color: 'var(--text-primary)', marginTop: '12px', marginBottom: '6px', fontSize: '14px', fontWeight: '700' }}>{content.replace('### ', '')}</h4>
       }
       if (content.startsWith('## ')) {
-        return <h3 key={idx} style={{ color: 'var(--text-primary)', marginTop: '16px', marginBottom: '10px', fontSize: '16px' }}>{content.replace('## ', '')}</h3>
+        return <h3 key={idx} style={{ color: 'var(--text-primary)', marginTop: '14px', marginBottom: '8px', fontSize: '15px', fontWeight: '800' }}>{content.replace('## ', '')}</h3>
+      }
+      if (content.startsWith('# ')) {
+        return <h2 key={idx} style={{ color: 'var(--text-primary)', marginTop: '16px', marginBottom: '10px', fontSize: '16px', fontWeight: '800' }}>{content.replace('# ', '')}</h2>
       }
       
-      // Bullet points
-      if (content.startsWith('* ') || content.startsWith('- ')) {
-        content = content.substring(2)
+      // Match bullet points with potential leading spaces
+      const bulletMatch = content.match(/^(\s*)([*+-])\s+(.*)$/)
+      if (bulletMatch) {
+        const indentLevel = bulletMatch[1].length
+        const rawContent = bulletMatch[3]
         return (
-          <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginLeft: '12px', marginY: '4px' }}>
-            <span style={{ color: 'var(--accent-indigo)' }}>•</span>
-            <span>{renderBold(content)}</span>
+          <div 
+            key={idx} 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'flex-start', 
+              gap: '6px', 
+              marginLeft: `${Math.max(12, indentLevel * 6)}px`, 
+              marginTop: '3px',
+              marginBottom: '3px'
+            }}
+          >
+            <span style={{ color: indentLevel > 0 ? 'var(--text-muted)' : 'var(--accent-indigo)', fontSize: '13px', lineHeight: '1.4' }}>
+              {indentLevel > 0 ? '○' : '•'}
+            </span>
+            <span style={{ fontSize: '13px', lineHeight: '1.4', color: 'var(--text-secondary)' }}>{renderBold(rawContent)}</span>
           </div>
         )
       }
 
-      return <p key={idx} style={{ marginBottom: '8px' }}>{renderBold(content)}</p>
+      // Match numbered lists with potential leading spaces
+      const numberMatch = content.match(/^(\s*)(\d+)\.\s+(.*)$/)
+      if (numberMatch) {
+        const indentLevel = numberMatch[1].length
+        const num = numberMatch[2]
+        const rawContent = numberMatch[3]
+        return (
+          <div 
+            key={idx} 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'flex-start', 
+              gap: '6px', 
+              marginLeft: `${Math.max(12, indentLevel * 6)}px`, 
+              marginTop: '3px',
+              marginBottom: '3px'
+            }}
+          >
+            <span style={{ color: 'var(--accent-indigo)', fontWeight: '700', fontSize: '13px', minWidth: '16px', textAlign: 'right' }}>
+              {num}.
+            </span>
+            <span style={{ fontSize: '13px', lineHeight: '1.4', color: 'var(--text-secondary)' }}>{renderBold(rawContent)}</span>
+          </div>
+        )
+      }
+
+      // Fallback for normal paragraphs
+      const trimmed = content.trim()
+      if (trimmed.startsWith('⚠️') || trimmed.startsWith('✅')) {
+        return (
+          <p key={idx} style={{ marginBottom: '6px', fontSize: '13px', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 8px', borderRadius: '6px', backgroundColor: trimmed.startsWith('⚠️') ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)', border: trimmed.startsWith('⚠️') ? '1px solid rgba(239, 68, 68, 0.15)' : '1px solid rgba(16, 185, 129, 0.15)' }}>
+            {renderBold(content)}
+          </p>
+        )
+      }
+
+      return (
+        <p key={idx} style={{ marginBottom: '6px', fontSize: '13px', lineHeight: '1.4', color: 'var(--text-secondary)' }}>
+          {renderBold(content)}
+        </p>
+      )
     })
   }
 
@@ -336,8 +397,11 @@ Try asking:
               className={`chat-bubble ${msg.sender}`}
               style={{
                 alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                backgroundColor: msg.sender === 'user' ? 'var(--border-glass)' : 'rgba(99, 102, 241, 0.08)',
-                border: msg.sender === 'user' ? '1px solid var(--border-glass)' : '1px solid rgba(99, 102, 241, 0.15)'
+                backgroundColor: msg.sender === 'user' ? 'var(--border-glass)' : 'rgba(99, 102, 241, 0.05)',
+                border: msg.sender === 'user' ? '1px solid var(--border-glass)' : '1px solid rgba(99, 102, 241, 0.12)',
+                maxWidth: msg.sender === 'user' ? '85%' : '94%',
+                padding: '12px 16px',
+                borderRadius: '12px'
               }}
             >
               {parseMarkdown(msg.text)}
