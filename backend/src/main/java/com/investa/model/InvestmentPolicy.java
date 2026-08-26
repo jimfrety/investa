@@ -43,8 +43,8 @@ public class InvestmentPolicy {
     private Double seedTransactionFees;
     private Double seedDividendsReceived;
     
-    @Convert(converter = com.investa.util.AesEncryptor.class)
     private String displayCurrencyPref;
 
+    @Convert(converter = com.investa.util.AesEncryptor.class)
     private String geminiApiKey;
 }

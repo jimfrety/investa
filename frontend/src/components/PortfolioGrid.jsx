@@ -9,7 +9,7 @@ import RemoveIcon from '@mui/icons-material/Remove'
 import SyncIcon from '@mui/icons-material/Sync'
 import TradeModal from './TradeModal'
 
-export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, setActiveTab, theme, onAskAI, policy }) {
+export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, setActiveTab, theme, onAskAI }) {
   const queryClient = useQueryClient()
   const [isSyncing, setIsSyncing] = useState(false)
   const [isTradeOpen, setIsTradeOpen] = useState(false)

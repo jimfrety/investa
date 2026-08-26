@@ -356,12 +356,13 @@ public class SharesiesService {
         String[] stringKeys = {"sector", "category", "industry", "classification", "market_classification", "sector_name", "industry_name", "category_name", "fund_type", "asset_type", "instrument_type", "type"};
         for (String k : stringKeys) {
             Object val = inst.get(k);
-            if (val instanceof String s && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
+            if (val instanceof String && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
                 return s;
-            } else if (val instanceof Map m) {
+            } else if (val instanceof Map) {
+            Map m = (Map) val;
                 for (String subK : new String[]{"sector", "category", "industry", "name", "title", "classification"}) {
                     Object subVal = m.get(subK);
-                    if (subVal instanceof String s && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
+                    if (subVal instanceof String && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
                         return s;
                     }
                 }
@@ -371,14 +372,16 @@ public class SharesiesService {
         String[] listKeys = {"categories", "sectors", "industries", "tags", "classifications", "market_classifications", "instrument_categories"};
         for (String k : listKeys) {
             Object val = inst.get(k);
-            if (val instanceof List list && !list.isEmpty()) {
+            if (val instanceof List && !((List) val).isEmpty()) {
+            List list = (List) val;
                 for (Object item : list) {
-                    if (item instanceof String s && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
+                    if (item instanceof String && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
                         return s;
-                    } else if (item instanceof Map m) {
+                    } else if (item instanceof Map) {
+            Map m = (Map) item;
                         for (String subK : new String[]{"name", "category", "sector", "industry", "title", "classification"}) {
                             Object subVal = m.get(subK);
-                            if (subVal instanceof String s && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
+                            if (subVal instanceof String && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
                                 return s;
                             }
                         }
@@ -392,10 +395,12 @@ public class SharesiesService {
 
     private Integer parseRiskValue(Object val) {
         if (val == null) return null;
-        if (val instanceof Number n) {
+        if (val instanceof Number) {
+            Number n = (Number) val;
             int intVal = n.intValue();
             if (intVal >= 1 && intVal <= 10) return Math.min(7, Math.max(1, intVal));
-        } else if (val instanceof String s) {
+        } else if (val instanceof String) {
+            String s = (String) val;
             s = s.trim();
             if (s.isEmpty()) return null;
             try {
@@ -436,19 +441,22 @@ public class SharesiesService {
         }
 
         for (Object val : inst.values()) {
-            if (val instanceof Map m) {
+            if (val instanceof Map) {
+            Map m = (Map) val;
                 for (String subK : new String[]{"risk", "risk_rating", "risk_level", "rating", "level", "value", "score", "indicator", "volatility", "name", "title", "classification"}) {
                     Integer parsed = parseRiskValue(m.get(subK));
                     if (parsed != null) return parsed;
                 }
-            } else if (val instanceof List list && !list.isEmpty()) {
+            } else if (val instanceof List && !((List) val).isEmpty()) {
+            List list = (List) val;
                 for (Object item : list) {
-                    if (item instanceof Map m) {
+                    if (item instanceof Map) {
+            Map m = (Map) item;
                         for (String subK : new String[]{"risk", "risk_rating", "risk_level", "rating", "level", "value", "score", "name", "title", "classification"}) {
                             Integer parsed = parseRiskValue(m.get(subK));
                             if (parsed != null) return parsed;
                         }
-                    } else if (item instanceof String s && (s.toLowerCase().contains("risk") || s.toLowerCase().contains("rating") || s.toLowerCase().contains("level") || s.toLowerCase().contains("aggressive") || s.toLowerCase().contains("conservative") || s.toLowerCase().contains("growth") || s.toLowerCase().contains("balanced"))) {
+                    } else if (item instanceof String && (s.toLowerCase().contains("risk") || s.toLowerCase().contains("rating") || s.toLowerCase().contains("level") || s.toLowerCase().contains("aggressive") || s.toLowerCase().contains("conservative") || s.toLowerCase().contains("growth") || s.toLowerCase().contains("balanced"))) {
                         Integer parsed = parseRiskValue(s);
                         if (parsed != null) return parsed;
                     }
@@ -533,7 +541,8 @@ public class SharesiesService {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> body = (Map<String, Object>) response.getBody();
                 Object userObj = body.get("user");
-                if (userObj instanceof Map m) {
+                if (userObj instanceof Map) {
+            Map m = (Map) userObj;
                     return m.get("wallet_balances");
                 }
             }
@@ -569,7 +578,8 @@ public class SharesiesService {
                 
                 Map userMap = null;
                 Object userObj = body.get("user");
-                if (userObj instanceof Map m) {
+                if (userObj instanceof Map) {
+            Map m = (Map) userObj;
                     userMap = m;
                 }
 
@@ -579,9 +589,11 @@ public class SharesiesService {
                     walletObj = userMap.get("wallet_balances");
                 }
                 Double totalCashBase = 0.0;
-                if (walletObj instanceof Map mapVal) {
+                if (walletObj instanceof Map) {
+            Map mapVal = (Map) walletObj;
                     for (Object val : mapVal.values()) {
-                        if (val instanceof Map balMap) {
+                        if (val instanceof Map) {
+            Map balMap = (Map) val;
                             String curr = getFirstPresentKey(balMap, "currency", "curr", "currency_code", "code");
                             if (curr == null) curr = "NZD";
                             String balStr = getFirstPresentKey(balMap, "available", "available_balance", "balance", "amount", "total");
@@ -595,9 +607,11 @@ public class SharesiesService {
                             try { totalCashBase += Double.parseDouble(val.toString()); } catch (NumberFormatException ignored) {}
                         }
                     }
-                } else if (walletObj instanceof List listVal && !listVal.isEmpty()) {
+                } else if (walletObj instanceof List && !((List) walletObj).isEmpty()) {
+            List listVal = (List) walletObj;
                     for (Object item : listVal) {
-                        if (item instanceof Map balMap) {
+                        if (item instanceof Map) {
+            Map balMap = (Map) item;
                             String curr = getFirstPresentKey(balMap, "currency", "curr", "currency_code", "code");
                             if (curr == null) curr = "NZD";
                             String balStr = getFirstPresentKey(balMap, "available", "available_balance", "balance", "amount", "total");
@@ -614,9 +628,11 @@ public class SharesiesService {
                 String resolvedPortfolioId = null;
                 if (userMap != null) {
                     Object userPorts = userMap.get("portfolios");
-                    if (userPorts instanceof List list && !list.isEmpty()) {
+                    if (userPorts instanceof List && !((List) userPorts).isEmpty()) {
+            List list = (List) userPorts;
                         Object first = list.get(0);
-                        if (first instanceof Map m) {
+                        if (first instanceof Map) {
+            Map m = (Map) first;
                             if (m.get("id") != null) resolvedPortfolioId = m.get("id").toString();
                             else if (m.get("portfolio_id") != null) resolvedPortfolioId = m.get("portfolio_id").toString();
                         }
@@ -624,9 +640,10 @@ public class SharesiesService {
                         resolvedPortfolioId = userMap.get("portfolio_id").toString();
                     }
                 }
-                if (resolvedPortfolioId == null && body.get("portfolios") instanceof List list && !list.isEmpty()) {
+                if (resolvedPortfolioId == null && body.get("portfolios") instanceof List && !((List) body.get("portfolios")).isEmpty()) { List list = (List) body.get("portfolios");
                     Object first = list.get(0);
-                    if (first instanceof Map m) {
+                    if (first instanceof Map) {
+            Map m = (Map) first;
                         if (m.get("id") != null) resolvedPortfolioId = m.get("id").toString();
                         else if (first != null) resolvedPortfolioId = first.toString();
                     }
@@ -671,11 +688,13 @@ public class SharesiesService {
                 if (watchObj == null) watchObj = body.get("favorite_instruments");
                 if (watchObj == null) watchObj = body.get("favourite_instruments");
 
-                if (watchObj instanceof List watchlistCodes) {
+                if (watchObj instanceof List) {
+            List watchlistCodes = (List) watchObj;
                     for (Object wObj : watchlistCodes) {
                         if (wObj != null) {
                             String watchId = null;
-                            if (wObj instanceof Map m) {
+                            if (wObj instanceof Map) {
+            Map m = (Map) wObj;
                                 Object idVal = m.get("fund_id");
                                 if (idVal == null) idVal = m.get("id");
                                 if (idVal == null) idVal = m.get("instrument_id");
@@ -822,17 +841,21 @@ public class SharesiesService {
                             if (instObj == null) instObj = bodyMap.get("results");
                             if (instObj == null) instObj = bodyMap.get("data");
 
-                            if (instObj instanceof List list) {
+                            if (instObj instanceof List) {
+            List list = (List) instObj;
                                 for (Object o : list) {
-                                    if (o instanceof Map m) holdingsList.add((Map) m);
+                                    if (o instanceof Map) { Map m = (Map) o; holdingsList.add((Map) m); }
                                 }
-                            } else if (instObj instanceof Map mapVal) {
+                            } else if (instObj instanceof Map) {
+            Map mapVal = (Map) instObj;
                                 for (Object val : mapVal.values()) {
-                                    if (val instanceof Map m) {
+                                    if (val instanceof Map) {
+            Map m = (Map) val;
                                         holdingsList.add((Map) m);
-                                    } else if (val instanceof List list) {
+                                    } else if (val instanceof List) {
+            List list = (List) val;
                                         for (Object o : list) {
-                                            if (o instanceof Map m) holdingsList.add((Map) m);
+                                            if (o instanceof Map) { Map m = (Map) o; holdingsList.add((Map) m); }
                                         }
                                     }
                                 }
@@ -927,7 +950,8 @@ public class SharesiesService {
                                             Integer riskVal = extractRisk(instInfo, extractRisk(portItem, 5));
 
                                             double unregGain = (quantity * currentPrice) - (quantity * costPrice);
-                                            if (portItem.get("total_return_detail") instanceof Map trDetail) {
+                                            if (portItem.get("total_return_detail") instanceof Map) {
+            Map trDetail = (Map) portItem.get("total_return_detail");
                                                 Object ucg = trDetail.get("unrealised_capital_gains");
                                                 if (ucg != null) {
                                                     try {
@@ -1048,9 +1072,11 @@ public class SharesiesService {
                                                 if (divResp.getStatusCode().is2xxSuccessful() && divResp.getBody() != null) {
                                                     Map<String, Object> divBody = divResp.getBody();
                                                     Object divsObj = divBody.get("dividends");
-                                                    if (divsObj instanceof List divsList) {
+                                                    if (divsObj instanceof List) {
+            List divsList = (List) divsObj;
                                                         for (Object dObj : divsList) {
-                                                            if (dObj instanceof Map dMap) {
+                                                            if (dObj instanceof Map) {
+            Map dMap = (Map) dObj;
                                                                 Double divAmt = null;
                                                                 Object amtObj = getFirstPresentKey(dMap, "amount", "rate", "value");
                                                                 if (amtObj != null) {
@@ -1152,7 +1178,8 @@ public class SharesiesService {
             
             int syncedCount = 0;
             for (Object item : txList) {
-                if (item instanceof Map txMap) {
+                if (item instanceof Map) {
+            Map txMap = (Map) item;
                     String typeStr = getFirstPresentKey(txMap, "type", "transaction_type", "action");
                     if (typeStr == null) typeStr = "BUY";
                     typeStr = typeStr.toUpperCase();
@@ -1297,9 +1324,10 @@ public class SharesiesService {
                     if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                         Map body = response.getBody();
                         Object txObj = body.get("transactions");
-                        if (txObj instanceof List list) {
+                        if (txObj instanceof List) {
+            List list = (List) txObj;
                             for (Object o : list) {
-                                if (o instanceof Map m) batchTransactions.add(m);
+                                if (o instanceof Map) { Map m = (Map) o; batchTransactions.add(m); }
                             }
                             
                             Object hm = body.get("has_more");
@@ -1307,7 +1335,7 @@ public class SharesiesService {
                             
                             if (hasMore && !list.isEmpty()) {
                                 Object last = list.get(list.size() - 1);
-                                if (last instanceof Map lastMap && lastMap.get("transaction_id") != null) {
+                                if (last instanceof Map && ((Map) last).get("transaction_id") != null) { Map lastMap = (Map) last;
                                     beforeId = lastMap.get("transaction_id").toString();
                                 } else {
                                     hasMore = false;
@@ -1349,9 +1377,11 @@ public class SharesiesService {
                 ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     Object ordersObj = response.getBody().get("orders");
-                    if (ordersObj instanceof List list) {
+                    if (ordersObj instanceof List) {
+            List list = (List) ordersObj;
                         for (Object o : list) {
-                            if (o instanceof Map order) {
+                            if (o instanceof Map) {
+            Map order = (Map) o;
                                 Object feeVal = getFirstPresentKey(order, "fee", "brokerage", "transaction_fee");
                                 if (feeVal != null) {
                                     try {
@@ -1387,7 +1417,8 @@ public class SharesiesService {
                 ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     Object dividendsObj = response.getBody().get("dividends");
-                    if (dividendsObj instanceof List list) {
+                    if (dividendsObj instanceof List) {
+            List list = (List) dividendsObj;
                         String symbol = instrumentCache.get(fundId);
                         List<Transaction> txs = new ArrayList<>();
                         if (symbol != null) {
@@ -1399,7 +1430,8 @@ public class SharesiesService {
                         LocalDate oneYearAgo = LocalDate.now().minusYears(1);
 
                         for (Object o : list) {
-                            if (o instanceof Map div) {
+                            if (o instanceof Map) {
+            Map div = (Map) o;
                                 Object amtVal = getFirstPresentKey(div, "gross_amount", "gross_dividend", "gross", "amount", "rate", "value", "net_amount");
                                 Object payObj = getFirstPresentKey(div, "payment_date", "pay_date", "paymentDate");
                                 Object exObj = getFirstPresentKey(div, "ex_date", "ex_dividend_date", "exDividendDate");
@@ -1646,9 +1678,11 @@ public class SharesiesService {
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Object instObj = response.getBody().get("instruments");
-                if (instObj instanceof List instruments) {
+                if (instObj instanceof List) {
+            List instruments = (List) instObj;
                     for (Object instItem : instruments) {
-                        if (instItem instanceof Map inst) {
+                        if (instItem instanceof Map) {
+            Map inst = (Map) instItem;
                             String id = (String) inst.get("id");
                             String code = (String) inst.get("symbol");
                             if (code == null) code = (String) inst.get("code");
@@ -1818,9 +1852,11 @@ public class SharesiesService {
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Object instObj = response.getBody().get("instruments");
-                if (instObj instanceof List instruments) {
+                if (instObj instanceof List) {
+            List instruments = (List) instObj;
                     for (Object instItem : instruments) {
-                        if (instItem instanceof Map inst) {
+                        if (instItem instanceof Map) {
+            Map inst = (Map) instItem;
                             String code = (String) inst.get("symbol");
                             if (code == null) code = (String) inst.get("code");
                             if (code == null) continue;
