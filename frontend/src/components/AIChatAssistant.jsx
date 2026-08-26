@@ -239,100 +239,144 @@ Try asking:
     }
   }
 
-  // Simple parser to convert markdown titles and bold tags to html in React
-  const parseMarkdown = (text) => {
+  // Robust markdown parser that strips markdown formatting (e.g. *, **) and groups items into native lists
+  const renderFormattedText = (text) => {
     if (!text) return ''
-    
-    return text.split('\n').map((line, idx) => {
-      if (!line.trim()) {
-        return <div key={idx} style={{ height: '6px' }} />
+    const regex = /(\*\*.*?\*\*|\*.*?\*)/g
+    const parts = text.split(regex)
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{part.slice(2, -2)}</strong>
       }
-
-      let content = line
-      
-      // Headers
-      if (content.startsWith('### ')) {
-        return <h4 key={idx} style={{ color: 'var(--text-primary)', marginTop: '12px', marginBottom: '6px', fontSize: '14px', fontWeight: '700' }}>{content.replace('### ', '')}</h4>
+      if (part.startsWith('*') && part.endsWith('*')) {
+        return <em key={i} style={{ fontStyle: 'italic', color: 'var(--text-primary)' }}>{part.slice(1, -1)}</em>
       }
-      if (content.startsWith('## ')) {
-        return <h3 key={idx} style={{ color: 'var(--text-primary)', marginTop: '14px', marginBottom: '8px', fontSize: '15px', fontWeight: '800' }}>{content.replace('## ', '')}</h3>
-      }
-      if (content.startsWith('# ')) {
-        return <h2 key={idx} style={{ color: 'var(--text-primary)', marginTop: '16px', marginBottom: '10px', fontSize: '16px', fontWeight: '800' }}>{content.replace('# ', '')}</h2>
-      }
-      
-      // Match bullet points with potential leading spaces
-      const bulletMatch = content.match(/^(\s*)([*+-])\s+(.*)$/)
-      if (bulletMatch) {
-        const indentLevel = bulletMatch[1].length
-        const rawContent = bulletMatch[3]
-        return (
-          <div 
-            key={idx} 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'flex-start', 
-              gap: '6px', 
-              marginLeft: `${Math.max(12, indentLevel * 6)}px`, 
-              marginTop: '3px',
-              marginBottom: '3px'
-            }}
-          >
-            <span style={{ color: indentLevel > 0 ? 'var(--text-muted)' : 'var(--accent-indigo)', fontSize: '13px', lineHeight: '1.4' }}>
-              {indentLevel > 0 ? '○' : '•'}
-            </span>
-            <span style={{ fontSize: '13px', lineHeight: '1.4', color: 'var(--text-secondary)' }}>{renderBold(rawContent)}</span>
-          </div>
-        )
-      }
-
-      // Match numbered lists with potential leading spaces
-      const numberMatch = content.match(/^(\s*)(\d+)\.\s+(.*)$/)
-      if (numberMatch) {
-        const indentLevel = numberMatch[1].length
-        const num = numberMatch[2]
-        const rawContent = numberMatch[3]
-        return (
-          <div 
-            key={idx} 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'flex-start', 
-              gap: '6px', 
-              marginLeft: `${Math.max(12, indentLevel * 6)}px`, 
-              marginTop: '3px',
-              marginBottom: '3px'
-            }}
-          >
-            <span style={{ color: 'var(--accent-indigo)', fontWeight: '700', fontSize: '13px', minWidth: '16px', textAlign: 'right' }}>
-              {num}.
-            </span>
-            <span style={{ fontSize: '13px', lineHeight: '1.4', color: 'var(--text-secondary)' }}>{renderBold(rawContent)}</span>
-          </div>
-        )
-      }
-
-      // Fallback for normal paragraphs
-      const trimmed = content.trim()
-      if (trimmed.startsWith('⚠️') || trimmed.startsWith('✅')) {
-        return (
-          <p key={idx} style={{ marginBottom: '6px', fontSize: '13px', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 8px', borderRadius: '6px', backgroundColor: trimmed.startsWith('⚠️') ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)', border: trimmed.startsWith('⚠️') ? '1px solid rgba(239, 68, 68, 0.15)' : '1px solid rgba(16, 185, 129, 0.15)' }}>
-            {renderBold(content)}
-          </p>
-        )
-      }
-
-      return (
-        <p key={idx} style={{ marginBottom: '6px', fontSize: '13px', lineHeight: '1.4', color: 'var(--text-secondary)' }}>
-          {renderBold(content)}
-        </p>
-      )
+      return part
     })
   }
 
-  const renderBold = (text) => {
-    const parts = text.split('**')
-    return parts.map((part, i) => i % 2 === 1 ? <strong key={i} style={{ color: 'var(--text-primary)' }}>{part}</strong> : part)
+  const parseMarkdown = (text) => {
+    if (!text) return ''
+    
+    const lines = text.split('\n')
+    const elements = []
+    let currentList = null // { type: 'ul' | 'ol', items: [] }
+    
+    const flushList = (keyPrefix) => {
+      if (currentList) {
+        const Tag = currentList.type
+        const listStyle = currentList.type === 'ul' 
+          ? { paddingLeft: '18px', margin: '4px 0 8px 0', listStyleType: 'disc' }
+          : { paddingLeft: '18px', margin: '4px 0 8px 0', listStyleType: 'decimal' }
+          
+        elements.push(
+          <Tag key={`list-${keyPrefix}`} style={listStyle}>
+            {currentList.items.map((item, idx) => (
+              <li 
+                key={idx} 
+                style={{ 
+                  fontSize: '13px', 
+                  lineHeight: '1.5', 
+                  color: 'var(--text-secondary)',
+                  marginBottom: '4px'
+                }}
+              >
+                {renderFormattedText(item)}
+              </li>
+            ))}
+          </Tag>
+        )
+        currentList = null
+      }
+    }
+    
+    for (let idx = 0; idx < lines.length; idx++) {
+      const line = lines[idx]
+      const trimmed = line.trim()
+      
+      if (!trimmed) {
+        flushList(idx)
+        elements.push(<div key={`space-${idx}`} style={{ height: '6px' }} />)
+        continue
+      }
+      
+      // Headers
+      if (trimmed.startsWith('### ')) {
+        flushList(idx)
+        elements.push(
+          <h4 key={idx} style={{ color: 'var(--text-primary)', marginTop: '12px', marginBottom: '6px', fontSize: '14px', fontWeight: '700' }}>
+            {trimmed.replace('### ', '')}
+          </h4>
+        )
+        continue
+      }
+      if (trimmed.startsWith('## ')) {
+        flushList(idx)
+        elements.push(
+          <h3 key={idx} style={{ color: 'var(--text-primary)', marginTop: '14px', marginBottom: '8px', fontSize: '15px', fontWeight: '800' }}>
+            {trimmed.replace('## ', '')}
+          </h3>
+        )
+        continue
+      }
+      if (trimmed.startsWith('# ')) {
+        flushList(idx)
+        elements.push(
+          <h2 key={idx} style={{ color: 'var(--text-primary)', marginTop: '16px', marginBottom: '10px', fontSize: '16px', fontWeight: '800' }}>
+            {trimmed.replace('# ', '')}
+          </h2>
+        )
+        continue
+      }
+      
+      // Bullet points
+      const bulletMatch = line.match(/^(\s*)([*+-])\s+(.*)$/)
+      if (bulletMatch) {
+        const rawContent = bulletMatch[3]
+        if (currentList && currentList.type !== 'ul') {
+          flushList(idx)
+        }
+        if (!currentList) {
+          currentList = { type: 'ul', items: [] }
+        }
+        currentList.items.push(rawContent)
+        continue
+      }
+      
+      // Numbered list items
+      const numberMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/)
+      if (numberMatch) {
+        const rawContent = numberMatch[3]
+        if (currentList && currentList.type !== 'ol') {
+          flushList(idx)
+        }
+        if (!currentList) {
+          currentList = { type: 'ol', items: [] }
+        }
+        currentList.items.push(rawContent)
+        continue
+      }
+      
+      // Normal paragraph line
+      flushList(idx)
+      
+      if (trimmed.startsWith('⚠️') || trimmed.startsWith('✅')) {
+        elements.push(
+          <p key={idx} style={{ marginBottom: '6px', fontSize: '13px', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 8px', borderRadius: '6px', backgroundColor: trimmed.startsWith('⚠️') ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)', border: trimmed.startsWith('⚠️') ? '1px solid rgba(239, 68, 68, 0.15)' : '1px solid rgba(16, 185, 129, 0.15)' }}>
+            {renderFormattedText(trimmed)}
+          </p>
+        )
+      } else {
+        elements.push(
+          <p key={idx} style={{ marginBottom: '6px', fontSize: '13px', lineHeight: '1.4', color: 'var(--text-secondary)' }}>
+            {renderFormattedText(line)}
+          </p>
+        )
+      }
+    }
+    
+    flushList(lines.length)
+    return elements
   }
 
   const isAlreadyWatchlisted = (code) => {
