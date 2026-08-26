@@ -405,7 +405,7 @@ export default function PortfolioGrid({ customerId, onTradeExecuted, activeTab, 
       </div>
 
       {/* Desktop AG Grid */}
-      <div className={`portfolio-desktop-grid ${theme === 'light' ? 'ag-theme-quartz' : 'ag-theme-quartz-dark'}`} style={{ height: '480px', width: '100%' }}>
+      <div className={`portfolio-desktop-grid ${theme === 'light' ? 'ag-theme-quartz' : 'ag-theme-quartz-dark'}`} style={{ height: 'calc(100vh - 220px)', minHeight: '400px', width: '100%' }}>
         <AgGridReact
           rowData={holdings}
           columnDefs={columnDefs}
