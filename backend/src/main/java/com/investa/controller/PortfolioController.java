@@ -29,6 +29,8 @@ public class PortfolioController {
 
     private final PortfolioService portfolioService;
     private final HoldingRepository holdingRepository;
+    private final com.investa.repository.InvestmentPolicyRepository policyRepository;
+    private final com.investa.service.CurrencyService currencyService;
     private final TransactionRepository transactionRepository;
     private final ExcelImportService excelImportService;
     private final com.investa.service.MarketStackPriceService priceService;
@@ -92,11 +94,49 @@ public class PortfolioController {
 
     @GetMapping("/holdings")
     public ResponseEntity<List<Holding>> getHoldings(@RequestHeader("X-Customer-ID") Long customerId) {
-        List<Holding> holdings = holdingRepository.findByCustomerId(customerId);
-        for (Holding h : holdings) {
+        List<Holding> dbHoldings = holdingRepository.findByCustomerId(customerId);
+        List<Holding> result = new java.util.ArrayList<>();
+        com.investa.model.InvestmentPolicy policy = policyRepository.findByCustomerId(customerId).orElse(null);
+        boolean useBase = policy != null && "BASE".equalsIgnoreCase(policy.getDisplayCurrencyPref());
+        
+        for (Holding dbH : dbHoldings) {
+            // Clone to avoid modifying managed entities in Open-in-View
+            Holding h = Holding.builder()
+                .id(dbH.getId())
+                .customerId(dbH.getCustomerId())
+                .code(dbH.getCode())
+                .shareName(dbH.getShareName())
+                .market(dbH.getMarket())
+                .type(dbH.getType())
+                .sector(dbH.getSector())
+                .risk(dbH.getRisk())
+                .quantity(dbH.getQuantity())
+                .avgPurchasePrice(dbH.getAvgPurchasePrice())
+                .currentPrice(dbH.getCurrentPrice())
+                .unrealisedGain(dbH.getUnrealisedGain())
+                .simpleReturn(dbH.getSimpleReturn())
+                .investmentValue(dbH.getInvestmentValue())
+                .currency(useBase ? "NZD" : dbH.getCurrency())
+                .country(dbH.getCountry())
+                .dividendYield(dbH.getDividendYield())
+                .lastUpdated(dbH.getLastUpdated())
+                .build();
+
             double qty = h.getQuantity() != null ? h.getQuantity() : 0.0;
             double curPrice = h.getCurrentPrice() != null ? h.getCurrentPrice() : 0.0;
             double costPrice = h.getAvgPurchasePrice() != null ? h.getAvgPurchasePrice() : 0.0;
+            
+            if (useBase) {
+                String c = dbH.getCurrency() != null ? dbH.getCurrency() : "NZD";
+                curPrice = currencyService.convertToBase(curPrice, c);
+                costPrice = currencyService.convertToBase(costPrice, c);
+                h.setCurrentPrice(curPrice);
+                h.setAvgPurchasePrice(costPrice);
+                if (h.getInvestmentValue() != null) {
+                    h.setInvestmentValue(currencyService.convertToBase(h.getInvestmentValue(), c));
+                }
+            }
+
             if (h.getUnrealisedGain() == null) {
                 h.setUnrealisedGain((qty * curPrice) - (qty * costPrice));
             }
@@ -106,8 +146,9 @@ public class PortfolioController {
             if (h.getInvestmentValue() == null || h.getInvestmentValue() == 0.0) {
                 h.setInvestmentValue(qty * curPrice);
             }
+            result.add(h);
         }
-        return ResponseEntity.ok(holdings);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/transactions")

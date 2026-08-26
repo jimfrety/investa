@@ -38,6 +38,7 @@ export default function Settings({ user, theme, setTheme }) {
   const [avoidCuts, setAvoidCuts] = useState(true)
   const [maxSector, setMaxSector] = useState(20)
   const [cashAvailable, setCashAvailable] = useState(0)
+  const [displayCurrencyPref, setDisplayCurrencyPref] = useState('LOCAL')
   const [policySuccessMsg, setPolicySuccessMsg] = useState('')
 
   // Profile Update State
@@ -68,6 +69,7 @@ export default function Settings({ user, theme, setTheme }) {
       setAvoidCuts(policy.avoidDividendCuts !== false)
       setMaxSector(Math.round((policy.maxSectorExposure ?? 0.20) * 100))
       setCashAvailable(policy.cashAvailable ?? 0.0)
+      setDisplayCurrencyPref(policy.displayCurrencyPref || "LOCAL")
     }
   }, [policy])
 
@@ -111,7 +113,8 @@ export default function Settings({ user, theme, setTheme }) {
       minMarketCap: minCap * 1.0e9,
       avoidDividendCuts: avoidCuts,
       maxSectorExposure: maxSector / 100.0,
-      cashAvailable: Number(cashAvailable)
+      cashAvailable: Number(cashAvailable),
+      displayCurrencyPref: displayCurrencyPref
     })
   }
 
@@ -518,6 +521,18 @@ export default function Settings({ user, theme, setTheme }) {
                 onChange={(e) => setCashAvailable(Number(e.target.value))}
                 className="investa-input"
               />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Display Currency</label>
+              <select 
+                value={displayCurrencyPref}
+                onChange={(e) => setDisplayCurrencyPref(e.target.value)}
+                className="investa-input"
+              >
+                <option value="LOCAL">Local Currency (USD, AUD, etc)</option>
+                <option value="BASE">Base Currency (NZD)</option>
+              </select>
             </div>
           </div>
 

@@ -229,7 +229,8 @@ export default function App() {
       case 'portfolio':
         return (
           <PortfolioGrid 
-            customerId={user.customerId} 
+            customerId={user.customerId}
+            policy={policy} 
             onTradeExecuted={handleRefetchAll} 
             activeTab={watchlistSubTab}
             setActiveTab={setWatchlistSubTab}

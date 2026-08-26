@@ -651,6 +651,7 @@ public class SharesiesService {
                                 .minMarketCap(2.0e9)
                                 .avoidDividendCuts(true)
                                 .maxSectorExposure(0.20)
+                                            .displayCurrencyPref("LOCAL")
                                 .cashAvailable(0.0)
                                 .build());
                 if (policy != null) {
@@ -788,6 +789,7 @@ public class SharesiesService {
                                             .minMarketCap(2.0e9)
                                             .avoidDividendCuts(true)
                                             .maxSectorExposure(0.20)
+                                            .displayCurrencyPref("LOCAL")
                                             .cashAvailable(0.0)
                                             .build());
                             if (policyObj != null) {
@@ -1564,6 +1566,7 @@ public class SharesiesService {
                             .minMarketCap(2.0e9)
                             .avoidDividendCuts(true)
                             .maxSectorExposure(0.20)
+                                            .displayCurrencyPref("LOCAL")
                             .cashAvailable(0.0)
                             .build());
             if (policy != null) {
