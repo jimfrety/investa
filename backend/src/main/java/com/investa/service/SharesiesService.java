@@ -356,14 +356,20 @@ public class SharesiesService {
         String[] stringKeys = {"sector", "category", "industry", "classification", "market_classification", "sector_name", "industry_name", "category_name", "fund_type", "asset_type", "instrument_type", "type"};
         for (String k : stringKeys) {
             Object val = inst.get(k);
-            if (val instanceof String && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
-                return s;
+            if (val instanceof String) {
+                String s = (String) val;
+                if (!s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
+                    return s;
+                }
             } else if (val instanceof Map) {
-            Map m = (Map) val;
+                Map m = (Map) val;
                 for (String subK : new String[]{"sector", "category", "industry", "name", "title", "classification"}) {
                     Object subVal = m.get(subK);
-                    if (subVal instanceof String && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
-                        return s;
+                    if (subVal instanceof String) {
+                        String s = (String) subVal;
+                        if (!s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
+                            return s;
+                        }
                     }
                 }
             }
@@ -373,16 +379,22 @@ public class SharesiesService {
         for (String k : listKeys) {
             Object val = inst.get(k);
             if (val instanceof List && !((List) val).isEmpty()) {
-            List list = (List) val;
+                List list = (List) val;
                 for (Object item : list) {
-                    if (item instanceof String && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
-                        return s;
+                    if (item instanceof String) {
+                        String s = (String) item;
+                        if (!s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
+                            return s;
+                        }
                     } else if (item instanceof Map) {
-            Map m = (Map) item;
+                        Map m = (Map) item;
                         for (String subK : new String[]{"name", "category", "sector", "industry", "title", "classification"}) {
                             Object subVal = m.get(subK);
-                            if (subVal instanceof String && !s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
-                                return s;
+                            if (subVal instanceof String) {
+                                String s = (String) subVal;
+                                if (!s.trim().isEmpty() && !s.equalsIgnoreCase("equity") && !s.equalsIgnoreCase("mf") && !s.equalsIgnoreCase("share") && !s.equalsIgnoreCase("stock")) {
+                                    return s;
+                                }
                             }
                         }
                     }
@@ -448,17 +460,20 @@ public class SharesiesService {
                     if (parsed != null) return parsed;
                 }
             } else if (val instanceof List && !((List) val).isEmpty()) {
-            List list = (List) val;
+                List list = (List) val;
                 for (Object item : list) {
                     if (item instanceof Map) {
-            Map m = (Map) item;
+                        Map m = (Map) item;
                         for (String subK : new String[]{"risk", "risk_rating", "risk_level", "rating", "level", "value", "score", "name", "title", "classification"}) {
                             Integer parsed = parseRiskValue(m.get(subK));
                             if (parsed != null) return parsed;
                         }
-                    } else if (item instanceof String && (s.toLowerCase().contains("risk") || s.toLowerCase().contains("rating") || s.toLowerCase().contains("level") || s.toLowerCase().contains("aggressive") || s.toLowerCase().contains("conservative") || s.toLowerCase().contains("growth") || s.toLowerCase().contains("balanced"))) {
-                        Integer parsed = parseRiskValue(s);
-                        if (parsed != null) return parsed;
+                    } else if (item instanceof String) {
+                        String s = (String) item;
+                        if (s.toLowerCase().contains("risk") || s.toLowerCase().contains("rating") || s.toLowerCase().contains("level") || s.toLowerCase().contains("aggressive") || s.toLowerCase().contains("conservative") || s.toLowerCase().contains("growth") || s.toLowerCase().contains("balanced")) {
+                            Integer parsed = parseRiskValue(s);
+                            if (parsed != null) return parsed;
+                        }
                     }
                 }
             }

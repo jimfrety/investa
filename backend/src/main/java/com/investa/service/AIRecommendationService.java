@@ -246,6 +246,9 @@ public class AIRecommendationService {
         sb.append("   - **Share Price Stability**: Assess if the share price has been stable.\n");
         sb.append("   - **Dividend Return Stability/Growth**: Assess if the dividend payout has been stable or increased.\n");
         sb.append("   - **Dividend Sustainability**: Assess if the firm has the cash reserves/payout ratio/coverage to sustain its current dividend yield.\n");
+        sb.append("4. You MUST split your response into two distinct sections separated by the exact delimiter line `--- DETAIL_BREAK ---`:\n");
+        sb.append("   - Section 1 (above the delimiter): A condensed summary and explicit recommendation (max 3-4 sentences).\n");
+        sb.append("   - Section 2 (below the delimiter): The detailed analysis (e.g., breakdown by specialist agents, default assessment measures, policy compliance checklist, etc.).\n");
 
         return sb.toString();
     }
@@ -416,7 +419,8 @@ public class AIRecommendationService {
         if (uniqueMatched != null && !uniqueMatched.isEmpty()) {
             StringBuilder answer = new StringBuilder();
             answer.append("### Stock Search & Research Results\n\n");
-            answer.append(String.format("I found **%d matching share(s)** for your query:\n\n", uniqueMatched.size()));
+            answer.append(String.format("Found **%d matching share(s)**. We recommend reviewing these against your active Investment Policy boundaries.\n\n", uniqueMatched.size()));
+            answer.append("--- DETAIL_BREAK ---\n\n");
             for (Map<String, Object> share : uniqueMatched) {
                 String code = (String) share.get("code");
                 String name = (String) share.get("shareName");
@@ -510,9 +514,11 @@ public class AIRecommendationService {
             List<Map<String, Object>> recs = portfolioService.getRebalanceRecommendations(customerId, amt);
             StringBuilder answer = new StringBuilder();
             answer.append(String.format("### Investment Allocation Recommendation ($%,.2f)\n\n", amt));
+            answer.append(String.format("**Recommendation**: Deploy $%,.2f across the selected holdings to increase projected annual income by $%,.2f while maintaining a safe portfolio beta of %.2f.\n\n",
+                    amt, amt * 0.068, riskMetrics.get("portfolioBeta")));
+            answer.append("--- DETAIL_BREAK ---\n\n");
             answer.append(String.format("Based on your **Investment Policy Rules** (Primary: %s, Max Risk Limit: %.2f / 7, Max Single Holding: %.1f%%, Max Sector Exposure: %.1f%%, Avoid Cuts: %b), here is the optimal distribution of capital:\n\n",
                     policy.getPrimaryObjective(), policy.getMaxRisk(), policy.getMaxSingleHolding() * 100.0, policy.getMaxSectorExposure() * 100.0, policy.getAvoidDividendCuts() != null ? policy.getAvoidDividendCuts() : true));
-            
             answer.append("Our **Dividend Specialist Agent** has validated all allocations against Ascending Fortune's dividend safety guidelines, and our **Growth Specialist Agent** has checked sales expansion metrics. All recommendations satisfy your policy constraints:\n\n");
             
             for (Map<String, Object> r : recs) {
@@ -536,6 +542,9 @@ public class AIRecommendationService {
             ResearchCache rc = researchService.getResearch("CRWD");
             StringBuilder answer = new StringBuilder();
             answer.append("### Crowdstrike (CRWD) Analysis & Recommendation\n\n");
+            answer.append(String.format("**Recommendation: POLICY VIOLATION - REDUCE / TRIM**\nSince CRWD exceeds your risk cap of %.2f and your primary objective is *%s*, we advise trimming your position to bring it within policy boundaries and allocating the proceeds into safe, high-yield dividend assets.\n\n",
+                    policy.getMaxRisk(), policy.getPrimaryObjective()));
+            answer.append("--- DETAIL_BREAK ---\n\n");
             answer.append("Our **Growth Specialist Agent** has evaluated **CrowdStrike (CRWD)** using Investopedia growth investing principles:\n\n");
             answer.append("**Growth Metrics Assessment:**\n");
             answer.append("- **Historical Earnings Growth**: Solid historical revenue increases, though quarterly net income displays high volatility.\n");
@@ -566,9 +575,7 @@ public class AIRecommendationService {
                 answer.append(String.format("- **Single Asset Limit**: CRWD weight represents **%.1f%%** of your portfolio, which ✅ **COMPLIES** with your policy limit of **%.1f%%**.\n", crwdWeight * 100.0, policy.getMaxSingleHolding() * 100.0));
             }
             
-            answer.append("\n**Recommendation: POLICY VIOLATION - REDUCE / TRIM**\n");
-            answer.append(String.format("Since CRWD exceeds your risk cap of %.2f and your primary objective is *%s*, we advise trimming your position to bring it within policy boundaries and allocating the proceeds into safe, high-yield dividend assets.",
-                    policy.getMaxRisk(), policy.getPrimaryObjective()));
+            answer.append("\n*Recommendation details listed at top.*");
 
             response.put("answer", answer.toString());
             response.put("confidence", 87);
@@ -580,9 +587,10 @@ public class AIRecommendationService {
         if (query.contains("income") || query.contains("dividend") || query.contains("generating") || query.contains("annual") || query.contains("payout") || query.contains("yield")) {
             StringBuilder answer = new StringBuilder();
             answer.append("### Portfolio Income Analysis\n\n");
-            answer.append(String.format("- **Current Annual Dividend Income**: **$%,.2f**\n", divMetrics.get("annualIncome")));
+            answer.append(String.format("**Summary**: Your portfolio generates **$%,.2f** in annual dividend income (Yield: **%.2f%%**), supported by stable income streams.\n\n",
+                    divMetrics.get("annualIncome"), divMetrics.get("portfolioYield")));
+            answer.append("--- DETAIL_BREAK ---\n\n");
             answer.append(String.format("- **Monthly Average Income**: **$%,.2f**\n", divMetrics.get("monthlyAverage")));
-            answer.append(String.format("- **Portfolio Yield**: **%.2f%%**\n", divMetrics.get("portfolioYield")));
             answer.append(String.format("- **Historical Growth Rate**: **%.2f%%** annually\n", divMetrics.get("growthRate")));
             answer.append(String.format("- **Projected 2030 Annual Income**: **$%,.2f** (assuming reinvestment & 8.4% dividend increases)\n\n", divMetrics.get("projectedIncome2030")));
             answer.append("Your top income contributors are **JEPI** and **Enbridge (ENB)**, representing a secure cash flow stream with an aggregate dividend safety rating of **95/100**.");
@@ -594,6 +602,7 @@ public class AIRecommendationService {
         }
 
         // 4. "Which holding has become the highest risk?"
+        // 4. "Which holding has become the highest risk?"
         if (query.contains("highest risk") || query.contains("high risk") || query.contains("riskier") || query.contains("weakest holding") || query.contains("weakest") || query.contains("risk rating")) {
             Holding highestRisk = holdings.stream()
                     .max(Comparator.comparingInt(Holding::getRisk))
@@ -602,8 +611,9 @@ public class AIRecommendationService {
             StringBuilder answer = new StringBuilder();
             answer.append("### Portfolio Risk Inspection\n\n");
             if (highestRisk != null) {
-                answer.append(String.format("The holding with the highest individual risk score is **%s (%s)** with a risk rating of **%d/7**.\n\n",
+                answer.append(String.format("**Summary**: The holding with the highest individual risk score is **%s (%s)** with a risk rating of **%d/7**.\n\n",
                         highestRisk.getShareName(), highestRisk.getCode(), highestRisk.getRisk()));
+                answer.append("--- DETAIL_BREAK ---\n\n");
                 answer.append("Other notable high-beta/high-risk growth assets in the master stock list include **IONQ**, **Rigetti Computing (RGTI)**, and **D-Wave (QBTS)**.\n\n");
                 answer.append("From an allocation perspective, ensure that these high-risk holdings combined do not exceed **15% of your total net worth** to keep your composite portfolio risk rating at **4.2/7**.");
             } else {
@@ -620,6 +630,8 @@ public class AIRecommendationService {
         if (query.contains("agnc") || query.contains("better dividend")) {
             StringBuilder answer = new StringBuilder();
             answer.append("### AGNC Replacement Recommendation\n\n");
+            answer.append("**Recommendation**: Sell AGNC (a high-risk dividend yield trap violating your 'Avoid Cuts' policy) and redeploy capital into JEPI, Realty Income (O), or Enbridge (ENB) for safer compounding.\n\n");
+            answer.append("--- DETAIL_BREAK ---\n\n");
             answer.append("Our **Dividend Specialist Agent** (applying Ascending Fortune's dividend safety guidelines) has assessed AGNC and proposed three high-quality alternatives:\n\n");
             answer.append("**Why AGNC is a Dividend Trap**:\n");
             answer.append("- **Dividend Yield**: High (~14%) due to long-term stock price decline.\n");
@@ -681,11 +693,14 @@ public class AIRecommendationService {
 
             StringBuilder answer = new StringBuilder();
             answer.append("### Trim & Sell Recommendations\n\n");
-            answer.append("Our specialist agents scanned your holdings against active **Investment Policy Rules**:\n\n");
-            
             if (suggestions.isEmpty()) {
-                answer.append("Your portfolio is currently aligned with all risk parameters, and there are no urgent sell candidates. All active holdings are performing within expected limits.");
+                answer.append("**Recommendation**: Hold - Your active portfolio currently conforms to all Investment Policy bounds.\n\n");
+                answer.append("--- DETAIL_BREAK ---\n\n");
+                answer.append("Our specialist agents scanned your holdings and found no violations or concentrations that require immediate action.");
             } else {
+                answer.append("**Recommendation**: Reduce / Trim - We identified assets that exceed your maximum policy bounds (risk limit or single asset concentration).\n\n");
+                answer.append("--- DETAIL_BREAK ---\n\n");
+                answer.append("Our specialist agents scanned your holdings against active **Investment Policy Rules**:\n\n");
                 for (int i = 0; i < Math.min(4, suggestions.size()); i++) {
                     answer.append(suggestions.get(i)).append("\n\n");
                 }
@@ -707,6 +722,8 @@ public class AIRecommendationService {
 
             StringBuilder answer = new StringBuilder();
             answer.append("### Watchlist Opportunities & Buy Recommendations\n\n");
+            answer.append("**Recommendation**: Buy / Hold - Review top-scoring watchlist assets like KO or PFE that comply with your active policy boundaries.\n\n");
+            answer.append("--- DETAIL_BREAK ---\n\n");
             answer.append("Our **Dividend Specialist Agent** and **Growth Specialist Agent** have scanned your watchlist, evaluated each against their criteria, and verified Investment Policy boundaries:\n\n");
             
             int count = 0;
@@ -748,10 +765,52 @@ public class AIRecommendationService {
             Pattern tickerPattern = Pattern.compile("\\b" + h.getCode().toLowerCase() + "\\b");
             if (tickerPattern.matcher(query).find()) {
                 ResearchCache rc = researchService.getResearch(h.getCode());
-                StringBuilder answer = new StringBuilder();
                 boolean isDividend = h.getDividendIncome() != null && h.getDividendIncome() > 0.0 || rc.getPayoutRatio() > 0.0;
                 
+                // Pre-compute compliance
+                boolean violates = false;
+                StringBuilder complianceLog = new StringBuilder();
+                
+                if (h.getRisk() > policy.getMaxRisk()) {
+                    complianceLog.append(String.format("- ⚠️ **Risk Limit**: Asset risk (%d/7) **exceeds** your maximum policy risk cap of **%.2f/7**.\n", h.getRisk(), policy.getMaxRisk()));
+                    violates = true;
+                } else {
+                    complianceLog.append(String.format("- ✅ **Risk Limit**: Asset risk (%d/7) is within your maximum policy risk cap of **%.2f/7**.\n", h.getRisk(), policy.getMaxRisk()));
+                }
+                
+                double holdingWeight = 0.0;
+                double holdingsVal = (double) summary.get("holdingsValue");
+                if (holdingsVal > 0) {
+                    holdingWeight = (h.getQuantity() * h.getCurrentPrice()) / holdingsVal;
+                }
+                
+                if (holdingWeight > policy.getMaxSingleHolding()) {
+                    complianceLog.append(String.format("- ⚠️ **Single Holding Limit**: Asset weight (%.1f%%) **exceeds** your maximum single holding policy cap of **%.1f%%**.\n", holdingWeight * 100.0, policy.getMaxSingleHolding() * 100.0));
+                    violates = true;
+                } else {
+                    complianceLog.append(String.format("- ✅ **Single Holding Limit**: Asset weight (%.1f%%) is within your maximum single holding policy cap of **%.1f%%**.\n", holdingWeight * 100.0, policy.getMaxSingleHolding() * 100.0));
+                }
+
+                if (isDividend && policy.getMinDividendCoverage() != null && rc.getPayoutRatio() > 0.0) {
+                    double coverage = 1.0 / rc.getPayoutRatio();
+                    if (coverage < policy.getMinDividendCoverage()) {
+                        complianceLog.append(String.format("- ⚠️ **Dividend Coverage**: Coverage ratio (%.2fx) is **below** your min policy coverage of **%.2fx**.\n", coverage, policy.getMinDividendCoverage()));
+                        violates = true;
+                    } else {
+                        complianceLog.append(String.format("- ✅ **Dividend Coverage**: Coverage ratio (%.2fx) satisfies your min policy coverage of **%.2fx**.\n", coverage, policy.getMinDividendCoverage()));
+                    }
+                }
+                
+                StringBuilder answer = new StringBuilder();
                 answer.append(String.format("### %s (%s) Analysis & Recommendation\n\n", h.getShareName(), h.getCode()));
+                if (violates) {
+                    answer.append(String.format("**Recommendation**: **REDUCE / REBALANCE** to bring this holding back into your investment policy limits. Current weight represents **%.1f%%** and risk is **%d/7**.\n\n", holdingWeight * 100.0, h.getRisk()));
+                } else {
+                    answer.append(String.format("**Recommendation**: **HOLD** - This asset is fully compliant with all investment policy rules.\n\n"));
+                }
+                
+                answer.append("--- DETAIL_BREAK ---\n\n");
+                
                 answer.append(String.format("**%s (%s)** is currently held in your portfolio (**%,.2f shares**). It has a **Risk Rating of %d/7**.\n\n",
                         h.getShareName(), h.getCode(), h.getQuantity(), h.getRisk()));
                 
@@ -770,42 +829,7 @@ public class AIRecommendationService {
                 }
                 
                 answer.append("**Investment Policy Compliance:**\n");
-                boolean violates = false;
-                if (h.getRisk() > policy.getMaxRisk()) {
-                    answer.append(String.format("- ⚠️ **Risk Limit**: Asset risk (%d/7) **exceeds** your maximum policy risk cap of **%.2f/7**.\n", h.getRisk(), policy.getMaxRisk()));
-                    violates = true;
-                } else {
-                    answer.append(String.format("- ✅ **Risk Limit**: Asset risk (%d/7) is within your maximum policy risk cap of **%.2f/7**.\n", h.getRisk(), policy.getMaxRisk()));
-                }
-                
-                double holdingWeight = 0.0;
-                double holdingsVal = (double) summary.get("holdingsValue");
-                if (holdingsVal > 0) {
-                    holdingWeight = (h.getQuantity() * h.getCurrentPrice()) / holdingsVal;
-                }
-                
-                if (holdingWeight > policy.getMaxSingleHolding()) {
-                    answer.append(String.format("- ⚠️ **Single Holding Limit**: Asset weight (%.1f%%) **exceeds** your maximum single holding policy cap of **%.1f%%**.\n", holdingWeight * 100.0, policy.getMaxSingleHolding() * 100.0));
-                    violates = true;
-                } else {
-                    answer.append(String.format("- ✅ **Single Holding Limit**: Asset weight (%.1f%%) is within your maximum single holding policy cap of **%.1f%%**.\n", holdingWeight * 100.0, policy.getMaxSingleHolding() * 100.0));
-                }
-
-                if (isDividend && policy.getMinDividendCoverage() != null && rc.getPayoutRatio() > 0.0) {
-                    double coverage = 1.0 / rc.getPayoutRatio();
-                    if (coverage < policy.getMinDividendCoverage()) {
-                        answer.append(String.format("- ⚠️ **Dividend Coverage**: Coverage ratio (%.2fx) is **below** your min policy coverage of **%.2fx**.\n", coverage, policy.getMinDividendCoverage()));
-                        violates = true;
-                    } else {
-                        answer.append(String.format("- ✅ **Dividend Coverage**: Coverage ratio (%.2fx) satisfies your min policy coverage of **%.2fx**.\n", coverage, policy.getMinDividendCoverage()));
-                    }
-                }
-                
-                if (violates) {
-                    answer.append(String.format("\n**Recommendation**: **REDUCE / REBALANCE** to bring this holding back into your investment policy limits."));
-                } else {
-                    answer.append("\n**Recommendation**: **HOLD** - This asset is fully compliant with all investment policy rules.");
-                }
+                answer.append(complianceLog.toString());
                 
                 response.put("answer", answer.toString());
                 response.put("confidence", 90);

@@ -85,6 +85,7 @@ const extractTickers = (text, watchlist = [], messages = []) => {
 export default function AIChatAssistant({ isOpen, onClose, preloadMessage, clearPreload, onRefetch }) {
   const queryClient = useQueryClient()
   const [inputMessage, setInputMessage] = useState('')
+  const [expandedMessages, setExpandedMessages] = useState({})
   const [messages, setMessages] = useState([
     {
       sender: 'assistant',
@@ -434,6 +435,17 @@ Try asking:
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column' }}>
         {messages.map((msg, i) => {
           const detectedTickers = msg.validatedTickers || []
+          const hasDetails = msg.text && msg.text.includes('--- DETAIL_BREAK ---')
+          const isExpanded = !!expandedMessages[i]
+          
+          let summaryText = msg.text || ''
+          let detailsText = ''
+          
+          if (hasDetails) {
+            const parts = msg.text.split('--- DETAIL_BREAK ---')
+            summaryText = parts[0]
+            detailsText = parts.slice(1).join('--- DETAIL_BREAK ---')
+          }
 
           return (
             <div 
@@ -448,7 +460,46 @@ Try asking:
                 borderRadius: '12px'
               }}
             >
-              {parseMarkdown(msg.text)}
+              {hasDetails ? (
+                <>
+                  {parseMarkdown(summaryText)}
+                  <div style={{ marginTop: '8px', marginBottom: '8px' }}>
+                    <button
+                      onClick={() => setExpandedMessages(prev => ({ ...prev, [i]: !prev[i] }))}
+                      style={{
+                        background: 'rgba(99, 102, 241, 0.06)',
+                        border: '1px solid rgba(99, 102, 241, 0.15)',
+                        borderRadius: '6px',
+                        color: 'var(--accent-indigo)',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        padding: '5px 10px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        outline: 'none',
+                        transition: 'background 0.2s ease'
+                      }}
+                    >
+                      {isExpanded ? '▲ Hide Detailed Analysis' : '▼ Show Detailed Analysis'}
+                    </button>
+                  </div>
+                  {isExpanded && (
+                    <div 
+                      style={{ 
+                        marginTop: '10px', 
+                        paddingTop: '10px', 
+                        borderTop: '1px dashed var(--border-glass)'
+                      }}
+                    >
+                      {parseMarkdown(detailsText)}
+                    </div>
+                  )}
+                </>
+              ) : (
+                parseMarkdown(msg.text)
+              )}
 
               {/* Detected Tickers Quick Action Strip */}
               {detectedTickers.length > 0 && (
