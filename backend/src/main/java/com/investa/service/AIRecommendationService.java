@@ -213,7 +213,8 @@ public class AIRecommendationService {
         sb.append("You have access to two specialist sub-agents. You MUST delegate assessments to the appropriate specialist agent persona(s) and use their specific criteria:\n\n");
         
         sb.append("1. DIVIDEND SPECIALIST AGENT (Assessments based on: https://ascendingfortune.com/stock-analysis/dividend-analysis/dividend-analysis/)\n");
-        sb.append("Evaluate dividend shares using these measures:\n");
+        sb.append("Evaluate dividend shares using these measures. THE DISTRIBUTION COVERAGE RATIO IS THE HIGHEST PRIORITY MEASURE: always assess it FIRST, state it explicitly as a number (e.g. 1.6x), and let it dominate the overall verdict. If coverage is below 1.0x (or below the user's Min Dividend Coverage), the dividend is NOT sustainable and the overall assessment must be negative/avoid, regardless of yield, price stability or any other measure. All other measures below are secondary and may only refine, never override, the coverage verdict:\n");
+        sb.append("   - [HIGHEST PRIORITY] Distribution Coverage Ratio: Earnings (or, for REITs/funds, distributable earnings/FCF) divided by distributions paid (= 1 / payout ratio). Compare against the user's Min Dividend Coverage and check its trend over recent periods.\n");
         sb.append("   - Dividend Yield: Compare annual dividend per share with the current share price (watch out for dividend traps where a falling price artificially inflates the yield).\n");
         sb.append("   - Earnings Payout Ratio: Measure the proportion of earnings distributed as dividends (compare to company history and industry norms).\n");
         sb.append("   - Free Cash Flow (FCF) Payout Ratio: Check if cash generation (FCF) covers the dividend distributions since dividends are paid from cash rather than accounting net income.\n");
@@ -242,10 +243,11 @@ public class AIRecommendationService {
         sb.append("2. Whenever the response contains or references specific shares/tickers, you MUST explicitly include:\n");
         sb.append("   - The asset's current Dividend Yield and Dividend History (e.g. payout frequency, consistency/cuts history).\n");
         sb.append("   - The asset's Price Growth over the past 3 months (3-month trend).\n");
-        sb.append("3. For any dividend share discussed or assessed, you MUST provide a Default Assessment based on these three measures:\n");
+        sb.append("3. For any dividend share discussed or assessed, you MUST provide a Default Assessment. The FIRST and most heavily weighted item is the Distribution Coverage Ratio; it drives the final verdict:\n");
+        sb.append("   - **Distribution Coverage Ratio (HIGHEST PRIORITY)**: State the numeric coverage (e.g. 1.6x), compare to the user's Min Dividend Coverage, and judge whether the firm has the earnings/cash reserves to sustain its current dividend yield.\n");
         sb.append("   - **Share Price Stability**: Assess if the share price has been stable.\n");
         sb.append("   - **Dividend Return Stability/Growth**: Assess if the dividend payout has been stable or increased.\n");
-        sb.append("   - **Dividend Sustainability**: Assess if the firm has the cash reserves/payout ratio/coverage to sustain its current dividend yield.\n");
+        sb.append("   - The overall recommendation MUST be consistent with the coverage result (weak coverage = do not recommend, even if the other measures look good).\n");
         sb.append("4. You MUST split your response into two distinct sections separated by the exact delimiter line `--- DETAIL_BREAK ---`:\n");
         sb.append("   - Section 1 (above the delimiter): A condensed summary and explicit recommendation (max 3-4 sentences).\n");
         sb.append("   - Section 2 (below the delimiter): The detailed analysis (e.g., breakdown by specialist agents, default assessment measures, policy compliance checklist, etc.).\n");
@@ -458,9 +460,13 @@ public class AIRecommendationService {
                 
                 answer.append("  * **Specialist Analysis**:\n");
                 if (isDiv) {
+                    if (rc.getPayoutRatio() > 0.0) {
+                        answer.append(String.format("    - **Distribution Coverage Ratio (Highest Priority)**: %.2fx (payout ratio %,.1f%%).\n", 1.0 / rc.getPayoutRatio(), rc.getPayoutRatio() * 100.0));
+                    } else {
+                        answer.append("    - **Distribution Coverage Ratio (Highest Priority)**: Data unavailable - verify before buying.\n");
+                    }
                     answer.append("    - **Share Price Stability**: Price is trading within projected bounds.\n");
                     answer.append("    - **Dividend Return Stability/Growth**: Stable monthly/quarterly payout history.\n");
-                    answer.append("    - **Dividend Sustainability**: Cash reserves and FCF coverage are sufficient to sustain distributions.\n");
                 } else {
                     answer.append("    - **Earnings Growth (5-10 Yr)**: Positive historical revenue growth trend.\n");
                     answer.append("    - **Pretax Profit Margins**: Healthy cost controls with margins exceeding industry standards.\n");
@@ -803,7 +809,14 @@ public class AIRecommendationService {
                 
                 StringBuilder answer = new StringBuilder();
                 answer.append(String.format("### %s (%s) Analysis & Recommendation\n\n", h.getShareName(), h.getCode()));
-                if (violates) {
+                boolean hasCoverage = isDividend && rc.getPayoutRatio() > 0.0;
+                double distCoverage = hasCoverage ? 1.0 / rc.getPayoutRatio() : 0.0;
+                if (hasCoverage) {
+                    answer.append(String.format("**Distribution Coverage Ratio (highest priority): %.2fx**\n\n", distCoverage));
+                }
+                if (hasCoverage && distCoverage < 1.0) {
+                    answer.append("**Recommendation**: **REDUCE / AVOID** - the dividend is not covered by earnings (coverage below 1.0x), so it is not sustainable regardless of other measures.\n\n");
+                } else if (violates) {
                     answer.append(String.format("**Recommendation**: **REDUCE / REBALANCE** to bring this holding back into your investment policy limits. Current weight represents **%.1f%%** and risk is **%d/7**.\n\n", holdingWeight * 100.0, h.getRisk()));
                 } else {
                     answer.append(String.format("**Recommendation**: **HOLD** - This asset is fully compliant with all investment policy rules.\n\n"));
@@ -816,8 +829,10 @@ public class AIRecommendationService {
                 
                 if (isDividend) {
                     answer.append("Our **Dividend Specialist Agent** (using Ascending Fortune guidelines) has evaluated this dividend asset:\n");
+                    if (hasCoverage) {
+                        answer.append(String.format("- **Distribution Coverage Ratio (Highest Priority)**: %.2fx (payout ratio %,.1f%%).\n", distCoverage, rc.getPayoutRatio() * 100.0));
+                    }
                     answer.append(String.format("- **Dividend Yield**: %,.2f%% (Current Price: $%,.2f)\n", Watchlist.getDivYieldForCode(h.getCode(), "dividend"), h.getCurrentPrice()));
-                    answer.append(String.format("- **Payout Ratio / FCF Coverage**: Payout ratio is %,.1f%%. Cash flow coverage is stable.\n", rc.getPayoutRatio() * 100.0));
                     answer.append("- **Dividend Growth / History**: Consistent distributions with a stable/increasing trajectory.\n");
                     answer.append("- **Balance Sheet & Business Model**: Low-leverage profile with predictable cash flows to sustain the dividend.\n\n");
                 } else {
